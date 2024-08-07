@@ -1,21 +1,25 @@
 import cplex
+from Position_generator import generate_positions
+
 from cplex.exceptions import CplexSolverError
 #Basado en la simplificacion del modelo 6 del overleaf - ver seccion 11 de ese documento para modelo completo
 
-CANTIDAD_ITEMS=5 # constante N del modelo
+CANTIDAD_ITEMS=10 # constante N del modelo
 ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) 
 ANCHO_BIN = 10 # W en el modelo
-ALTO_BIN = 2 # H en el modelo
+ALTO_BIN = 4 # H en el modelo
 
 ANCHO_OBJETO= 2 # w en el modelo
 ALTO_OBJETO= 2 # h en el modelo
 
-#TODO: habria que leer el paper y ver como armar estos arrays
-CONJUNTO_POS_X=[] # constante X en el modelo
-CONJUNTO_POS_Y=[] # constante Y en el modelo
 
-CONJUNTO_POS_X_I=[] #constante X_i en el modelo
-CONJUNTO_POS_Y_I=[] #constante Y_i en el modelo
+#CONJUNTO_POS_X  constante X en el modelo
+#CONJUNTO_POS_Y  constante Y en el modelo
+
+#CONJUNTO_POS_X_I constante X_i en el modelo
+#CONJUNTO_POS_Y_I constante Y_i en el modelo
+
+CONJUNTO_POS_X, CONJUNTO_POS_Y, CONJUNTO_POS_X_I, CONJUNTO_POS_Y_I = generate_positions(ANCHO_BIN, ALTO_BIN, ANCHO_OBJETO, ALTO_OBJETO)
 
 CANT_X_I=len(CONJUNTO_POS_X_I) #constante Q(X_i) del modelo
 CANT_Y_I=len(CONJUNTO_POS_Y_I) #constante Q(Y_i) del modelo
@@ -49,13 +53,40 @@ try:
     for x in CONJUNTO_POS_X_I:
         for y in CONJUNTO_POS_Y_I:
                 for i in ITEMS:
-                    nombreVariablesAdicionales.append(f"n_{i},{x},{y}") # agrego variable n_{i,j}
-                nombreVariablesAdicionales.append(f"r_{i},{j}") # agrego variable r_{i,j}
+                    nombreVariablesAdicionales.append(f"n_{i},{x},{y}") # agrego variable n_{i,x,y}
 
+    for x in CONJUNTO_POS_X:
+        for y in CONJUNTO_POS_Y:            
+            nombreVariablesAdicionales.append(f"r_{x},{y}") # agrego variable r_{x,y}
 
     # Añadir las variables adicionales al problema con coeficientes 0 en la función objetivo
     coeficientesObjetivoAdicionales = [0.0] * len(nombreVariablesAdicionales)
     modelo.variables.add(names=nombreVariablesAdicionales, obj=coeficientesObjetivoAdicionales, types="B" * len(nombreVariablesAdicionales))
+
+    # Añadir la restricción r_{x,y} = sum_{i in N} sum_{x' in X_i, x-w+1 <= x' <= x} sum_{y' in Y_i, y-h+1 <= y' <= y} n_{i,x',y'} para cada (x, y) en X x Y
+    for x in CONJUNTO_POS_X:
+        for y in CONJUNTO_POS_Y:
+            coeficientes_restriccion = [1.0]  # Coeficiente para r_{x,y}
+            variables_restriccion = [f"r_{x},{y}"]  # Variable r_{x,y}
+
+            # Añadir los coeficientes y variables de sum_{i in N} sum_{x' in X_i, x-w+1 <= x' <= x} sum_{y' in Y_i, y-h+1 <= y' <= y} n_{i,x',y'}
+            for i in ITEMS:
+                for x_prima in CONJUNTO_POS_X_I:
+                    if x - ANCHO_OBJETO + 1 <= x_prima <= x:
+                        for y_prima in CONJUNTO_POS_Y_I:
+                            if y - ALTO_OBJETO + 1 <= y_prima <= y:
+                                coeficientes_restriccion.append(-1.0)
+                                variables_restriccion.append(f"n_{i},{x_prima},{y_prima}")
+
+            rhs_restriccion = 0.0  # Lado derecho de la restricción
+            sentido_restriccion = "E"  # "E" indica ==
+
+            # Añadir la restricción al problema
+            modelo.linear_constraints.add(
+                lin_expr=[cplex.SparsePair(variables_restriccion, coeficientes_restriccion)],
+                senses=[sentido_restriccion],
+                rhs=[rhs_restriccion]
+            )
 
     # Añadir la restricción m_i <= sum_{x in X_i} sum_{y in Y_i} n_{i,x,y} para cada i en items - restriccion 2 del modelo
     for i in ITEMS:
@@ -99,31 +130,7 @@ try:
             rhs=[CANT_X_I * CANT_Y_I]  # Right Hand Side (RHS) es Q(X_i) * Q(Y_i)
         )
 
-    # Añadir la restricción r_{x,y} = sum_{i in N} sum_{x' in X_i, x-w+1 <= x' <= x} sum_{y' in Y_i, y-h+1 <= y' <= y} n_{i,x',y'} para cada (x, y) en X x Y
-    for x in CONJUNTO_POS_X:
-        for y in CONJUNTO_POS_Y:
-            coeficientes_restriccion = [1.0]  # Coeficiente para r_{x,y}
-            variables_restriccion = [f"r_{x}_{y}"]  # Variable r_{x,y}
-
-            # Añadir los coeficientes y variables de sum_{i in N} sum_{x' in X_i, x-w+1 <= x' <= x} sum_{y' in Y_i, y-h+1 <= y' <= y} n_{i,x',y'}
-            for i in ITEMS:
-                for x_prima in CONJUNTO_POS_X_I:
-                    if x - w + 1 <= x_prima <= x:
-                        for y_prima in CONJUNTO_POS_Y_I:
-                            if y - h + 1 <= y_prima <= y:
-                                coeficientes_restriccion.append(-1.0)
-                                variables_restriccion.append(f"n{i}_{x_prima}_{y_prima}")
-
-            rhs_restriccion = 0.0  # Lado derecho de la restricción
-            sentido_restriccion = "E"  # "E" indica ==
-
-            # Añadir la restricción al problema
-            modelo.linear_constraints.add(
-                lin_expr=[cplex.SparsePair(variables_restriccion, coeficientes_restriccion)],
-                senses=[sentido_restriccion],
-                rhs=[rhs_restriccion]
-            )
-
+    
 
     # Resolver el modelo
     modelo.solve()

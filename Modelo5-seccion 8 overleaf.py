@@ -2,7 +2,7 @@ import cplex
 from cplex.exceptions import CplexSolverError
 #Basado en la simplificacion del modelo 5 del overleaf - ver seccion 8 de ese documento para modelo completo
 
-CANTIDAD_ITEMS=5 # constante n del modelo
+CANTIDAD_ITEMS=10 # constante n del modelo
 ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) # constante I del modelo
 ANCHO_BIN = 11 # W en el modelo
 ALTO_BIN = 3 # H en el modelo
@@ -48,6 +48,7 @@ try:
                 nombreVariablesAdicionales.append(f"l_{j}{i}") # agrego variable l_{ij}
                 nombreVariablesAdicionales.append(f"b_{i}{j}") # agrego variable b_{ij}
                 nombreVariablesAdicionales.append(f"b_{j}{i}") # agrego variable b_{ij}
+                #TODO: revisar estas variables ya que a veces se duplican e impiden resolver el modelo (se duplican con 20 items por ejemplo)
 
     # Añadir las variables adicionales al problema con coeficientes 0 en la función objetivo
     coeficientesObjetivoAdicionales = [0.0] * len(nombreVariablesAdicionales)
