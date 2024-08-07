@@ -6,11 +6,11 @@ from cplex.exceptions import CplexSolverError
 
 CANTIDAD_ITEMS=20 # constante N del modelo
 ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) 
-ANCHO_BIN = 15 # W en el modelo
-ALTO_BIN = 12 # H en el modelo
+ANCHO_BIN = 5 # W en el modelo
+ALTO_BIN = 2 # H en el modelo
 
-ANCHO_OBJETO= 3 # w en el modelo
-ALTO_OBJETO= 4 # h en el modelo
+ANCHO_OBJETO= 2 # w en el modelo
+ALTO_OBJETO= 1 # h en el modelo
 
 
 #CONJUNTO_POS_X  constante X en el modelo

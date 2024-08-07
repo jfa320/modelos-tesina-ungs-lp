@@ -2,13 +2,13 @@ import cplex
 from cplex.exceptions import CplexSolverError
 #Basado en la simplificacion del modelo 5 del overleaf - ver seccion 8 de ese documento para modelo completo
 
-CANTIDAD_ITEMS=10 # constante n del modelo
+CANTIDAD_ITEMS= 20 # constante n del modelo
 ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) # constante I del modelo
-ANCHO_BIN = 11 # W en el modelo
-ALTO_BIN = 3 # H en el modelo
+ANCHO_BIN = 5 # W en el modelo
+ALTO_BIN = 2 # H en el modelo
 
-ANCHO_OBJETO= 4 # w en el modelo
-ALTO_OBJETO= 3 # h en el modelo
+ANCHO_OBJETO= 2 # w en el modelo
+ALTO_OBJETO= 1 # h en el modelo
 
 try:
     # Crear un modelo de CPLEX
@@ -40,17 +40,20 @@ try:
     coeficientesObjetivoAdicionales = [0.0] * len(nombreVariablesAdicionales)
     modelo.variables.add(names=nombreVariablesAdicionales, obj=coeficientesObjetivoAdicionales, types="I" * len(nombreVariablesAdicionales))
 
-    nombreVariablesAdicionales = []
+    nombreVariablesAdicionales= list()
     for i in ITEMS:
         for j in ITEMS:
             if i != j:
-                nombreVariablesAdicionales.append(f"l_{i}{j}") # agrego variable l_{ij}
-                nombreVariablesAdicionales.append(f"l_{j}{i}") # agrego variable l_{ij}
-                nombreVariablesAdicionales.append(f"b_{i}{j}") # agrego variable b_{ij}
-                nombreVariablesAdicionales.append(f"b_{j}{i}") # agrego variable b_{ij}
+                nombreVariablesAdicionales.append(f"l_{i},{j}") # agrego variable l_{ij}
+                nombreVariablesAdicionales.append(f"l_{j},{i}") # agrego variable l_{ij}
+                nombreVariablesAdicionales.append(f"b_{i},{j}") # agrego variable b_{ij}
+                nombreVariablesAdicionales.append(f"b_{j},{i}") # agrego variable b_{ij}
                 #TODO: revisar estas variables ya que a veces se duplican e impiden resolver el modelo (se duplican con 20 items por ejemplo)
 
     # Añadir las variables adicionales al problema con coeficientes 0 en la función objetivo
+    # convertir el set a una lista
+    # nombreVariablesAdicionales = list(nombreVariablesAdicionales)
+    print(nombreVariablesAdicionales)
     coeficientesObjetivoAdicionales = [0.0] * len(nombreVariablesAdicionales)
     modelo.variables.add(names=nombreVariablesAdicionales, obj=coeficientesObjetivoAdicionales, types="B" * len(nombreVariablesAdicionales))
 
@@ -59,7 +62,7 @@ try:
         for j in ITEMS:
             if i < j: #Aca fue necesario reescribir la restriccion para que funcione con CPLEX
                 coeficientes_restriccion = [1.0, 1.0, 1.0, 1.0, -1.0, -1.0]
-                variables_restriccion = [f"l_{i}{j}", f"l_{j}{i}", f"b_{i}{j}", f"b_{j}{i}", f"f_{i}", f"f_{j}"] 
+                variables_restriccion = [f"l_{i},{j}", f"l_{j},{i}", f"b_{i},{j}", f"b_{j},{i}", f"f_{i}", f"f_{j}"] 
                 rhs_restriccion = -1.0
                 sentido_restriccion = "G"  # "G" indica >=
 
@@ -75,7 +78,7 @@ try:
         for j in ITEMS:
             if i != j:
                 coeficientes_restriccion = [1.0, -1.0, ANCHO_BIN]
-                variables_restriccion = [f"x_{i}", f"x_{j}", f"l_{i}{j}"]
+                variables_restriccion = [f"x_{i}", f"x_{j}", f"l_{i},{j}"]
                 rhs_restriccion = ANCHO_BIN - ANCHO_OBJETO
                 sentido_restriccion = "L"  # "L" indica <=
 
@@ -91,7 +94,7 @@ try:
         for j in ITEMS:
             if i != j:
                 coeficientes_restriccion = [1.0, -1.0, ALTO_BIN]
-                variables_restriccion = [f"y_{i}", f"y_{j}", f"b_{i}{j}"]
+                variables_restriccion = [f"y_{i}", f"y_{j}", f"b_{i},{j}"]
                 rhs_restriccion = ALTO_BIN - ALTO_OBJETO
                 sentido_restriccion = "L"  # "L" indica <=
 
