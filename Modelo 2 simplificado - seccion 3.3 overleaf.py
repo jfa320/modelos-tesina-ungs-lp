@@ -2,7 +2,7 @@ import cplex
 from Position_generator import generate_positions
 
 from cplex.exceptions import CplexSolverError
-#Basado en la simplificacion del modelo 6 del overleaf - ver seccion 11 de ese documento para modelo completo
+#Basado en la simplificacion del modelo 2 del overleaf (modelo discretizado en posiciones) - ver seccion 3.3 de ese documento para modelo completo
 
 CANTIDAD_ITEMS=20 # constante N del modelo
 ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) 
