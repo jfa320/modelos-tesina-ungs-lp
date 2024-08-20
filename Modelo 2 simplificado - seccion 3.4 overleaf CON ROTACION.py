@@ -2,11 +2,34 @@ import cplex
 from cplex.exceptions import CplexError
 
 # Parámetros
+
+
+# NOT WORKING
 H = 4  # Alto del bin
 W = 6  # Ancho del bin
-n_items = 13  # Número de items
-h = 2   # Altura de los items
-w = 3   # Ancho de los items
+n_items = 6  # Número de items
+h = 3   # Altura de los items
+w = 2   # Ancho de los items
+
+# NOT WORKING
+# H = 5  # Alto del bin
+# W = 6  # Ancho del bin
+# n_items = 6  # Número de items
+# h = 4   # Altura de los items
+# w = 3   # Ancho de los items
+
+
+# WORKING
+# H = 6  # Alto del bin
+# W = 6  # Ancho del bin
+# n_items = 6  # Número de items
+# h = 3   # Altura de los items
+# w = 2   # Ancho de los items
+
+Q_X_i = len([x for x in range(W) if x <= W - w])
+Q_Y_i = len([y for y in range(H) if y <= H - h])
+Q_X_i_prime = len([x for x in range(W) if x <= W - h])
+Q_Y_i_prime = len([y for y in range(H) if y <= H - w])
 
 # Crear el modelo
 model = cplex.Cplex()
@@ -19,7 +42,7 @@ model.set_error_stream(None)
 m_vars = []  # Variables m_i y m_{i'}
 n_vars = []  # Variables n_{i,x,y} y n_{i',x,y}
 r_vars = []  # Variables r_{x,y}
-
+nprime=[]
 # Variables m_i y m_{i'}
 for i in range(n_items):
     m_vars.append(f"m_{i}")
@@ -90,10 +113,7 @@ for i in range(n_items):
     )
 
 # Restricción 3: suma de n_{i,x,y} + n_{i',x,y} <= Q(X_i)Q(Y_i)m_i + Q(X_{i'})Q(Y_{i'})m_{i'}
-Q_X_i = len([x for x in range(W) if x <= W - w])
-Q_Y_i = len([y for y in range(H) if y <= H - h])
-Q_X_i_prime = len([x for x in range(W) if x <= W - h])
-Q_Y_i_prime = len([y for y in range(H) if y <= H - w])
+
 
 for i in range(n_items):
     row = []
@@ -132,11 +152,63 @@ try:
 except CplexError as exc:
     print(exc)
 
+# # Imprimir resultados
+# print("Objective value:", model.solution.get_objective_value())
+# for i in range(n_items):
+#     normal_var = f"m_{i}"
+#     rotated_var = f"m_{i}'"
+#     print(f"Item {i} placed: Normal - {model.solution.get_values(normal_var)}, Rotated - {model.solution.get_values(rotated_var)}")
+
+#        # Imprimir las posiciones en las que se coloca cada item
+#     if model.solution.get_values(normal_var) > 0.5:
+#         print(f"Item {i} is placed in its normal orientation at:")
+#         for x in range(W):
+#             for y in range(H):
+#                 var_name = f"n_{i}_{x}_{y}"
+#                 if model.solution.get_values(var_name) > 0.5:
+#                     print(f"  Position (x={x}, y={y})")
+#     elif model.solution.get_values(rotated_var) > 0.5:
+#         print(f"Item {i} is placed in its rotated orientation at:")
+#         for x in range(W):
+#             for y in range(H):
+#                 if x <= W - h and y <= H - w:
+#                     var_name = f"n_{i}'_{x}_{y}"
+#                     if model.solution.get_values(var_name) > 0.5:
+#                         print(f"  Position (x={x}, y={y})")
+
 # Imprimir resultados
 print("Objective value:", model.solution.get_objective_value())
+
 for i in range(n_items):
     normal_var = f"m_{i}"
     rotated_var = f"m_{i}'"
     print(f"Item {i} placed: Normal - {model.solution.get_values(normal_var)}, Rotated - {model.solution.get_values(rotated_var)}")
 
+    # Imprimir las posiciones en las que se coloca cada item
+    if model.solution.get_values(normal_var) > 0.5:
+        print(f"Item {i} is placed in its normal orientation at:")
+        found_position = False  # Variable para verificar si se encontró al menos una posición
+        for x in range(W):
+            for y in range(H):
+                if x <= W - w and y <= H - h:
+                    var_name = f"n_{i}_{x}_{y}"
+                    if model.solution.get_values(var_name) > 0.5:
+                        print(f"  Position (x={x}, y={y})")
+                        found_position = True
+        if not found_position:
+            print(f"  No valid position found for Item {i}, check model constraints or logic.")
+
+
+    elif model.solution.get_values(rotated_var) > 0.5:
+        print(f"Item {i} is placed in its rotated orientation at:")
+        found_position = False  # Variable para verificar si se encontró al menos una posición
+        for x in range(W):
+            for y in range(H):
+                if x <= W - h and y <= H - w:
+                    var_name = f"n_{i}'_{x}_{y}"
+                    if model.solution.get_values(var_name) > 0.5:
+                        print(f"  Position (x={x}, y={y})")
+                        found_position = True
+        if not found_position:
+            print(f"  No valid position found for Item {i}, check model constraints or logic.")
 

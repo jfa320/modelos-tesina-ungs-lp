@@ -4,13 +4,13 @@ from Position_generator import generate_positions
 from cplex.exceptions import CplexSolverError
 #Basado en la simplificacion del modelo 2 del overleaf (modelo discretizado en posiciones) - ver seccion 3.3 de ese documento para modelo completo
 
-CANTIDAD_ITEMS=20 # constante N del modelo
+CANTIDAD_ITEMS=6 # constante N del modelo
 ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) 
-ANCHO_BIN = 5 # W en el modelo
-ALTO_BIN = 2 # H en el modelo
+ANCHO_BIN = 6 # W en el modelo
+ALTO_BIN = 4 # H en el modelo
 
 ANCHO_OBJETO= 2 # w en el modelo
-ALTO_OBJETO= 1 # h en el modelo
+ALTO_OBJETO= 3 # h en el modelo
 
 
 #CONJUNTO_POS_X  constante X en el modelo
