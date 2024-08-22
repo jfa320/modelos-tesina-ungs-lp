@@ -1,22 +1,22 @@
 import cplex
-
+from Position_generator_modelo_3 import *
 # Crear el modelo
 model = cplex.Cplex()
 
 # Parámetros
-W = 6  # Ancho del bin
+W = 3  # Ancho del bin
 H = 4  # Alto del bin
-w = 2  # Ancho del item
+w = 1  # Ancho del item
 h = 3  # Alto del item
 
 I = range(6)  # Conjunto de items
-P = generate_positions(W, H, w, h)
-# J = range(10)  # Ejemplo de posiciones posibles para los items
-C = create_C_matrix(W, H, positions)
+J = generate_positions2_without_rotation(W, H, w, h) #posiciones
+P = [(x, y) for x in range(W) for y in range(H)]  #puntos
+C = create_C_matrix(W, H, J,w,h,P)
 
-# Conjunto de posiciones válidas por item T(i)
-T_i = generate_Ti(W, H, w, h, C)
-Q = {i: len(T[i]) for i in I}  # Cantidad total de posiciones válidas por item
+# Conjunto de posiciones válidas por item 
+T = J
+Q = len(T)  # Cantidad total de posiciones válidas por item
 
 # Variables
 n_vars = []
@@ -31,7 +31,7 @@ for i in I:
 # Añadir las variables x_j^i
 for i in I:
     x_vars_i = []
-    for j in T[i]:
+    for j in T:
         var_name = f"x_{j}^{i}"
         model.variables.add(names=[var_name], types=[model.variables.type.binary])
         x_vars_i.append(var_name)
@@ -43,12 +43,12 @@ model.objective.set_sense(model.objective.sense.maximize)
 model.objective.set_linear(list(zip(n_vars, objective)))
 
 # Restricción 1: Cada punto del bin está ocupado por a lo sumo un item
-for p in P:
+for index_p,_ in enumerate(P):
     indices = []
     coefficients = []
     for i in I:
-        for j in T[i]:
-            if C[j][p] == 1:
+        for index_j,j in enumerate(T):
+            if C[index_j][index_p] == 1:
                 indices.append(f"x_{j}^{i}")
                 coefficients.append(1.0)
     model.linear_constraints.add(
@@ -61,11 +61,12 @@ for p in P:
 indices = []
 coefficients = []
 for i in I:
-    for j in T[i]:
-        for p in P:
-            if C[j][p] == 1:
+    for index_j,j in enumerate(T):
+        for index_p,_ in enumerate(P):
+            if C[index_j][index_p] == 1:
                 indices.append(f"x_{j}^{i}")
                 coefficients.append(1.0)
+
 model.linear_constraints.add(
     lin_expr=[[indices, coefficients]],
     senses=["L"],
@@ -74,8 +75,8 @@ model.linear_constraints.add(
 
 # Restricción 3: n_i <= suma(x_j^i)
 for i in I:
-    indices = [f"x_{j}^{i}" for j in T[i]]
-    coefficients = [1.0] * len(T[i])
+    indices = [f"x_{j}^{i}" for j in T]
+    coefficients = [1.0] * len(T)
     indices.append(f"n_{i}")
     coefficients.append(-1.0)
     model.linear_constraints.add(
@@ -86,10 +87,10 @@ for i in I:
 
 # Restricción 4: suma(x_j^i) <= Q(i) * n_i
 for i in I:
-    indices = [f"x_{j}^{i}" for j in T[i]]
-    coefficients = [1.0] * len(T[i])
+    indices = [f"x_{j}^{i}" for j in T]
+    coefficients = [1.0] * len(T)
     indices.append(f"n_{i}")
-    coefficients.append(-Q[i])
+    coefficients.append(-Q)
     model.linear_constraints.add(
         lin_expr=[[indices, coefficients]],
         senses=["L"],

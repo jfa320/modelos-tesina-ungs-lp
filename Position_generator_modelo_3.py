@@ -1,6 +1,6 @@
 import numpy as np
 
-def generate_positions(W, H, w, h):
+def generate_positions_without_rotation(W, H, w, h): #este lo saque del paper pero genera posiciones incorrectas
     positions = []
     
     for j in range(w, W + 1):  # Desde w hasta W (inclusive)
@@ -14,33 +14,46 @@ def generate_positions(W, H, w, h):
     
     return positions
 
+def generate_positions2_without_rotation(W, H, w, h):
+    positions = []
+    
+    # Bucle sobre posiciones horizontales donde el objeto puede empezar
+    for j in range(W - w + 1):  # Desde 0 hasta W - w
+        # Bucle sobre posiciones verticales donde el objeto puede empezar
+        for k in range(H - h + 1):  # Desde 0 hasta H - h
+            # Si el objeto cabe dentro del bin, guardamos la posición
+            positions.append((j, k))
+    
+    return positions
 
-def create_C_matrix(W, H, positions):
+
+def create_C_matrix(W, H, positions, w, h, points):
     num_positions = len(positions)
     num_points = W * H  # Total de puntos en la cuadrícula del bin
     C = np.zeros((num_positions, num_points), dtype=int)
-
+   
     # Enumerar los puntos del bin como coordenadas (x, y)
-    points = [(x, y) for x in range(W) for y in range(H)]
-
-    for j, (x_start, _, y_start, _) in enumerate(positions):
+    points = points
+    
+    for j, (x_start, y_start) in enumerate(positions):  # Solo usamos x_start y y_start
         for dx in range(w):  # Ancho del item
             for dy in range(h):  # Alto del item
                 # Calcular el punto que ocupa la posición (x_start + dx, y_start + dy)
                 x = x_start + dx
                 y = y_start + dy
                 if 0 <= x < W and 0 <= y < H:
-                    p = points.index((x, y))  # Índice del punto en la matriz C
+                    # Encuentra el índice del punto (x, y) en la lista de puntos
+                    p = points.index((x, y))
+                    # Marca el punto p en la fila j de la matriz C
                     C[j, p] = 1
 
     return C
 
-def generate_Ti(W, H, w_i, h_i, C):
-    positions = generate_positions(W, H, w_i, h_i)
+def generate_Ti(W, H, w_i, h_i, C, positions):
     T_i = []
 
     # Para cada posición generada, validar si es válida
-    for idx, (x_start, _, y_start, _) in enumerate(positions):
+    for idx, (x_start, y_start) in enumerate(positions):  # Solo usamos x_start y y_start
         valid = True
         for dx in range(w_i):
             for dy in range(h_i):
