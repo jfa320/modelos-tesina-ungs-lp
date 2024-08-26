@@ -11,6 +11,7 @@ h = 3  # Alto del item
 
 I = range(6)  # Conjunto de items
 J = generate_positions2_without_rotation(W, H, w, h) #posiciones
+print(J)
 P = [(x, y) for x in range(W) for y in range(H)]  #puntos
 C = create_C_matrix(W, H, J,w,h,P)
 
@@ -60,13 +61,19 @@ for index_p,_ in enumerate(P):
 # Restricción 2: No exceder el área del bin
 indices = []
 coefficients = []
-for i in I:
-    for index_j,j in enumerate(T):
-        for index_p,_ in enumerate(P):
-            if C[index_j][index_p] == 1:
-                indices.append(f"x_{j}^{i}")
-                coefficients.append(1.0)
+seen_indices = set()  # Conjunto para verificar duplicados
 
+for i in I:
+    for index_j, j in enumerate(T):
+        for index_p, _ in enumerate(P):
+            if C[index_j][index_p] == 1:
+                var_name = f"x_{j}^{i}"
+                if var_name not in seen_indices:  # Verificar si ya se ha agregado
+                    indices.append(var_name)
+                    coefficients.append(1.0)
+                    seen_indices.add(var_name)  # Marcar como agregado
+
+# Agregar la restricción al modelo sin duplicados
 model.linear_constraints.add(
     lin_expr=[[indices, coefficients]],
     senses=["L"],

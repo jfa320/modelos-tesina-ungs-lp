@@ -2,13 +2,13 @@ import cplex
 from cplex.exceptions import CplexSolverError
 #Basado en la simplificacion del modelo 1 (modelo base) - ver seccion 2.8 en Overleaf para modelo completo
 
-CANTIDAD_ITEMS= 20 # constante n del modelo
+CANTIDAD_ITEMS= 6 # constante n del modelo
 ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) # constante I del modelo
-ANCHO_BIN = 5 # W en el modelo
-ALTO_BIN = 2 # H en el modelo
+ANCHO_BIN = 6 # W en el modelo
+ALTO_BIN = 4 # H en el modelo
 
 ANCHO_OBJETO= 2 # w en el modelo
-ALTO_OBJETO= 1 # h en el modelo
+ALTO_OBJETO= 3 # h en el modelo
 
 try:
     # Crear un modelo de CPLEX
