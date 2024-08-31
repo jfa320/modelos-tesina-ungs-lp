@@ -1,4 +1,6 @@
 import numpy as np
+import itertools
+import math
 
 def generate_positions_without_rotation(W, H, w, h): #este lo saque del paper pero genera posiciones incorrectas
     positions = []
@@ -11,6 +13,24 @@ def generate_positions_without_rotation(W, H, w, h): #este lo saque del paper pe
                         if (k + i) <= H:
                             # Creación y etiquetado de una nueva posición para el item i
                             positions.append((j, l, i, k))
+    
+    return positions
+
+def generate_positions_without_rotation_marcelo(L,A,l,a):
+    positions = {
+        (i, j) 
+        for i, j in itertools.product(range(math.floor(L / a) + 1), range(math.floor(A / a) + 1))
+        if i * l + j * a <= L - a
+    }
+    return positions
+
+def generate_positions_without_rotation_one_item_size(W, H, w, h):
+    positions = []
+    
+    # Recorrer todas las posibles posiciones en el bin
+    for j in range(W - w + 1):  # Rango de posiciones horizontales
+        for l in range(H - h + 1):  # Rango de posiciones verticales
+            positions.append((j, l))  # Generar la posición (j, l)
     
     return positions
 

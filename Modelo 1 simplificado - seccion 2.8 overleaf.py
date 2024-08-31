@@ -1,6 +1,6 @@
 import cplex
 from cplex.exceptions import CplexSolverError
-#Basado en la simplificacion del modelo 1 (modelo base) - ver seccion 2.8 en Overleaf para modelo completo
+#Basado en la simplificacion del modelo 1 (modelo base - Pisinger & Sigurd) - ver seccion 2.8 en Overleaf para modelo completo
 
 CANTIDAD_ITEMS= 6 # constante n del modelo
 ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) # constante I del modelo
