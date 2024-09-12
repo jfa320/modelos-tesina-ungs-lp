@@ -2,10 +2,22 @@ import cplex
 from cplex.exceptions import CplexSolverError
 #Basado en la simplificacion del modelo 1 (modelo base - Pisinger & Sigurd) - ver seccion 2.8 en Overleaf para modelo completo
 
-CANTIDAD_ITEMS= 6 # constante n del modelo
+# Caso sencillo que mejora con rotacion
+
+# CANTIDAD_ITEMS= 6 # constante n del modelo
+# ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) # constante I del modelo
+# ANCHO_BIN = 6 # W en el modelo
+# ALTO_BIN = 4 # H en el modelo
+
+# ANCHO_OBJETO= 2 # w en el modelo
+# ALTO_OBJETO= 3 # h en el modelo
+
+#caso con mas de 20 objetos
+
+CANTIDAD_ITEMS= 20 # constante n del modelo
 ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) # constante I del modelo
-ANCHO_BIN = 6 # W en el modelo
-ALTO_BIN = 4 # H en el modelo
+ANCHO_BIN = 10 # W en el modelo
+ALTO_BIN = 10 # H en el modelo
 
 ANCHO_OBJETO= 2 # w en el modelo
 ALTO_OBJETO= 3 # h en el modelo
@@ -40,19 +52,19 @@ try:
     coeficientesObjetivoAdicionales = [0.0] * len(nombreVariablesAdicionales)
     modelo.variables.add(names=nombreVariablesAdicionales, obj=coeficientesObjetivoAdicionales, types="I" * len(nombreVariablesAdicionales))
 
-    nombreVariablesAdicionales= list()
+    nombreVariablesAdicionales= set()
     for i in ITEMS:
         for j in ITEMS:
             if i != j:
-                nombreVariablesAdicionales.append(f"l_{i},{j}") # agrego variable l_{ij}
-                nombreVariablesAdicionales.append(f"l_{j},{i}") # agrego variable l_{ij}
-                nombreVariablesAdicionales.append(f"b_{i},{j}") # agrego variable b_{ij}
-                nombreVariablesAdicionales.append(f"b_{j},{i}") # agrego variable b_{ij}
+                nombreVariablesAdicionales.add(f"l_{i},{j}") # agrego variable l_{ij}
+                nombreVariablesAdicionales.add(f"l_{j},{i}") # agrego variable l_{ij}
+                nombreVariablesAdicionales.add(f"b_{i},{j}") # agrego variable b_{ij}
+                nombreVariablesAdicionales.add(f"b_{j},{i}") # agrego variable b_{ij}
                 #TODO: revisar estas variables ya que a veces se duplican e impiden resolver el modelo (se duplican con 20 items por ejemplo)
 
     # Añadir las variables adicionales al problema con coeficientes 0 en la función objetivo
     # convertir el set a una lista
-    # nombreVariablesAdicionales = list(nombreVariablesAdicionales)
+    nombreVariablesAdicionales = list(nombreVariablesAdicionales)
     print(nombreVariablesAdicionales)
     coeficientesObjetivoAdicionales = [0.0] * len(nombreVariablesAdicionales)
     modelo.variables.add(names=nombreVariablesAdicionales, obj=coeficientesObjetivoAdicionales, types="B" * len(nombreVariablesAdicionales))
