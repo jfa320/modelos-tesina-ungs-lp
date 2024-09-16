@@ -4,23 +4,23 @@ from cplex.exceptions import CplexSolverError
 
 # Caso sencillo que mejora con rotacion
 
-# CANTIDAD_ITEMS= 6 # constante n del modelo
-# ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) # constante I del modelo
-# ANCHO_BIN = 6 # W en el modelo
-# ALTO_BIN = 4 # H en el modelo
-
-# ANCHO_OBJETO= 2 # w en el modelo
-# ALTO_OBJETO= 3 # h en el modelo
-
-#caso con mas de 20 objetos
-
-CANTIDAD_ITEMS= 20 # constante n del modelo
+CANTIDAD_ITEMS= 6 # constante n del modelo
 ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) # constante I del modelo
-ANCHO_BIN = 10 # W en el modelo
-ALTO_BIN = 10 # H en el modelo
+ANCHO_BIN = 6 # W en el modelo
+ALTO_BIN = 4 # H en el modelo
 
 ANCHO_OBJETO= 2 # w en el modelo
 ALTO_OBJETO= 3 # h en el modelo
+
+#caso con mas de 20 objetos
+
+# CANTIDAD_ITEMS= 20 # constante n del modelo
+# ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) # constante I del modelo
+# ANCHO_BIN = 10 # W en el modelo
+# ALTO_BIN = 10 # H en el modelo
+
+# ANCHO_OBJETO= 2 # w en el modelo
+# ALTO_OBJETO= 3 # h en el modelo
 
 try:
     # Crear un modelo de CPLEX

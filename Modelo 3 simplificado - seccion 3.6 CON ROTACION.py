@@ -4,15 +4,29 @@ from Position_generator_modelo_3 import *
 # Crear el modelo
 model = cplex.Cplex()
 
-# Parámetros
-W = 4  # Ancho del bin
-H = 4  # Alto del bin
-w = 1 # Ancho del item
-h = 3  # Alto del item
+#Caso 1: 
 
-I = range(6)  # Conjunto de items
+CANTIDAD_ITEMS=6 # constante N del modelo
+ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) 
+ANCHO_BIN = 6 # W en el modelo
+ALTO_BIN = 4 # H en el modelo
+
+ANCHO_OBJETO= 2 # w en el modelo
+ALTO_OBJETO= 3 # h en el modelo
+
+# Parámetros
+W = ANCHO_BIN  # Ancho del bin
+H = ALTO_BIN  # Alto del bin
+w = ANCHO_OBJETO # Ancho del item
+h = ALTO_OBJETO  # Alto del item
+
+I = range(CANTIDAD_ITEMS)  # Conjunto de items
 J = generate_positions2_without_rotation(W, H, w, h)  # Posiciones sin rotación
+print("sin rotacion")
+print(J)
 J_rot = generate_positions2_without_rotation(W, H, h, w)  # Posiciones con rotación de 90 grados
+print("con rotacion")
+print(J_rot)
 P = [(x, y) for x in range(W) for y in range(H)]  # Puntos del bin
 C = create_C_matrix(W, H, J, w, h, P)  # Matriz C para posiciones sin rotación
 C_rot = create_C_matrix(W, H, J_rot, h, w, P)  # Matriz C para posiciones rotadas
@@ -151,3 +165,20 @@ for i, var_name in enumerate(n_vars):
     print(f"{var_name} = {model.solution.get_values(var_name)}")
 
 
+# Imprimir los valores de las variables x_j^i
+print("\nValores de las variables x_j^i:")
+for i in range(len(I)):
+    for j in range(len(T)):
+        var_name = x_vars[i][j]
+        value = model.solution.get_values(var_name)
+        if value > 0:  # Mostrar solo las variables que están activas
+            print(f"{var_name} = {value}")
+
+# Imprimir los valores de las variables y_j^i
+print("\nValores de las variables y_j^i:")
+for i in range(len(I)):
+    for j in range(len(T_rot)):
+        var_name = y_vars[i][j]
+        value = model.solution.get_values(var_name)
+        if value > 0:  # Mostrar solo las variables que están activas
+            print(f"{var_name} = {value}")

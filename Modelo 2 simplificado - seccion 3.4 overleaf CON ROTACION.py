@@ -1,214 +1,198 @@
 import cplex
-from cplex.exceptions import CplexError
+from Position_generator import generate_positions
 
-# Parámetros
+from cplex.exceptions import CplexSolverError
 
+# Constantes del problema
 
-# NOT WORKING
-H = 4  # Alto del bin
-W = 6  # Ancho del bin
-n_items = 6  # Número de items
-h = 3   # Altura de los items
-w = 2   # Ancho de los items
+# Caso 1:
 
-# NOT WORKING
-# H = 5  # Alto del bin
-# W = 6  # Ancho del bin
-# n_items = 6  # Número de items
-# h = 4   # Altura de los items
-# w = 3   # Ancho de los items
+CANTIDAD_ITEMS=6 # constante N del modelo
+ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) 
+ANCHO_BIN = 6 # W en el modelo
+ALTO_BIN = 4 # H en el modelo
+
+ANCHO_OBJETO= 2 # w en el modelo
+ALTO_OBJETO= 3 # h en el modelo
 
 
-# WORKING
-# H = 6  # Alto del bin
-# W = 6  # Ancho del bin
-# n_items = 6  # Número de items
-# h = 3   # Altura de los items
-# w = 2   # Ancho de los items
+# Generación de posiciones factibles para ítems y sus versiones rotadas
+CONJUNTO_POS_X, CONJUNTO_POS_Y, CONJUNTO_POS_X_I, CONJUNTO_POS_Y_I = generate_positions(ANCHO_BIN, ALTO_BIN, ANCHO_OBJETO, ALTO_OBJETO)
+CONJUNTO_POS_X_I_ROT = [x for x in range(ANCHO_BIN) if x <= ANCHO_BIN - ALTO_OBJETO]
+CONJUNTO_POS_Y_I_ROT = [y for y in range(ALTO_BIN) if y <= ALTO_BIN - ANCHO_OBJETO]
 
-Q_X_i = len([x for x in range(W) if x <= W - w])
-Q_Y_i = len([y for y in range(H) if y <= H - h])
-Q_X_i_prime = len([x for x in range(W) if x <= W - h])
-Q_Y_i_prime = len([y for y in range(H) if y <= H - w])
+CANT_X_I = len(CONJUNTO_POS_X_I)
+CANT_Y_I = len(CONJUNTO_POS_Y_I)
+CANT_X_I_ROT = len(CONJUNTO_POS_X_I_ROT)
+CANT_Y_I_ROT = len(CONJUNTO_POS_Y_I_ROT)
 
-# Crear el modelo
-model = cplex.Cplex()
-model.set_log_stream(None)
-model.set_results_stream(None)
-model.set_warning_stream(None)
-model.set_error_stream(None)
+try:
+    # Crear el modelo CPLEX
+    modelo = cplex.Cplex()
+    modelo.set_problem_type(cplex.Cplex.problem_type.LP)
+    modelo.objective.set_sense(modelo.objective.sense.maximize)
 
-# Definir las variables
-m_vars = []  # Variables m_i y m_{i'}
-n_vars = []  # Variables n_{i,x,y} y n_{i',x,y}
-r_vars = []  # Variables r_{x,y}
-nprime=[]
-# Variables m_i y m_{i'}
-for i in range(n_items):
-    m_vars.append(f"m_{i}")
-    m_vars.append(f"m_{i}'")
+    # Variables para indicar si el ítem o su versión rotada están en el bin
+    nombreVariables = [f"m_{i}" for i in ITEMS] + [f"m_rot_{i}" for i in ITEMS]
+    coeficientes = [1.0] * CANTIDAD_ITEMS * 2
+    modelo.variables.add(names=nombreVariables, obj=coeficientes, types="B" * len(nombreVariables))
 
-# Variables n_{i,x,y} y n_{i',x,y}, y r_{x,y}
-for i in range(n_items):
-    for x in range(W):
-        for y in range(H):
-            if x <= W - w and y <= H - h:  # Espacio para la versión no rotada
-                n_vars.append(f"n_{i}_{x}_{y}")
-            if x <= W - h and y <= H - w:  # Espacio para la versión rotada
-                n_vars.append(f"n_{i}'_{x}_{y}")
-for x in range(W):
-    for y in range(H):
-        r_vars.append(f"r_{x}_{y}")
+    # Variables de posición para la versión original y rotada de los ítems
+    nombreVariablesPosiciones = []
+    for i in ITEMS:
+        for x in CONJUNTO_POS_X_I:
+            for y in CONJUNTO_POS_Y_I:
+                nombreVariablesPosiciones.append(f"n_{i},{x},{y}")
+        for x_rot in CONJUNTO_POS_X_I_ROT:
+            for y_rot in CONJUNTO_POS_Y_I_ROT:
+                nombreVariablesPosiciones.append(f"n_rot_{i},{x_rot},{y_rot}")
 
-# Añadir las variables al modelo
-model.variables.add(names=m_vars, types=['B'] * len(m_vars))
-model.variables.add(names=n_vars, types=['B'] * len(n_vars))
-model.variables.add(names=r_vars, types=['B'] * len(r_vars))
+    coeficientesPos = [0.0] * len(nombreVariablesPosiciones)
+    modelo.variables.add(names=nombreVariablesPosiciones, obj=coeficientesPos, types="B" * len(nombreVariablesPosiciones))
 
-# Función objetivo: maximizar la suma de m_i + m_{i'}
-objective = [(m_vars[i], 1) for i in range(len(m_vars))]
-model.objective.set_sense(model.objective.sense.maximize)
-model.objective.set_linear(objective)
+    # Variables para las posiciones libres (r_x,y)
+    nombreVariablesR = [f"r_{x},{y}" for x in CONJUNTO_POS_X for y in CONJUNTO_POS_Y]
+    modelo.variables.add(names=nombreVariablesR, obj=[0.0] * len(nombreVariablesR), types="B" * len(nombreVariablesR))
 
-# Restricción 1: r_{x,y} = ...
-for x in range(W):
-    for y in range(H):
-        row = []
-        val = []
-        for i in range(n_items):
-            if x <= W - w and y <= H - h:
-                for x_prime in range(max(0, x - w + 1), x + 1):
-                    for y_prime in range(max(0, y - h + 1), y + 1):
-                        row.append(f"n_{i}_{x_prime}_{y_prime}")
-                        val.append(1)
-            if x <= W - h and y <= H - w:
-                for x_prime in range(max(0, x - h + 1), x + 1):
-                    for y_prime in range(max(0, y - w + 1), y + 1):
-                        row.append(f"n_{i}'_{x_prime}_{y_prime}")
-                        val.append(1)
-        row.append(f"r_{x}_{y}")
-        val.append(-1)
-        model.linear_constraints.add(
-            lin_expr=[cplex.SparsePair(ind=row, val=val)],
-            senses=["E"],
-            rhs=[0]
+    # Restricción 1: Evita solapamiento de ítems en una posición (x,y)
+    for x in CONJUNTO_POS_X:
+        for y in CONJUNTO_POS_Y:
+            coef_restriccion = [1.0]  # Coeficiente de r_{x,y}
+            var_restriccion = [f"r_{x},{y}"]
+
+            for i in ITEMS:
+                for x_prima in CONJUNTO_POS_X_I:
+                    if x - ANCHO_OBJETO + 1 <= x_prima <= x:
+                        for y_prima in CONJUNTO_POS_Y_I:
+                            if y - ALTO_OBJETO + 1 <= y_prima <= y:
+                                coef_restriccion.append(-1.0)
+                                var_restriccion.append(f"n_{i},{x_prima},{y_prima}")
+
+                for x_prima_rot in CONJUNTO_POS_X_I_ROT:
+                    if x - ALTO_OBJETO + 1 <= x_prima_rot <= x:
+                        for y_prima_rot in CONJUNTO_POS_Y_I_ROT:
+                            if y - ANCHO_OBJETO + 1 <= y_prima_rot <= y:
+                                coef_restriccion.append(-1.0)
+                                var_restriccion.append(f"n_rot_{i},{x_prima_rot},{y_prima_rot}")
+
+            modelo.linear_constraints.add(
+                lin_expr=[cplex.SparsePair(var_restriccion, coef_restriccion)],
+                senses=["E"], rhs=[0.0]
+            )
+
+    # Restricción 2: m_i + m_rot_i <= suma de posiciones donde el ítem está
+    # for i in ITEMS:
+    #     coef_restriccion = [1.0, 1.0]  # Coeficientes para m_i y m_rot_i
+    #     var_restriccion = [f"m_{i}", f"m_rot_{i}"]
+
+    #     for x in CONJUNTO_POS_X_I:
+    #         for y in CONJUNTO_POS_Y_I:
+    #             coef_restriccion.append(-1.0)
+    #             var_restriccion.append(f"n_{i},{x},{y}")
+
+    #     for x_rot in CONJUNTO_POS_X_I_ROT:
+    #         for y_rot in CONJUNTO_POS_Y_I_ROT:
+    #             coef_restriccion.append(-1.0)
+    #             var_restriccion.append(f"n_rot_{i},{x_rot},{y_rot}")
+
+    #     modelo.linear_constraints.add(
+    #         lin_expr=[cplex.SparsePair(var_restriccion, coef_restriccion)],
+    #         senses=["L"], rhs=[0.0]
+    #     )
+    # Restricción para ítems no rotados: m_i = suma de las posiciones no rotadas donde está el ítem i
+    for i in ITEMS:
+        coef_restriccion = [-1.0]  # Coeficiente para m_i
+        var_restriccion = [f"m_{i}"]  # Variable m_i que indica si el ítem no rotado está en el bin
+
+        # Sumamos todas las posiciones no rotadas posibles donde el ítem puede estar
+        for x in CONJUNTO_POS_X_I:
+            for y in CONJUNTO_POS_Y_I:
+                coef_restriccion.append(1.0)
+                var_restriccion.append(f"n_{i},{x},{y}")
+
+        # La restricción asegura que m_i sea igual a la suma de posiciones ocupadas
+        modelo.linear_constraints.add(
+            lin_expr=[cplex.SparsePair(var_restriccion, coef_restriccion)],
+            senses=["E"], rhs=[0.0]
         )
 
-# Restricción 2: m_i + m_{i'} <= suma de n_{i,x,y} + n_{i',x,y}
-for i in range(n_items):
-    row = [f"m_{i}", f"m_{i}'"]
-    val = [1, 1]
-    for x in range(W):
-        for y in range(H):
-            if x <= W - w and y <= H - h:
-                row.append(f"n_{i}_{x}_{y}")
-                val.append(-1)
-            if x <= W - h and y <= H - w:
-                row.append(f"n_{i}'_{x}_{y}")
-                val.append(-1)
-    model.linear_constraints.add(
-        lin_expr=[cplex.SparsePair(ind=row, val=val)],
-        senses=["L"],
-        rhs=[0]
-    )
+    # Restricción para ítems rotados: m_rot_i = suma de las posiciones rotadas donde está el ítem i
+    for i in ITEMS:
+        coef_restriccion_rot = [-1.0]  # Coeficiente para m_rot_i
+        var_restriccion_rot = [f"m_rot_{i}"]  # Variable m_rot_i que indica si el ítem rotado está en el bin
 
-# Restricción 3: suma de n_{i,x,y} + n_{i',x,y} <= Q(X_i)Q(Y_i)m_i + Q(X_{i'})Q(Y_{i'})m_{i'}
+        # Sumamos todas las posiciones rotadas posibles donde el ítem puede estar
+        for x_rot in CONJUNTO_POS_X_I_ROT:
+            for y_rot in CONJUNTO_POS_Y_I_ROT:
+                coef_restriccion_rot.append(1.0)
+                var_restriccion_rot.append(f"n_rot_{i},{x_rot},{y_rot}")
 
+        # La restricción asegura que m_rot_i sea igual a la suma de posiciones ocupadas
+        modelo.linear_constraints.add(
+            lin_expr=[cplex.SparsePair(var_restriccion_rot, coef_restriccion_rot)],
+            senses=["E"], rhs=[0.0]
+        )
 
-for i in range(n_items):
-    row = []
-    val = []
-    for x in range(W):
-        for y in range(H):
-            if x <= W - w and y <= H - h:
-                row.append(f"n_{i}_{x}_{y}")
-                val.append(1)
-            if x <= W - h and y <= H - w:
-                row.append(f"n_{i}'_{x}_{y}")
-                val.append(1)
-    row.append(f"m_{i}")
-    val.append(-Q_X_i * Q_Y_i)
-    row.append(f"m_{i}'")
-    val.append(-Q_X_i_prime * Q_Y_i_prime)
-    model.linear_constraints.add(
-        lin_expr=[cplex.SparsePair(ind=row, val=val)],
-        senses=["L"],
-        rhs=[0]
-    )
+    # Restricción 3: suma de posiciones <= Q(X_i)*Q(Y_i) * m_i
+    for i in ITEMS:
+        coef_restriccion = [-1.0]  # Coeficiente para m_i
+        var_restriccion = [f"m_{i}"]
 
-# Restricción 4: m_i + m_{i'} <= 1
-for i in range(n_items):
-    row = [f"m_{i}", f"m_{i}'"]
-    val = [1, 1]
-    model.linear_constraints.add(
-        lin_expr=[cplex.SparsePair(ind=row, val=val)],
-        senses=["L"],
-        rhs=[1]
-    )
+        for x in CONJUNTO_POS_X_I:
+            for y in CONJUNTO_POS_Y_I:
+                coef_restriccion.append(1.0)
+                var_restriccion.append(f"n_{i},{x},{y}")
 
-# Resolver el modelo
-try:
-    model.solve()
-except CplexError as exc:
-    print(exc)
+        modelo.linear_constraints.add(
+            lin_expr=[cplex.SparsePair(var_restriccion, coef_restriccion)],
+            senses=["L"], rhs=[CANT_X_I * CANT_Y_I]
+        )
 
-# # Imprimir resultados
-# print("Objective value:", model.solution.get_objective_value())
-# for i in range(n_items):
-#     normal_var = f"m_{i}"
-#     rotated_var = f"m_{i}'"
-#     print(f"Item {i} placed: Normal - {model.solution.get_values(normal_var)}, Rotated - {model.solution.get_values(rotated_var)}")
+        coef_restriccion_rot = [-1.0]  # Coeficiente para m_rot_i
+        var_restriccion_rot = [f"m_rot_{i}"]
 
-#        # Imprimir las posiciones en las que se coloca cada item
-#     if model.solution.get_values(normal_var) > 0.5:
-#         print(f"Item {i} is placed in its normal orientation at:")
-#         for x in range(W):
-#             for y in range(H):
-#                 var_name = f"n_{i}_{x}_{y}"
-#                 if model.solution.get_values(var_name) > 0.5:
-#                     print(f"  Position (x={x}, y={y})")
-#     elif model.solution.get_values(rotated_var) > 0.5:
-#         print(f"Item {i} is placed in its rotated orientation at:")
-#         for x in range(W):
-#             for y in range(H):
-#                 if x <= W - h and y <= H - w:
-#                     var_name = f"n_{i}'_{x}_{y}"
-#                     if model.solution.get_values(var_name) > 0.5:
-#                         print(f"  Position (x={x}, y={y})")
+        for x_rot in CONJUNTO_POS_X_I_ROT:
+            for y_rot in CONJUNTO_POS_Y_I_ROT:
+                coef_restriccion_rot.append(1.0)
+                var_restriccion_rot.append(f"n_rot_{i},{x_rot},{y_rot}")
 
-# Imprimir resultados
-print("Objective value:", model.solution.get_objective_value())
+        modelo.linear_constraints.add(
+            lin_expr=[cplex.SparsePair(var_restriccion_rot, coef_restriccion_rot)],
+            senses=["L"], rhs=[CANT_X_I_ROT * CANT_Y_I_ROT]
+        )
 
-for i in range(n_items):
-    normal_var = f"m_{i}"
-    rotated_var = f"m_{i}'"
-    print(f"Item {i} placed: Normal - {model.solution.get_values(normal_var)}, Rotated - {model.solution.get_values(rotated_var)}")
+    # Restricción 4: m_i + m_rot_i <= 1
+    for i in ITEMS:
+        modelo.linear_constraints.add(
+            lin_expr=[cplex.SparsePair([f"m_{i}", f"m_rot_{i}"], [1.0, 1.0])],
+            senses=["L"], rhs=[1.0]
+        )
 
-    # Imprimir las posiciones en las que se coloca cada item
-    if model.solution.get_values(normal_var) > 0.5:
-        print(f"Item {i} is placed in its normal orientation at:")
-        found_position = False  # Variable para verificar si se encontró al menos una posición
-        for x in range(W):
-            for y in range(H):
-                if x <= W - w and y <= H - h:
-                    var_name = f"n_{i}_{x}_{y}"
-                    if model.solution.get_values(var_name) > 0.5:
-                        print(f"  Position (x={x}, y={y})")
-                        found_position = True
-        if not found_position:
-            print(f"  No valid position found for Item {i}, check model constraints or logic.")
+    # Resolver el modelo
+    modelo.solve()
 
+    # Obtener resultados
+    solution_values = modelo.solution.get_values()
+    objective_value = modelo.solution.get_objective_value()
+    sol_values_posiciones = modelo.solution.get_values(nombreVariablesPosiciones)
 
-    elif model.solution.get_values(rotated_var) > 0.5:
-        print(f"Item {i} is placed in its rotated orientation at:")
-        found_position = False  # Variable para verificar si se encontró al menos una posición
-        for x in range(W):
-            for y in range(H):
-                if x <= W - h and y <= H - w:
-                    var_name = f"n_{i}'_{x}_{y}"
-                    if model.solution.get_values(var_name) > 0.5:
-                        print(f"  Position (x={x}, y={y})")
-                        found_position = True
-        if not found_position:
-            print(f"  No valid position found for Item {i}, check model constraints or logic.")
+    print("Valor óptimo de la función objetivo:", objective_value)
+    for var_name, value in zip(nombreVariables, solution_values):
+        print(f"{var_name} = {value}")
+    
+    print("\nPosiciones ocupadas por ítems no rotados:")
+    for var_name, value in zip(nombreVariablesPosiciones, sol_values_posiciones):
+        if value == 1.0 and "n_" in var_name and "rot" not in var_name:
+            print(f"{var_name} = {value}")
 
+    # Imprimir las posiciones ocupadas por ítems rotados
+    print("\nPosiciones ocupadas por ítems rotados:")
+    for var_name, value in zip(nombreVariablesPosiciones, sol_values_posiciones):
+        if value == 1.0 and "n_rot" in var_name:
+            print(f"{var_name} = {value}")
+
+except CplexSolverError as e:
+    if e.args[2] == 1217:
+        print("\nNo existen soluciones para el modelo dado.")
+    else:
+        print("CPLEX Solver Error:", e)

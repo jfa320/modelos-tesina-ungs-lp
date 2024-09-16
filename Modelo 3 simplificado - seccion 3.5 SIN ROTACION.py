@@ -3,10 +3,11 @@ from Position_generator_modelo_3 import *
 # Crear el modelo
 model = cplex.Cplex()
 
+
 # Parámetros
-W = 3  # Ancho del bin
+W = 6  # Ancho del bin
 H = 4  # Alto del bin
-w = 1  # Ancho del item
+w = 2  # Ancho del item
 h = 3  # Alto del item
 
 I = range(6)  # Conjunto de items
