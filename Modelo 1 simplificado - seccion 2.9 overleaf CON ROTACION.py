@@ -1,13 +1,55 @@
 import cplex
 from cplex.exceptions import CplexSolverError
 
-CANTIDAD_ITEMS= 6 # constante n del modelo
-ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) # constante I del modelo
-ANCHO_BIN = 6 # W en el modelo
-ALTO_BIN = 4 # H en el modelo
+# Caso 1:
+# CANTIDAD_ITEMS=6 # constante N del modelo
+# ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) 
+# ANCHO_BIN = 6 # W en el modelo
+# ALTO_BIN = 4 # H en el modelo
 
-ANCHO_OBJETO= 2 # w en el modelo
-ALTO_OBJETO= 3 # h en el modelo
+# ANCHO_OBJETO= 2 # w en el modelo
+# ALTO_OBJETO= 3 # h en el modelo
+
+
+#Caso 2: 
+
+# CANTIDAD_ITEMS=6 # constante N del modelo
+# ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) 
+# ANCHO_BIN = 5 # W en el modelo
+# ALTO_BIN = 5 # H en el modelo
+
+# ANCHO_OBJETO= 3 # w en el modelo
+# ALTO_OBJETO= 2 # h en el modelo
+
+#Caso 3: 
+
+# CANTIDAD_ITEMS=8 # constante N del modelo
+# ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) 
+# ANCHO_BIN = 6 # W en el modelo
+# ALTO_BIN = 6 # H en el modelo
+
+# ANCHO_OBJETO= 4 # w en el modelo
+# ALTO_OBJETO= 2 # h en el modelo
+
+#Caso 4: 
+
+# CANTIDAD_ITEMS=5 # constante N del modelo
+# ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) 
+# ANCHO_BIN = 7 # W en el modelo
+# ALTO_BIN = 3 # H en el modelo
+
+# ANCHO_OBJETO= 3 # w en el modelo
+# ALTO_OBJETO= 2 # h en el modelo
+
+# Caso 5: 
+
+CANTIDAD_ITEMS = 6  # constante N del modelo
+ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) 
+ANCHO_BIN = 6  # W en el modelo
+ALTO_BIN = 3  # H en el modelo
+
+ANCHO_OBJETO = 3  # w en el modelo
+ALTO_OBJETO = 2  # h en el modelo
 
 try:
     # Crear un modelo de CPLEX

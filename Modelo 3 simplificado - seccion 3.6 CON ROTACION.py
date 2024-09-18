@@ -4,15 +4,15 @@ from Position_generator_modelo_3 import *
 # Crear el modelo
 model = cplex.Cplex()
 
-#Caso 1: 
+# Caso 5: 
 
-CANTIDAD_ITEMS=6 # constante N del modelo
+CANTIDAD_ITEMS = 6  # constante N del modelo
 ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) 
-ANCHO_BIN = 6 # W en el modelo
-ALTO_BIN = 4 # H en el modelo
+ANCHO_BIN = 6  # W en el modelo
+ALTO_BIN = 3  # H en el modelo
 
-ANCHO_OBJETO= 2 # w en el modelo
-ALTO_OBJETO= 3 # h en el modelo
+ANCHO_OBJETO = 3  # w en el modelo
+ALTO_OBJETO = 2  # h en el modelo
 
 # Parámetros
 W = ANCHO_BIN  # Ancho del bin
