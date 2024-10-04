@@ -1,5 +1,6 @@
 import cplex
 from cplex.exceptions import CplexSolverError
+from TraceFileGenerator import TraceFileGenerator
 import multiprocessing
 import time
 
@@ -7,6 +8,12 @@ import time
 #Basado en la simplificacion del modelo 1 (modelo base - Pisinger & Sigurd) - ver seccion 2.8 en Overleaf para modelo completo
 
 # Caso sencillo que mejora con rotacion
+NOMBRE_MODELO="Model1"
+
+modelStatus="1"
+solverStatus="1"
+objective_value=0
+solverTime=1
 
 # CANTIDAD_ITEMS= 6 # constante n del modelo
 # ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) # constante I del modelo
@@ -17,10 +24,11 @@ import time
 # ALTO_OBJETO= 3 # h en el modelo
 
 #prueba para validar el corte al minuto de la ejecucion
-CANTIDAD_ITEMS= 100 # constante n del modelo
+NOMBRE_CASO="inst2"
+CANTIDAD_ITEMS= 15 # constante n del modelo
 ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) # constante I del modelo
-ANCHO_BIN = 16 # W en el modelo
-ALTO_BIN = 14 # H en el modelo
+ANCHO_BIN = 6 # W en el modelo
+ALTO_BIN = 4 # H en el modelo
 
 ANCHO_OBJETO= 2 # w en el modelo
 ALTO_OBJETO= 3 # h en el modelo
@@ -35,12 +43,21 @@ ALTO_OBJETO= 3 # h en el modelo
 # ANCHO_OBJETO= 2 # w en el modelo
 # ALTO_OBJETO= 3 # h en el modelo
 
-EXECUTION_TIME=60 # in seconds
+EXECUTION_TIME=2 # in seconds
 
 def createAndSolveModel(queue,interrupcion_manual,tiempoMaximo):
+    #valores por default para enviar a paver
+    modelStatus="1"
+    solverStatus="1"
+    objective_value=0
+    solverTime=1
+    
     try:
+
         # Crear un modelo de CPLEX
         modelo= cplex.Cplex()
+
+        tiempoInicial=modelo.get_time()
 
         # Definir el problema como uno de maximización
         modelo.set_problem_type(cplex.Cplex.problem_type.LP)
@@ -170,20 +187,47 @@ def createAndSolveModel(queue,interrupcion_manual,tiempoMaximo):
         # Obtener y mostrar los resultados
         solution_values = modelo.solution.get_values()
         objective_value = modelo.solution.get_objective_value()
-
-        queue.put(f"Valor óptimo de la función objetivo: {objective_value}")
-        queue.put("Valores de las variables:")
+        print(f"Valor óptimo de la función objetivo: {objective_value}")
         for var_name, value in zip(nombreVariables, solution_values):
-            queue.put(f"{var_name} = {value}")
+            print(f"{var_name} = {value}")
+       
+        status = modelo.solution.get_status()
+        tiempoFinal = modelo.get_time()
+        solverTime=tiempoFinal-tiempoInicial
+        solverTime=round(solverTime, 2)
+        
+        if status == 105:  # CPLEX código 105 = Time limit exceeded
+            print("El solver se detuvo porque alcanzó el límite de tiempo.")
+            modelStatus="2" #valor en paver para marcar un optimo local
 
+        # Enviar resultados a través de la cola
+        queue.put({
+            "modelStatus": modelStatus,
+            "solverStatus": solverStatus,
+            "objective_value": objective_value,
+            "solverTime": solverTime
+        })
+        
     except CplexSolverError as e:
         if e.args[2] == 1217:  # Codigo de error para "No solution exists"
-            queue.put("\nNo existen soluciones para el modelo dado.")
+            print("\nNo existen soluciones para el modelo dado.")
+            modelStatus="14" #valor en paver para marcar que el modelo no devolvio respuesta por error
+            solverStatus="4" #el solver finalizo la ejecucion del modelo
         else:
-            queue.put("CPLEX Solver Error:", e)
+            print("CPLEX Solver Error:", e)
+            modelStatus="12" #valor en paver para marcar un error desconocido
+            solverStatus="10" #el solver tuvo un error en la ejecucion
+
+        queue.put({
+            "modelStatus": modelStatus,
+            "solverStatus": solverStatus,
+            "objective_value": objective_value,
+            "solverTime": solverTime
+        })
 
 
 def executeWithTimeLimit(tiempo_maximo):
+    global modelStatus, solverStatus, objective_value, solverTime 
     # Crear una cola para recibir los resultados del subproceso
     queue = multiprocessing.Queue()
 
@@ -200,25 +244,34 @@ def executeWithTimeLimit(tiempo_maximo):
 
     # Monitorear la cola mientras el proceso está en ejecución
     while proceso.is_alive():
-        # Verificar si hay mensajes en la cola y mostrarlos
-        while not queue.empty():
-            print(queue.get())
 
         if interrupcion_manual.value:
             # Si se excede el tiempo, terminamos el proceso
             if time.time() - tiempo_inicial > tiempo_maximo:
                 print("Tiempo límite alcanzado. Abortando el proceso.")
+                modelStatus="14" #valor en paver para marcar que el modelo no devolvio respuesta por error
+                solverStatus="4" #el solver finalizo la ejecucion del modelo
+                solverTime=tiempo_maximo
                 proceso.terminate()
                 proceso.join()
                 break
 
         time.sleep(0.1)  # Evitar consumir demasiados recursos
 
-    # Asegurarse de imprimir los mensajes restantes si el proceso terminó por sí mismo
+    # Imprimo resultados de la ejecucion que se guardan luego en el archivo trc para usar en paver
     while not queue.empty():
-        print(queue.get())
+        message = queue.get()
+        if isinstance(message, dict):
+            print(message)
+            modelStatus = message["modelStatus"]
+            solverStatus = message["solverStatus"]
+            objective_value = message["objective_value"]
+            solverTime = message["solverTime"]
+
 
 
 if __name__ == '__main__':
     # Ejecutar la función con un límite de tiempo de 10 segundos
     executeWithTimeLimit(EXECUTION_TIME)
+    generator = TraceFileGenerator("output.trc")
+    generator.write_trace_record(NOMBRE_CASO, NOMBRE_MODELO, modelStatus, solverStatus, objective_value, solverTime)
