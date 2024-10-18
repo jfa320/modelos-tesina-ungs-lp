@@ -70,8 +70,8 @@ def createAndSolveModel(queue,interrupcion_manual,tiempoMaximo):
         modelo.parameters.timelimit.set(tiempoMaximo)
 
         # Variables para indicar si el ítem o su versión rotada están en el bin (para la FO)
-        nombreVariables = [f"m_{i}" for i in ITEMS] + [f"m_rot_{i}" for i in ITEMS]
-        coeficientes = [S_star[i-1] for i in ITEMS] + [S_star[i-1] for i in ITEMS]
+        nombreVariables = [f"m_{i}" for i in ITEMS] + [f"m_rot_{i}" for i in ITEMS] 
+        coeficientes = [S_star[i-1] for i in ITEMS] + [S_star[i-1] for i in ITEMS] #TODO: Revisar en base a respuesta de Marcelo y ver como sacar ese dato del maestro
         modelo.variables.add(names=nombreVariables, obj=coeficientes, types="B" * len(nombreVariables))
 
 
@@ -132,7 +132,7 @@ def createAndSolveModel(queue,interrupcion_manual,tiempoMaximo):
             # La restricción asegura que m_i sea igual a la suma de posiciones ocupadas
             modelo.linear_constraints.add(
                 lin_expr=[cplex.SparsePair(var_restriccion, coef_restriccion)],
-                senses=["E"], rhs=[0.0]
+                senses=["L"], rhs=[0.0]
             )
 
         # Restricción para ítems rotados: m_rot_i = suma de las posiciones rotadas donde está el ítem i
@@ -149,10 +149,10 @@ def createAndSolveModel(queue,interrupcion_manual,tiempoMaximo):
             # La restricción asegura que m_rot_i sea igual a la suma de posiciones ocupadas
             modelo.linear_constraints.add(
                 lin_expr=[cplex.SparsePair(var_restriccion_rot, coef_restriccion_rot)],
-                senses=["E"], rhs=[0.0]
+                senses=["L"], rhs=[0.0]
             )
 
-        # Restricción 3: suma de posiciones <= Q(X_i)*Q(Y_i) * m_i
+        # Restricción : suma de posiciones <= Q(X_i)*Q(Y_i) * m_i 
         for i in ITEMS:
             coef_restriccion = [-1.0]  # Coeficiente para m_i
             var_restriccion = [f"m_{i}"]
@@ -180,7 +180,7 @@ def createAndSolveModel(queue,interrupcion_manual,tiempoMaximo):
                 senses=["L"], rhs=[CANT_X_I_ROT * CANT_Y_I_ROT]
             )
 
-        # Restricción 4: m_i + m_rot_i <= 1
+        # Restricción 4: m_i + m_rot_i <= 1 
         for i in ITEMS:
             modelo.linear_constraints.add(
                 lin_expr=[cplex.SparsePair([f"m_{i}", f"m_rot_{i}"], [1.0, 1.0])],
@@ -196,7 +196,6 @@ def createAndSolveModel(queue,interrupcion_manual,tiempoMaximo):
         # Obtener resultados
         solution_values = modelo.solution.get_values()
         objective_value = modelo.solution.get_objective_value()
-        sol_values_posiciones = modelo.solution.get_values(nombreVariablesPosiciones)
 
         print("Valor óptimo de la función objetivo:", objective_value)
         for var_name, value in zip(nombreVariables, solution_values):

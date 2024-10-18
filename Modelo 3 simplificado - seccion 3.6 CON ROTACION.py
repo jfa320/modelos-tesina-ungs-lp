@@ -203,6 +203,7 @@ def createAndSolveModel(queue,interrupcion_manual,tiempoMaximo):
         for i, var_name in enumerate(n_vars):
             print(f"{var_name} = {model.solution.get_values(var_name)}")
 
+
         status = model.solution.get_status()
         tiempoFinal = model.get_time()
         solverTime=tiempoFinal-tiempoInicial
