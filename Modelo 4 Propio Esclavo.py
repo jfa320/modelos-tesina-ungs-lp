@@ -1,6 +1,8 @@
 import cplex
 from cplex.exceptions import CplexSolverError
 from TraceFileGenerator import TraceFileGenerator
+from Objetos.Rebanada import Rebanada
+from Objetos.Item import Item
 import multiprocessing
 import time
 
@@ -196,10 +198,35 @@ def createAndSolveModel(queue,interrupcion_manual,tiempoMaximo):
         # Obtener resultados
         solution_values = modelo.solution.get_values()
         objective_value = modelo.solution.get_objective_value()
-
+        
+        items_en_rebanada = []
         print("Valor óptimo de la función objetivo:", objective_value)
         for var_name, value in zip(nombreVariables, solution_values):
             print(f"{var_name} = {value}")
+            if value == 1.0:
+                # Si la variable tiene valor 1, extraemos la información del ítem y posición
+                item=Item()
+                if "n_" in var_name:  # Ítem no rotado
+                    # Extraer el ítem y su posición
+                    partes = var_name.replace("n_", "").split(",")
+                    i = int(partes[0])
+                    y = int(partes[2])
+                    item.set_id(i)
+                    item.set_alto(ALTO_OBJETO) 
+                    item.set_posicion_y(y)
+                    item.set_rotado(False)
+                    
+                else:  # Ítem rotado
+                    # Extraer el ítem rotado y su posición
+                    partes = var_name.replace("n_rot_", "").split(",")
+                    i = int(partes[0])
+                    y = int(partes[2])
+                    item.set_id(i)
+                    item.set_alto(ANCHO_OBJETO) 
+                    item.set_posicion_y(y)
+                    item.set_rotado(True)
+                items_en_rebanada.append(item)
+
         
         status = modelo.solution.get_status()
         tiempoFinal = modelo.get_time()
@@ -217,6 +244,12 @@ def createAndSolveModel(queue,interrupcion_manual,tiempoMaximo):
             "objective_value": objective_value,
             "solverTime": solverTime
         })
+        
+        rebanada= Rebanada()
+        rebanada.set_items(items_en_rebanada)
+        rebanada.set_alto(findHighestHeight(items_en_rebanada))
+        
+        return rebanada
 
     except CplexSolverError as e:
         if e.args[2] == 1217:  # Codigo de error para "No solution exists"
@@ -287,3 +320,11 @@ if __name__ == '__main__':
     generator = TraceFileGenerator("output.trc")
     generator.write_trace_record(NOMBRE_CASO, NOMBRE_MODELO, modelStatus, solverStatus, objective_value, solverTime)
 
+
+
+def findHighestHeight(lista_items):
+    highestHeight=0
+    for item in lista_items:
+        if(item.get_posicion_y()+item.get_alto()>highestHeight):
+                highestHeight=item.get_posicion_y()+item.get_alto()
+    return highestHeight
