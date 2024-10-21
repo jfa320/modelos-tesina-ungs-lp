@@ -52,7 +52,7 @@ CANT_Y_I_ROT = len(CONJUNTO_POS_Y_I_ROT)
 
 EXECUTION_TIME=2 # in seconds
 
-def createAndSolveModel(queue,interrupcion_manual,tiempoMaximo):
+def createAndSolveSlaveModel(queue,interrupcion_manual,tiempoMaximo):
     #valores por default para enviar a paver
     modelStatus="1"
     solverStatus="1"
@@ -279,7 +279,7 @@ def executeWithTimeLimit(tiempo_maximo):
     interrupcion_manual = multiprocessing.Value('b', True)
 
     # Crear el subproceso que correrá la función
-    proceso = multiprocessing.Process(target=createAndSolveModel, args=(queue,interrupcion_manual,tiempo_maximo))
+    proceso = multiprocessing.Process(target=createAndSolveSlaveModel, args=(queue,interrupcion_manual,tiempo_maximo))
 
     # Iniciar el subproceso
     proceso.start()

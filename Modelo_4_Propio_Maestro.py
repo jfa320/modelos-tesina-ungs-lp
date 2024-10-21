@@ -4,6 +4,9 @@ from TraceFileGenerator import TraceFileGenerator
 import multiprocessing
 import time
 
+from Objetos.Rebanada import Rebanada
+from Objetos.Item import Item
+
 from Position_generator import *
 
 NOMBRE_MODELO="Model4Maestro"
@@ -35,7 +38,7 @@ ALTO_OBJETO= 3 # h en el modelo
 REBANADAS=[] #TODO CARGAR ARRAY CON LO DEL ESCLAVO
 ALTO_REBANADA = [] # H_r en el modelo #TODO CARGAR ARRAY
 ALTO_BIN=4
-POSICIONES_Y= generate_positions_modelo_maestro(ALTO_BIN, ) #TODO: PENSAR COMO MANEJAR LAS POSICIONES AHORA QUE TENGO QUE TENER EN CUENTA QUE SOBRESALEN ITEMS (VER MAIL)
+POSICIONES_Y= generate_positions_modelo_maestro(ALTO_BIN)
 CANTIDAD_ITEMS= 10 
 ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) # constante I del modelo
 
@@ -47,7 +50,7 @@ ALTOS_ITEM=[] #TODO CARGAR ARRAY CON LO QUE VENGA DEL ESCLAVO
 
 EXECUTION_TIME=2 # in seconds
 
-def createAndSolveModel(queue,interrupcion_manual,tiempoMaximo):
+def createAndSolveMasterModel(queue,interrupcion_manual,tiempoMaximo):
     #valores por default para enviar a paver
     modelStatus="1"
     solverStatus="1"
@@ -70,13 +73,13 @@ def createAndSolveModel(queue,interrupcion_manual,tiempoMaximo):
         # Acá defino la FUNCION OBJETIVO
         nombre_p_r  = [f"p_{r}" for r in REBANADAS]
         coeficientes = coeficientes = [1.0] * CANTIDAD_REBANADAS
-        modelo.variables.add(names=nombre_p_r, obj=coeficientes, types="B" * CANTIDAD_REBANADAS)
+        modelo.variables.add(names=nombre_p_r, obj=coeficientes, lb=[0.0] * CANTIDAD_REBANADAS, ub=[1.0] * CANTIDAD_REBANADAS, types="C" * CANTIDAD_REBANADAS) #Relajo la variable binaria a continua para buscar solucion dual
 
 
         # Variables para indicar si la rebanada r ocupa la posición p (s_{rp})
         nombre_s_rp = [f"s_{r},{p}" for r in REBANADAS for p in POSICIONES_Y]
         coef_s_rp = [0.0]* (len(REBANADAS) * len(POSICIONES_Y)) 
-        modelo.variables.add(names=nombre_s_rp, obj=coef_s_rp, types="B" * len(nombre_s_rp))
+        modelo.variables.add(names=nombre_s_rp, obj=coef_s_rp, lb=[0.0] * len(nombre_s_rp), ub=[1.0] * len(nombre_s_rp), types="C" * len(nombre_s_rp)) #Relajo la variable binaria a continua para buscar solucion dual
 
         # Variables para indicar la ubicacion y donde se ubica una rebanada r
         nombre_y_r = [f"y_{r}" for r in REBANADAS]
@@ -84,11 +87,11 @@ def createAndSolveModel(queue,interrupcion_manual,tiempoMaximo):
 
         # Variables para determinar si una rebanada i se ubica arriba de otra rebanada j
         nombre_z_ij = [f"z_{i},{j}" for i in REBANADAS for j in REBANADAS if i != j]
-        modelo.variables.add(names=nombre_z_ij, obj=[0.0] * len(nombre_z_ij), types="B" * len(nombre_z_ij))
+        modelo.variables.add(names=nombre_z_ij, obj=[0.0] * len(nombre_z_ij), lb=[0.0] * len(nombre_z_ij), ub=[1.0] * len(nombre_z_ij), types="C" * len(nombre_z_ij)) #Relajo la variable binaria a continua para buscar solucion dual
 
         # Variables w_{i,r} (indica si el ítem i está en la rebanada r)
         nombre_w_ir = [f"w_{i},{r}" for i in ITEMS for r in REBANADAS]
-        modelo.variables.add(names=nombre_w_ir, obj=[0.0] * len(nombre_w_ir), types="B" * len(nombre_w_ir))
+        modelo.variables.add(names=nombre_w_ir, obj=[0.0] * len(nombre_w_ir), lb=[0.0] * len(nombre_w_ir), ub=[1.0] * len(nombre_w_ir), types="C" * len(nombre_w_ir)) #Relajo la variable binaria a continua para buscar solucion dual
      
         # Variables y_{i,r} indica la posicion absoluta en el eje y del item i de la rebanada r en el bin
         nombre_y_ir = [f"y_{i},{r}" for i in ITEMS for r in REBANADAS]
@@ -195,11 +198,19 @@ def createAndSolveModel(queue,interrupcion_manual,tiempoMaximo):
         # Obtener resultados
         solution_values = modelo.solution.get_values()
         objective_value = modelo.solution.get_objective_value()
-
+        dual_values = modelo.solution.get_dual_values() #aca obtengo solucion dual
+        
         print("Valor óptimo de la función objetivo:", objective_value)
         for var_name, value in zip(nombre_p_r, solution_values):
             print(f"{var_name} = {value}")
+            
+        dual_sol = {}
         
+        for i, dual in enumerate(dual_values):
+            print(f"Constraint_ {i}: Dual Value = {dual}")
+            dual_sol[f"Constraint_{i}"] = dual
+        
+        #TODO: definir si acá hago un return de dual_sol
         status = modelo.solution.get_status()
         tiempoFinal = modelo.get_time()
         solverTime=tiempoFinal-tiempoInicial
@@ -235,7 +246,7 @@ def createAndSolveModel(queue,interrupcion_manual,tiempoMaximo):
         })
 
 
-def executeWithTimeLimit(tiempo_maximo):
+def executeWithTimeLimit(tiempo_maximo): #TODO: ver si puedo generalizar para usarlo en varios modelos
     global modelStatus, solverStatus, objective_value, solverTime 
 
     # Crear una cola para recibir los resultados del subproceso
@@ -245,7 +256,7 @@ def executeWithTimeLimit(tiempo_maximo):
     interrupcion_manual = multiprocessing.Value('b', True)
 
     # Crear el subproceso que correrá la función
-    proceso = multiprocessing.Process(target=createAndSolveModel, args=(queue,interrupcion_manual,tiempo_maximo))
+    proceso = multiprocessing.Process(target=createAndSolveMasterModel, args=(queue,interrupcion_manual,tiempo_maximo))
 
     # Iniciar el subproceso
     proceso.start()

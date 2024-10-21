@@ -28,11 +28,13 @@ def generate_positions_no_height_limit(W, H, w, h):
 
     return X, Y, X_i, Y_i
 
-def generate_positions_modelo_maestro(H, altoRebanada):
+def generate_positions_modelo_maestro(H):
   
     Y = [y for y in range(H)]
 
     # Generar el conjunto de posiciones válidas en el eje y (Y_i)
-    Y_i = [y for y in Y if y <= H - altoRebanada]
+    Y_i = [y for y in Y if y <= H]
 
     return Y_i
+
+
