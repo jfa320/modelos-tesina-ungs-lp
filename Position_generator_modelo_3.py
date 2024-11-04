@@ -2,19 +2,24 @@ import numpy as np
 import itertools
 import math
 
-def generate_positions_without_rotation(W, H, w, h): #este lo saque del paper pero genera posiciones incorrectas
+def generate_positions_without_rotation(W, H, wi, hi):
     positions = []
-    
-    for j in range(w, W + 1):  # Desde w hasta W (inclusive)
-        for l in range(W):  # Desde 0 hasta W-1
-            if (j + l) <= W:
-                for i in range(h, H + 1):  # Desde h hasta H (inclusive)
-                    for k in range(H):  # Desde 0 hasta H-1
-                        if (k + i) <= H:
-                            # Creación y etiquetado de una nueva posición para el item i
-                            positions.append((j, l, i, k))
-    
-    return positions
+
+    # Ciclo externo en 'j' desde el ancho del ítem hasta el ancho del bin
+    for j in range(wi, W + 1):
+        # Ciclo en 'l' para iterar sobre posibles desplazamientos horizontales
+        for l in range(W):
+            if (j + l) <= W:  # Validación para asegurar que no se exceda el ancho del bin
+                # Ciclo en 'i' desde la altura del ítem hasta la altura del bin
+                for i in range(hi, H + 1):
+                    # Ciclo en 'k' para iterar sobre posibles desplazamientos verticales
+                    for k in range(H):
+                        if (k + i) <= H:  # Validación para asegurar que no se exceda la altura del bin
+                            # Creación y etiquetado de una nueva posición (j - wi, i - hi) válida para el ítem
+                            positions.append((j - wi, i - hi))
+
+    # Eliminamos duplicados en caso de ser necesario
+    return list(set(positions))
 
 def generate_positions_without_rotation_marcelo(L,A,l,a):
     positions = {

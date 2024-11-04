@@ -1,8 +1,7 @@
 import cplex
 from cplex.exceptions import CplexSolverError
 from TraceFileGenerator import TraceFileGenerator
-import multiprocessing
-import time
+
 
 from Objetos.Rebanada import Rebanada
 from Objetos.Item import Item
@@ -35,14 +34,14 @@ ANCHO_BIN = 6 # W en el modelo
 ANCHO_OBJETO= 2 # w en el modelo
 ALTO_OBJETO= 3 # h en el modelo
 
-REBANADAS=[] #TODO CARGAR ARRAY CON LO DEL ESCLAVO
+rebanadas=[] #TODO CARGAR ARRAY CON LO DEL ESCLAVO
 ALTO_REBANADA = [] # H_r en el modelo #TODO CARGAR ARRAY
 ALTO_BIN=4
 POSICIONES_Y= generate_positions_modelo_maestro(ALTO_BIN)
 CANTIDAD_ITEMS= 10 
 ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) # constante I del modelo
 
-CANTIDAD_REBANADAS=len(REBANADAS)
+cantidadRebanadas=len(rebanadas)
 
 POS_REL_ITEM_Y=[] #TODO PENSAR COMO CARGARLO, QUIZAS CON EL NUMERO DE ITEM Y SU POSICION
 ALTOS_ITEM=[] #TODO CARGAR ARRAY CON LO QUE VENGA DEL ESCLAVO
@@ -50,13 +49,15 @@ ALTOS_ITEM=[] #TODO CARGAR ARRAY CON LO QUE VENGA DEL ESCLAVO
 
 EXECUTION_TIME=2 # in seconds
 
-def createAndSolveMasterModel(queue,interrupcion_manual,tiempoMaximo):
+def createAndSolveMasterModel(interrupcion_manual,tiempoMaximo,rebanadaInicial):
     #valores por default para enviar a paver
     modelStatus="1"
     solverStatus="1"
     objective_value=0
     solverTime=1
-
+    rebanadas.append(rebanadaInicial)
+    cantidadRebanadas=len(rebanadas)
+    
     try:
         # Crear el modelo CPLEX
         modelo = cplex.Cplex()
@@ -71,36 +72,36 @@ def createAndSolveMasterModel(queue,interrupcion_manual,tiempoMaximo):
 
         # Variables para indicar si uso o no la rebanada r en el bin (para la FO)
         # Acá defino la FUNCION OBJETIVO
-        nombre_p_r  = [f"p_{r}" for r in REBANADAS]
-        coeficientes = coeficientes = [1.0] * CANTIDAD_REBANADAS
-        modelo.variables.add(names=nombre_p_r, obj=coeficientes, lb=[0.0] * CANTIDAD_REBANADAS, ub=[1.0] * CANTIDAD_REBANADAS, types="C" * CANTIDAD_REBANADAS) #Relajo la variable binaria a continua para buscar solucion dual
+        nombre_p_r  = [f"p_{r}" for r in range(cantidadRebanadas)]
+        coeficientes = coeficientes = [1.0] * cantidadRebanadas
+        modelo.variables.add(names=nombre_p_r, obj=coeficientes, lb=[0.0] * cantidadRebanadas, ub=[1.0] * cantidadRebanadas, types="C" * cantidadRebanadas) #Relajo la variable binaria a continua para buscar solucion dual
 
 
         # Variables para indicar si la rebanada r ocupa la posición p (s_{rp})
-        nombre_s_rp = [f"s_{r},{p}" for r in REBANADAS for p in POSICIONES_Y]
-        coef_s_rp = [0.0]* (len(REBANADAS) * len(POSICIONES_Y)) 
+        nombre_s_rp = [f"s_{r},{p}" for r in range(cantidadRebanadas) for p in POSICIONES_Y]
+        coef_s_rp = [0.0]* (len(rebanadas) * len(POSICIONES_Y)) 
         modelo.variables.add(names=nombre_s_rp, obj=coef_s_rp, lb=[0.0] * len(nombre_s_rp), ub=[1.0] * len(nombre_s_rp), types="C" * len(nombre_s_rp)) #Relajo la variable binaria a continua para buscar solucion dual
 
         # Variables para indicar la ubicacion y donde se ubica una rebanada r
-        nombre_y_r = [f"y_{r}" for r in REBANADAS]
+        nombre_y_r = [f"y_{r}" for r in range(cantidadRebanadas)]
         modelo.variables.add(names=nombre_y_r, obj=[0.0] * len(nombre_y_r), types="C" * len(nombre_y_r), lb=[0.0] * len(nombre_y_r))
 
         # Variables para determinar si una rebanada i se ubica arriba de otra rebanada j
-        nombre_z_ij = [f"z_{i},{j}" for i in REBANADAS for j in REBANADAS if i != j]
+        nombre_z_ij = [f"z_{i},{j}" for i in range(cantidadRebanadas) for j in range(cantidadRebanadas) if i != j]
         modelo.variables.add(names=nombre_z_ij, obj=[0.0] * len(nombre_z_ij), lb=[0.0] * len(nombre_z_ij), ub=[1.0] * len(nombre_z_ij), types="C" * len(nombre_z_ij)) #Relajo la variable binaria a continua para buscar solucion dual
 
         # Variables w_{i,r} (indica si el ítem i está en la rebanada r)
-        nombre_w_ir = [f"w_{i},{r}" for i in ITEMS for r in REBANADAS]
+        nombre_w_ir = [f"w_{i},{r}" for i in ITEMS for r in range(cantidadRebanadas)]
         modelo.variables.add(names=nombre_w_ir, obj=[0.0] * len(nombre_w_ir), lb=[0.0] * len(nombre_w_ir), ub=[1.0] * len(nombre_w_ir), types="C" * len(nombre_w_ir)) #Relajo la variable binaria a continua para buscar solucion dual
      
         # Variables y_{i,r} indica la posicion absoluta en el eje y del item i de la rebanada r en el bin
-        nombre_y_ir = [f"y_{i},{r}" for i in ITEMS for r in REBANADAS]
+        nombre_y_ir = [f"y_{i},{r}" for i in ITEMS for r in range(cantidadRebanadas)]
         modelo.variables.add(names=nombre_y_ir, obj=[0.0] * len(nombre_y_ir), types="C" * len(nombre_y_ir), lb=[0.0] * len(nombre_y_ir))
 
         
         # Restricción (1): Cada ítem se ubica solo en una rebanada
         for i in ITEMS:
-            varW_ir = [f"w_{i},{r}" for r in REBANADAS]
+            varW_ir = [f"w_{i},{r}" for r in range(cantidadRebanadas)]
             modelo.linear_constraints.add(
                 lin_expr=[cplex.SparsePair(ind=varW_ir, val=[1] * len(varW_ir))],
                 senses=["L"], rhs=[1]
@@ -108,7 +109,7 @@ def createAndSolveMasterModel(queue,interrupcion_manual,tiempoMaximo):
         
         # Restricción (2): Un ítem pertenece a una rebanada solo si la rebanada es seleccionada
         for i in ITEMS:
-            for r in REBANADAS:
+            for r in range(cantidadRebanadas):
                 modelo.linear_constraints.add(
                     lin_expr=[cplex.SparsePair(ind=[f"w_{i},{r}", f"p_{r}"], val=[1, -1])],
                     senses=["L"], rhs=[0]
@@ -116,12 +117,12 @@ def createAndSolveMasterModel(queue,interrupcion_manual,tiempoMaximo):
 
         # Restricción (3): La suma de las alturas de las rebanadas seleccionadas no excede la altura del bin
         modelo.linear_constraints.add(
-            lin_expr=[cplex.SparsePair(ind=nombre_p_r, val=[ALTO_REBANADA[r] for r in REBANADAS])],
+            lin_expr=[cplex.SparsePair(ind=nombre_p_r, val=[ALTO_REBANADA[r] for r in range(cantidadRebanadas)])],
             senses=["L"], rhs=[ALTO_BIN]
         )
 
         # Restricción (4): Si se elige una rebanada, debe ocupar una sola posición en el bin
-        for r in REBANADAS:
+        for r in range(cantidadRebanadas):
             varS_rp = [f"s_{r},{p}" for p in POSICIONES_Y]
             modelo.linear_constraints.add(
                 lin_expr=[cplex.SparsePair(ind=varS_rp + [f"p_{r}"], val=[1] * len(varS_rp) + [-1])],
@@ -129,8 +130,8 @@ def createAndSolveMasterModel(queue,interrupcion_manual,tiempoMaximo):
             )
 
         # Restricciones (5) y (6): Las rebanadas no deben solaparse verticalmente
-        for r in REBANADAS:
-            for rp in REBANADAS:
+        for r in range(cantidadRebanadas):
+            for rp in range(cantidadRebanadas):
                 if r != rp:
                     modelo.linear_constraints.add(
                         lin_expr=[cplex.SparsePair(ind=[f"y_{r}", f"y_{rp}", f"z_{rp},{r}"], val=[1, -1, ALTO_BIN])],
@@ -142,8 +143,8 @@ def createAndSolveMasterModel(queue,interrupcion_manual,tiempoMaximo):
                     )
 
         # Restricción (7): Cada par de rebanadas deben estar en una relación de arriba o abajo, no ambas
-        for r in REBANADAS:
-            for rp in REBANADAS:
+        for r in range(cantidadRebanadas):
+            for rp in range(cantidadRebanadas):
                 if r != rp:
                     modelo.linear_constraints.add(
                         lin_expr=[cplex.SparsePair(ind=[f"z_{r},{rp}", f"z_{rp},{r}"], val=[1, 1])],
@@ -152,7 +153,7 @@ def createAndSolveMasterModel(queue,interrupcion_manual,tiempoMaximo):
 
         # Restricción (8): Establece la posicion absoluta en el bin de cada item de una rebanada
         for i in ITEMS:
-            for r in REBANADAS:
+            for r in range(cantidadRebanadas):
                 modelo.linear_constraints.add(
                     lin_expr=[cplex.SparsePair(ind=[f"y_{i},{r}", f"y_{r}"], val=[1, -1])],
                     senses=["E"], rhs=[POS_REL_ITEM_Y[i,r]] #TODO REVISAR COMO ACCEDER A ESTE ARRAY (quizas usar diccionarios)
@@ -162,8 +163,8 @@ def createAndSolveMasterModel(queue,interrupcion_manual,tiempoMaximo):
         for i in ITEMS:
             for j in ITEMS:
                 if i != j:  # Solo si i y j son distintos
-                    for r in REBANADAS:
-                        for r_prime in REBANADAS:
+                    for r in range(cantidadRebanadas):
+                        for r_prime in range(cantidadRebanadas):
                             if r != r_prime:  # Solo si r y r' son distintos
                                 
                                 # Restricción (9): y_{ir} + h_i <= y_{jr'} + H * z_{r,r'}
@@ -210,7 +211,6 @@ def createAndSolveMasterModel(queue,interrupcion_manual,tiempoMaximo):
             print(f"Constraint_ {i}: Dual Value = {dual}")
             dual_sol[f"Constraint_{i}"] = dual
         
-        #TODO: definir si acá hago un return de dual_sol
         status = modelo.solution.get_status()
         tiempoFinal = modelo.get_time()
         solverTime=tiempoFinal-tiempoInicial
@@ -220,13 +220,7 @@ def createAndSolveMasterModel(queue,interrupcion_manual,tiempoMaximo):
             print("El solver se detuvo porque alcanzó el límite de tiempo.")
             modelStatus="2" #valor en paver para marcar un optimo local
 
-        # Enviar resultados a través de la cola
-        queue.put({
-            "modelStatus": modelStatus,
-            "solverStatus": solverStatus,
-            "objective_value": objective_value,
-            "solverTime": solverTime
-        })
+        return dual_sol
 
     except CplexSolverError as e:
         if e.args[2] == 1217:  # Codigo de error para "No solution exists"
@@ -238,62 +232,4 @@ def createAndSolveMasterModel(queue,interrupcion_manual,tiempoMaximo):
             modelStatus="12" #valor en paver para marcar un error desconocido
             solverStatus="10" #el solver tuvo un error en la ejecucion
 
-        queue.put({
-            "modelStatus": modelStatus,
-            "solverStatus": solverStatus,
-            "objective_value": objective_value,
-            "solverTime": solverTime
-        })
-
-
-def executeWithTimeLimit(tiempo_maximo): #TODO: ver si puedo generalizar para usarlo en varios modelos
-    global modelStatus, solverStatus, objective_value, solverTime 
-
-    # Crear una cola para recibir los resultados del subproceso
-    queue = multiprocessing.Queue()
-
-    # Crear una variable compartida para manejar la interrupción manual
-    interrupcion_manual = multiprocessing.Value('b', True)
-
-    # Crear el subproceso que correrá la función
-    proceso = multiprocessing.Process(target=createAndSolveMasterModel, args=(queue,interrupcion_manual,tiempo_maximo))
-
-    # Iniciar el subproceso
-    proceso.start()
-
-    tiempo_inicial = time.time()
-
-    # Monitorear la cola mientras el proceso está en ejecución
-    while proceso.is_alive():
-
-        if interrupcion_manual.value:
-            # Si se excede el tiempo, terminamos el proceso
-            if time.time() - tiempo_inicial > tiempo_maximo:
-                print("Tiempo límite alcanzado. Abortando el proceso.")
-                modelStatus="14" #valor en paver para marcar que el modelo no devolvio respuesta por error
-                solverStatus="4" #el solver finalizo la ejecucion del modelo
-                solverTime=tiempo_maximo
-                proceso.terminate()
-                proceso.join()
-                break
-
-        time.sleep(0.1)  # Evitar consumir demasiados recursos
-
-    # Imprimo resultados de la ejecucion que se guardan luego en el archivo trc para usar en paver
-    while not queue.empty():
-        message = queue.get()
-        if isinstance(message, dict):
-            print(message)
-            modelStatus = message["modelStatus"]
-            solverStatus = message["solverStatus"]
-            objective_value = message["objective_value"]
-            solverTime = message["solverTime"]
-
-
-
-if __name__ == '__main__':
- 
-    executeWithTimeLimit(EXECUTION_TIME)
-    generator = TraceFileGenerator("output.trc")
-    generator.write_trace_record(NOMBRE_CASO, NOMBRE_MODELO, modelStatus, solverStatus, objective_value, solverTime)
 

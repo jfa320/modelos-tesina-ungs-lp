@@ -1,17 +1,7 @@
 class Rebanada:
-    def __init__(self, id, alto, items):
-        self.set_id(id)
+    def __init__(self, alto, items):
         self.set_alto(alto)
         self.set_items(items)
-
-    def set_id(self, id):
-        if isinstance(id, int) and id > 0:
-            self.__id = id
-        else:
-            raise ValueError("El ID debe ser un número entero positivo.")
-
-    def get_id(self):
-        return self.__id
 
     def set_alto(self, alto):
         if isinstance(alto, (int, float)) and alto > 0:

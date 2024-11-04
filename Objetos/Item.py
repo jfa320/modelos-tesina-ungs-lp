@@ -1,18 +1,9 @@
 class Item:
-    def __init__(self, id, alto, posicion_y,rotado):
-        self.set_id(id)
+    def __init__(self, alto, posicion_y,rotado,ancho):
         self.set_alto(alto)
         self.set_posicion_y(posicion_y)
         self.set_rotado(rotado)
-
-    def set_id(self, id):
-        if isinstance(id, int) and id > 0:
-            self.__id = id
-        else:
-            raise ValueError("El ID debe ser un número entero positivo.")
-
-    def get_id(self):
-        return self.__id
+        self.set_ancho(ancho)
 
     def set_alto(self, alto):
         if isinstance(alto, (int, float)) and alto > 0:
@@ -22,6 +13,15 @@ class Item:
 
     def get_alto(self):
         return self.__alto
+    
+    def set_ancho(self, ancho):
+        if isinstance(ancho, (int, float)) and ancho > 0:
+            self.__alto = ancho
+        else:
+            raise ValueError("El ancho debe ser un número positivo.")
+
+    def get_ancho(self):
+        return self.__ancho
 
     def set_posicion_y(self, posicion_y):
         if isinstance(posicion_y, (int, float)):
@@ -41,7 +41,11 @@ class Item:
     def get_rotado(self):
         return self.__rotado
     
-    
+    def rotar(self):
+        altoAux=self.get_alto()
+        self.__alto = self.get_ancho()
+        self.__ancho =altoAux
+        self.__rotado=not self.get_rotado()
 
     def __repr__(self):
         return f"Item(id={self.get_id()}, alto={self.get_alto()}, posicion_y={self.get_posicion_y()})"
