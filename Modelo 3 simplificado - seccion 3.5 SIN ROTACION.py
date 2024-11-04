@@ -6,42 +6,42 @@ import time
 
 from Position_generator_modelo_3 import *
 
-NOMBRE_MODELO="Model3Pos2"
+MODEL_NAME="Model3Pos2"
 
 modelStatus="1"
 solverStatus="1"
-objective_value=0
+objectiveValue=0
 solverTime=1
 
 
 # Caso 5: 
 
-# CANTIDAD_ITEMS = 6  # constante N del modelo
-# ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) 
-# ANCHO_BIN = 6  # W en el modelo
-# ALTO_BIN = 3  # H en el modelo
+# ITEMS_QUANTITY = 6  # constante N del modelo
+# ITEMS = list(range(1, ITEMS_QUANTITY + 1)) 
+# BIN_WIDTH = 6  # W en el modelo
+# BIN_HEIGHT = 3  # H en el modelo
 
-# ANCHO_OBJETO = 3  # w en el modelo
-# ALTO_OBJETO = 2  # h en el modelo
+# ITEM_WIDTH = 3  # w en el modelo
+# ITEM_HEIGHT = 2  # h en el modelo
 
-NOMBRE_CASO="inst2"
+CASE_NAME="inst2"
 
-CANTIDAD_ITEMS= 10 # constante n del modelo
-ITEMS = list(range(1, CANTIDAD_ITEMS + 1)) # constante I del modelo
-ANCHO_BIN = 6 # W en el modelo
-ALTO_BIN = 4 # H en el modelo
+ITEMS_QUANTITY= 10 # constante n del modelo
+ITEMS = list(range(1, ITEMS_QUANTITY + 1)) # constante I del modelo
+BIN_WIDTH = 6 # W en el modelo
+BIN_HEIGHT = 4 # H en el modelo
 
-ANCHO_OBJETO= 2 # w en el modelo
-ALTO_OBJETO= 3 # h en el modelo
+ITEM_WIDTH= 2 # w en el modelo
+ITEM_HEIGHT= 3 # h en el modelo
 
 
 # Parámetros
-W = ANCHO_BIN  # Ancho del bin
-H = ALTO_BIN  # Alto del bin
-w = ANCHO_OBJETO # Ancho del item
-h = ALTO_OBJETO  # Alto del item
+W = BIN_WIDTH  # Ancho del bin
+H = BIN_HEIGHT  # Alto del bin
+w = ITEM_WIDTH # Ancho del item
+h = ITEM_HEIGHT  # Alto del item
 
-I = range(CANTIDAD_ITEMS)  # Conjunto de items
+I = range(ITEMS_QUANTITY)  # Conjunto de items
 J = generate_positions2_without_rotation(W, H, w, h) #posiciones
 P = [(x, y) for x in range(W) for y in range(H)]  #puntos
 C = create_C_matrix(W, H, J,w,h,P)
@@ -57,7 +57,7 @@ def createAndSolveModel(queue,interrupcion_manual,tiempoMaximo):
     #valores por default para enviar a paver
     modelStatus="1"
     solverStatus="1"
-    objective_value=0
+    objectiveValue=0
     solverTime=1
 
     try:
@@ -161,11 +161,11 @@ def createAndSolveModel(queue,interrupcion_manual,tiempoMaximo):
         # Resolver el modelo
         model.solve()
 
-        objective_value = model.solution.get_objective_value()
+        objectiveValue = model.solution.get_objective_value()
 
         # Imprimir resultados
         print("Estado de la solución:", model.solution.get_status_string())
-        print("Valor de la función objetivo:", objective_value)
+        print("Valor de la función objetivo:", objectiveValue)
 
         status = model.solution.get_status()
         tiempoFinal = model.get_time()
@@ -180,7 +180,7 @@ def createAndSolveModel(queue,interrupcion_manual,tiempoMaximo):
         queue.put({
             "modelStatus": modelStatus,
             "solverStatus": solverStatus,
-            "objective_value": objective_value,
+            "objectiveValue": objectiveValue,
             "solverTime": solverTime
         })
 
@@ -197,12 +197,12 @@ def createAndSolveModel(queue,interrupcion_manual,tiempoMaximo):
         queue.put({
             "modelStatus": modelStatus,
             "solverStatus": solverStatus,
-            "objective_value": objective_value,
+            "objectiveValue": objectiveValue,
             "solverTime": solverTime
         })
 
 def executeWithTimeLimit(tiempo_maximo):
-    global modelStatus, solverStatus, objective_value, solverTime 
+    global modelStatus, solverStatus, objectiveValue, solverTime 
 
     # Crear una cola para recibir los resultados del subproceso
     queue = multiprocessing.Queue()
@@ -241,7 +241,7 @@ def executeWithTimeLimit(tiempo_maximo):
             print(message)
             modelStatus = message["modelStatus"]
             solverStatus = message["solverStatus"]
-            objective_value = message["objective_value"]
+            objectiveValue = message["objectiveValue"]
             solverTime = message["solverTime"]
 
 
@@ -250,6 +250,6 @@ if __name__ == '__main__':
  
     executeWithTimeLimit(EXECUTION_TIME)
     generator = TraceFileGenerator("output.trc")
-    generator.write_trace_record(NOMBRE_CASO, NOMBRE_MODELO, modelStatus, solverStatus, objective_value, solverTime)
+    generator.write_trace_record(CASE_NAME, MODEL_NAME, modelStatus, solverStatus, objectiveValue, solverTime)
 
 
