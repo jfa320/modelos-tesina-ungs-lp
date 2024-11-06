@@ -27,7 +27,7 @@ XY_x = {(x, y) for x in P for y in P if x + l <= L and y + a <= A}
 
 XY_y = {(x, y) for x in P for y in P if x + a <= L and y + l <= A}
 
-# Output de los conjuntos para verificar
+# Print de los conjuntos para verificar
 print("Q:", Q)
 print("P:", P)
 print("XY_x:", XY_x)

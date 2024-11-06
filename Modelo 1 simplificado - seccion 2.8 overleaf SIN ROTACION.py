@@ -56,6 +56,8 @@ def createAndSolveModel(queue,manualInterruption,maxTime):
 
         # Crear un modelo de CPLEX
         model= cplex.Cplex()
+        
+        model.set_results_stream(None) # deshabilito log de CPLEX de la info paso a paso
 
         initialTime=model.get_time()
 
@@ -183,10 +185,12 @@ def createAndSolveModel(queue,manualInterruption,maxTime):
 
         # Obtener y mostrar los resultados
         solutionValues = model.solution.get_values()
-        objectiveValue = model.solution.get_objectiveValue()
+        objectiveValue = model.solution.get_objective_value()
         print(f"Optimal value: {objectiveValue}")
-        for var_name, value in zip(varsNames, solutionValues):
-            print(f"{var_name} = {value}")
+        
+        #aca puedo imprimir los valores que toman las variables
+        # for var_name, value in zip(varsNames, solutionValues):
+        #     print(f"{var_name} = {value}")
        
         status = model.solution.get_status()
         finalTime = model.get_time()
@@ -260,6 +264,7 @@ def executeWithTimeLimit(maxTime):
         message = queue.get()
         if isinstance(message, dict):
             print(message)
+            
             modelStatus = message["modelStatus"]
             solverStatus = message["solverStatus"]
             objectiveValue = message["objectiveValue"]
