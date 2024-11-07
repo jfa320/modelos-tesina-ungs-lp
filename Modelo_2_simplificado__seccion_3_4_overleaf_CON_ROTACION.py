@@ -7,57 +7,58 @@ from Position_generator import generate_positions
 from Utils.Model_Functions import *
 from Config import *
 
-#Basado en la simplificacion del modelo 2 del overleaf (modelo discretizado en posiciones) - ver seccion 3.3 de ese documento para modelo completo
-
 MODEL_NAME="Model2Pos1"
 
-#SET_POS_X  constante X en el modelo
-#SET_POS_Y  constante Y en el modelo
-
-#SET_POS_X_I constante X_i en el modelo
-#SET_POS_Y_I constante Y_i en el modelo
-
+# Generación de posiciones factibles para ítems y sus versiones rotadas
 SET_POS_X, SET_POS_Y, SET_POS_X_I, SET_POS_Y_I = generate_positions(BIN_WIDTH, BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT)
+SET_POS_X_I_ROT = [x for x in range(BIN_WIDTH) if x <= BIN_WIDTH - ITEM_HEIGHT]
+SET_POS_Y_I_ROT = [y for y in range(BIN_HEIGHT) if y <= BIN_HEIGHT - ITEM_WIDTH]
 
-QUANTITY_X_I=len(SET_POS_X_I) #constante Q(X_i) del modelo
-QUANTITY_Y_I=len(SET_POS_Y_I) #constante Q(Y_i) del modelo
+QUANTITY_X_I = len(SET_POS_X_I)
+QUANTITY_Y_I = len(SET_POS_Y_I)
+QUANTITY_X_I_ROT = len(SET_POS_X_I_ROT)
+QUANTITY_Y_I_ROT = len(SET_POS_Y_I_ROT)
 
 def createAndSolveModel(queue,manualInterruption,maxTime):
     #valores por default para enviar a paver
     modelStatus, solverStatus, objectiveValue, solverTime = "1", "1", 0, 1
 
     try:
-        # Crear un modelo de CPLEX
-        model= cplex.Cplex()
+        # Crear el modelo CPLEX
+        model = cplex.Cplex()
         model.set_results_stream(None) # deshabilito log de CPLEX de la info paso a paso
         model.set_problem_type(cplex.Cplex.problem_type.LP)
         model.objective.set_sense(model.objective.sense.maximize)
         model.parameters.timelimit.set(maxTime)
-
+        
         initialTime=model.get_time()
-
+        
         # Definir variables y objetivos
-        varsNames = [f"m_{i}" for i in range(1, ITEMS_QUANTITY + 1)]
-        coeffs = [1.0] * ITEMS_QUANTITY  
+        varsNames = [f"m_{i}" for i in ITEMS] + [f"m_rot_{i}" for i in ITEMS]
+        coeffs = [1.0] * ITEMS_QUANTITY * 2
         addVariables(model, varsNames, coeffs, "B")
 
-        additionalVarsNames = []
-        for x in SET_POS_X_I:
-            for y in SET_POS_Y_I:
-                    for i in ITEMS:
-                        additionalVarsNames.append(f"n_{i},{x},{y}") 
+        positionVarsNames = []
+        for i in ITEMS:
+            for x in SET_POS_X_I:
+                for y in SET_POS_Y_I:
+                    positionVarsNames.append(f"n_{i},{x},{y}")
+            for xRot in SET_POS_X_I_ROT:
+                for yRot in SET_POS_Y_I_ROT:
+                    positionVarsNames.append(f"n_rot_{i},{xRot},{yRot}")
 
-        for x in SET_POS_X:
-            for y in SET_POS_Y:            
-                additionalVarsNames.append(f"r_{x},{y}") 
-        additionalCoeffObj = [0.0] * len(additionalVarsNames)
-        addVariables(model, additionalVarsNames, additionalCoeffObj, "B")
+        posCoeffs = [0.0] * len(positionVarsNames)
+        addVariables(model, positionVarsNames, posCoeffs, "B")
 
-        # Añadir la restricción r_{x,y} = sum_{i in N} sum_{x' in X_i, x-w+1 <= x' <= x} sum_{y' in Y_i, y-h+1 <= y' <= y} n_{i,x',y'} para cada (x, y) en X x Y
+        rVarsNames = [f"r_{x},{y}" for x in SET_POS_X for y in SET_POS_Y]
+        addVariables(model, rVarsNames, [0.0] * len(rVarsNames), "B")
+
+        # Restricción 1: Evita solapamiento de ítems en una posición (x,y)
         for x in SET_POS_X:
             for y in SET_POS_Y:
-                consCoeff = [1.0] 
-                consVars = [f"r_{x},{y}"]  
+                consCoeff = [1.0]  # Coeficiente de r_{x,y}
+                consVars = [f"r_{x},{y}"]
+
                 for i in ITEMS:
                     for xPrime in SET_POS_X_I:
                         if x - ITEM_WIDTH + 1 <= xPrime <= x:
@@ -65,36 +66,71 @@ def createAndSolveModel(queue,manualInterruption,maxTime):
                                 if y - ITEM_HEIGHT + 1 <= yPrime <= y:
                                     consCoeff.append(-1.0)
                                     consVars.append(f"n_{i},{xPrime},{yPrime}")
-                consRhs = 0.0  
-                consSense = "E"  
+
+                    for xPrimeRot in SET_POS_X_I_ROT:
+                        if x - ITEM_HEIGHT + 1 <= xPrimeRot <= x:
+                            for yPrimeRot in SET_POS_Y_I_ROT:
+                                if y - ITEM_WIDTH + 1 <= yPrimeRot <= y:
+                                    consCoeff.append(-1.0)
+                                    consVars.append(f"n_rot_{i},{xPrimeRot},{yPrimeRot}")
+                consRhs=0.0
+                consSense="E"
                 addConstraint(model,consCoeff,consVars,consRhs,consSense)
 
-        # Añadir la restricción m_i <= sum_{x in X_i} sum_{y in Y_i} n_{i,x,y} para cada i en items - restriccion 2 del modelo
-        for i in ITEMS:
-            consCoeff = [1.0]  # Coeficiente para m_i
-            consVars = [f"m_{i}"]  # Variable m_i
-            # Añadir los coeficientes y variables de sum_{x in X_i} sum_{y in Y_i} n_{i,x,y}
-            for x in SET_POS_X_I:
-                for y in SET_POS_Y_I:
-                    consCoeff.append(-1.0)
-                    consVars.append(f"n_{i},{x},{y}")
-            consRhs = 0.0  # Lado derecho de la restricción
-            consSense = "L"  # "L" indica <=
-            addConstraint(model,consCoeff,consVars,consRhs,consSense)
-
-        # Añadir la restricción sum_{x in X_i} sum_{y in Y_i} n_{i,x,y} <= Q(X_i) Q(Y_i) m_i para cada i en items
         for i in ITEMS:
             consCoeff = [-1.0]  # Coeficiente para m_i
-            consVars = [f"m_{i}"]  # Variable m_i
+            consVars = [f"m_{i}"]  # Variable m_i que indica si el ítem no rotado está en el bin
 
-            # Añadir los coeficientes y variables de sum_{x in X_i} sum_{y in Y_i} n_{i,x,y}
+            # Sumamos todas las posiciones no rotadas posibles donde el ítem puede estar
             for x in SET_POS_X_I:
                 for y in SET_POS_Y_I:
                     consCoeff.append(1.0)
                     consVars.append(f"n_{i},{x},{y}")
-            consRhs = 0.0  # Lado derecho de la restricción
-            consSense = "L"  # "L" indica <=
+            consRhs=0.0
+            consSense="E"
             addConstraint(model,consCoeff,consVars,consRhs,consSense)
+
+        # Restricción para ítems rotados: m_rot_i = suma de las posiciones rotadas donde está el ítem i
+        for i in ITEMS:
+            consCoeffRot = [-1.0]  # Coeficiente para m_rot_i
+            consVarsRot = [f"m_rot_{i}"]  # Variable m_rot_i que indica si el ítem rotado está en el bin
+
+            # Sumamos todas las posiciones rotadas posibles donde el ítem puede estar
+            for xRot in SET_POS_X_I_ROT:
+                for yRot in SET_POS_Y_I_ROT:
+                    consCoeffRot.append(1.0)
+                    consVarsRot.append(f"n_rot_{i},{xRot},{yRot}")
+            consRhs=0.0
+            consSense="E"
+            addConstraint(model,consCoeffRot,consVarsRot,consRhs,consSense)
+
+        # Restricción 3: suma de posiciones <= Q(X_i)*Q(Y_i) * m_i
+        for i in ITEMS:
+            consCoeff = [-1.0]  # Coeficiente para m_i
+            consVars = [f"m_{i}"]
+
+            for x in SET_POS_X_I:
+                for y in SET_POS_Y_I:
+                    consCoeff.append(1.0)
+                    consVars.append(f"n_{i},{x},{y}")
+                    
+            consRhs=QUANTITY_X_I * QUANTITY_Y_I
+            consSense="L"    
+            addConstraint(model,consCoeff,consVars,consRhs,consSense)
+
+            consCoeffRot = [-1.0]  # Coeficiente para m_rot_i
+            consVarsRot = [f"m_rot_{i}"]
+
+            for xRot in SET_POS_X_I_ROT:
+                for yRot in SET_POS_Y_I_ROT:
+                    consCoeffRot.append(1.0)
+                    consVarsRot.append(f"n_rot_{i},{xRot},{yRot}")
+            consRhs=QUANTITY_X_I_ROT * QUANTITY_Y_I_ROT
+            addConstraint(model,consCoeffRot,consVarsRot,consRhs,consSense)
+
+        # Restricción 4: m_i + m_rot_i <= 1
+        for i in ITEMS:
+            addConstraint(model,[1.0, 1.0],[f"m_{i}", f"m_rot_{i}"],1.0,"L")
 
         # Desactivar la interrupción manual aquí
         manualInterruption.value = False
@@ -102,18 +138,18 @@ def createAndSolveModel(queue,manualInterruption,maxTime):
         # Resolver el modelo
         model.solve()
 
-        # Obtener y mostrar los resultados
+        # Obtener resultados
         objectiveValue = model.solution.get_objective_value()
 
         print("Optimal value:", objectiveValue)
         
-        # print("Variables values:")
-        # for var_name, value in zip(varsNames, solutionValues):
+        #aca imprimo el valor que toman las variables
+        # for var_name, value in zip(varsNames, solution_values):
         #     print(f"{var_name} = {value}")
-
+        
         status = model.solution.get_status()
-        finalTime = model.get_time()
-        solverTime=finalTime-initialTime
+        tiempoFinal = model.get_time()
+        solverTime=tiempoFinal-initialTime
         solverTime=round(solverTime, 2)
         
         if status == 105:  # CPLEX código 105 = Time limit exceeded
@@ -169,8 +205,12 @@ def executeWithTimeLimit(maxTime):
             solverStatus = message["solverStatus"]
             objectiveValue = message["objectiveValue"]
             solverTime = message["solverTime"]
+    return CASE_NAME, MODEL_NAME, modelStatus, solverStatus, objectiveValue, solverTime
 
-if __name__ == '__main__':
-    executeWithTimeLimit(EXECUTION_TIME)
-    generator = TraceFileGenerator("output.trc")
-    generator.write_trace_record(CASE_NAME, MODEL_NAME, modelStatus, solverStatus, objectiveValue, solverTime)
+
+
+# if __name__ == '__main__':
+#     executeWithTimeLimit(EXECUTION_TIME)
+#     generator = TraceFileGenerator("output.trc")
+#     generator.write_trace_record(CASE_NAME, NOMBRE_MODELO, modelStatus, solverStatus, objectiveValue, solverTime)
+
