@@ -3,35 +3,11 @@ from cplex.exceptions import CplexSolverError
 from TraceFileGenerator import TraceFileGenerator
 import multiprocessing
 import time
-
 from Position_generator_modelo_3 import *
+from Utils.Model_Functions import *
+from Config import *
 
 MODEL_NAME="Model3Pos2"
-
-modelStatus="1"
-solverStatus="1"
-objectiveValue=0
-solverTime=1
-
-# Caso 5: 
-
-# ITEMS_QUANTITY = 6  # constante N del modelo
-# ITEMS = list(range(1, ITEMS_QUANTITY + 1)) 
-# BIN_WIDTH = 6  # W en el modelo
-# BIN_HEIGHT = 3  # H en el modelo
-
-# ITEM_WIDTH = 3  # w en el modelo
-# ITEM_HEIGHT = 2  # h en el modelo
-
-#prueba para validar el corte al minuto de la ejecucion
-CASE_NAME="inst2"
-ITEMS_QUANTITY= 10 # constante n del modelo
-ITEMS = list(range(1, ITEMS_QUANTITY + 1)) # constante I del modelo
-BIN_WIDTH = 6 # W en el modelo
-BIN_HEIGHT = 4 # H en el modelo
-
-ITEM_WIDTH= 2 # w en el modelo
-ITEM_HEIGHT= 3 # h en el modelo
 
 # Parámetros
 W = BIN_WIDTH  # Ancho del bin
@@ -54,21 +30,16 @@ T_rot = J_rot
 Q = len(T)  # Cantidad total de posiciones válidas por ítem
 Q_rot = len(T_rot)  # Cantidad total de posiciones válidas rotadas por ítem
 
-#seteo tiempo de ejecucion
-EXECUTION_TIME=2 # in seconds
-
 def createAndSolveModel(queue,manualInterruption,maxTime):
     #valores por default para enviar a paver
-    modelStatus="1"
-    solverStatus="1"
-    objectiveValue=0
-    solverTime=1
+    modelStatus, solverStatus, objectiveValue, solverTime = "1", "1", 0, 1
 
     try:
         # Crear el modelo
         model = cplex.Cplex()
-        
         model.set_results_stream(None) # deshabilito log de CPLEX de la info paso a paso
+        model.objective.set_sense(model.objective.sense.maximize)
+        model.parameters.timelimit.set(maxTime)
         
         initialTime=model.get_time()
 
@@ -103,11 +74,7 @@ def createAndSolveModel(queue,manualInterruption,maxTime):
 
         # Función objetivo: maximizar la suma de n_i
         objective = [1.0] * len(I)
-        model.objective.set_sense(model.objective.sense.maximize)
         model.objective.set_linear(list(zip(nVars, objective)))
-
-        # Definir el limite tiempo de la ejecución en un minuto
-        model.parameters.timelimit.set(maxTime)
 
         # Restricción 1: Cada punto del bin está ocupado por a lo sumo un ítem (incluyendo rotaciones)
         for indexP, _ in enumerate(P):
@@ -122,11 +89,9 @@ def createAndSolveModel(queue,manualInterruption,maxTime):
                     if C_rot[indexJ][indexP] == 1:
                         indexes.append(f"y_{j}^{i}")
                         coefficients.append(1.0)
-            model.linear_constraints.add(
-                lin_expr=[[indexes, coefficients]],
-                senses=["L"],
-                rhs=[1.0]
-            )
+            consRhs=1.0
+            consSense="L"
+            addConstraint(model,coefficients,indexes,consRhs,consSense)
 
         # Restricción 2: No exceder el área del bin
         indexes = []
@@ -150,12 +115,9 @@ def createAndSolveModel(queue,manualInterruption,maxTime):
                             indexes.append(varName)
                             coefficients.append(1.0)
                             seenIndices.add(varName)
-
-        model.linear_constraints.add(
-            lin_expr=[[indexes, coefficients]],
-            senses=["L"],
-            rhs=[W * H]
-        )
+        consRhs=W * H
+        consSense="L"
+        addConstraint(model,coefficients,indexes,consRhs,consSense)
 
         # Restricción 3: n_i <= suma(x_j^i + y_j^i)
         for i in I:
@@ -163,11 +125,9 @@ def createAndSolveModel(queue,manualInterruption,maxTime):
             coefficients = [1.0] * (len(T) + len(T_rot))
             indexes.append(f"n_{i}")
             coefficients.append(-1.0)
-            model.linear_constraints.add(
-                lin_expr=[[indexes, coefficients]],
-                senses=["G"],
-                rhs=[0.0]
-            )
+            consRhs=0.0
+            consSense="G"
+            addConstraint(model,coefficients,indexes,consRhs,consSense)
 
         # Restricción 4: suma(x_j^i) <= Q(i) * n_i
         for i in I:
@@ -175,11 +135,9 @@ def createAndSolveModel(queue,manualInterruption,maxTime):
             coefficients = [1.0] * len(T)
             indexes.append(f"n_{i}")
             coefficients.append(-Q)
-            model.linear_constraints.add(
-                lin_expr=[[indexes, coefficients]],
-                senses=["L"],
-                rhs=[0.0]
-            )
+            consRhs=0.0
+            consSense="L"
+            addConstraint(model,coefficients,indexes,consRhs,consSense)
 
         # Restricción 5: suma(y_j^i) <= Q_rot(i) * n_i
         for i in I:
@@ -187,11 +145,9 @@ def createAndSolveModel(queue,manualInterruption,maxTime):
             coefficients = [1.0] * len(T_rot)
             indexes.append(f"n_{i}")
             coefficients.append(-Q_rot)
-            model.linear_constraints.add(
-                lin_expr=[[indexes, coefficients]],
-                senses=["L"],
-                rhs=[0.0]
-            )
+            consRhs=0.0
+            consSense="L"
+            addConstraint(model,coefficients,indexes,consRhs,consSense)
 
         # Desactivar la interrupción manual aquí
         manualInterruption.value = False
@@ -226,21 +182,7 @@ def createAndSolveModel(queue,manualInterruption,maxTime):
         })
 
     except CplexSolverError as e:
-        if e.args[2] == 1217:  # Codigo de error para "No solution exists"
-            print("\nNo solutions for the given model.")
-            modelStatus="14" #valor en paver para marcar que el modelo no devolvio respuesta por error
-            solverStatus="4" #el solver finalizo la ejecucion del modelo
-        else:
-            print("CPLEX Solver Error:", e)
-            modelStatus="12" #valor en paver para marcar un error desconocido
-            solverStatus="10" #el solver tuvo un error en la ejecucion
-
-        queue.put({
-            "modelStatus": modelStatus,
-            "solverStatus": solverStatus,
-            "objectiveValue": objectiveValue,
-            "solverTime": solverTime
-        })
+        handleSolverError(e, queue,solverTime)
 
 def executeWithTimeLimit(maxTime):
     global modelStatus, solverStatus, objectiveValue, solverTime 
@@ -256,22 +198,18 @@ def executeWithTimeLimit(maxTime):
     # Iniciar el subproceso
     process.start()
 
-    tiempo_inicial = time.time()
+    initialTime = time.time()
 
     # Monitorear la cola mientras el proceso está en ejecución
     while process.is_alive():
-
-        if manualInterruption.value:
-            # Si se excede el tiempo, terminamos el proceso
-            if time.time() - tiempo_inicial > maxTime:
-                print("Limit time reached. Aborting process.")
-                modelStatus="14" #valor en paver para marcar que el modelo no devolvio respuesta por error
-                solverStatus="4" #el solver finalizo la ejecucion del modelo
-                solverTime=maxTime
-                process.terminate()
-                process.join()
-                break
-
+        if manualInterruption.value and time.time() - initialTime > maxTime:
+            print("Limit time reached. Aborting process.")
+            modelStatus="14" #valor en paver para marcar que el modelo no devolvio respuesta por error
+            solverStatus="4" #el solver finalizo la ejecucion del modelo
+            solverTime=maxTime
+            process.terminate()
+            process.join()
+            break
         time.sleep(0.1)  # Evitar consumir demasiados recursos
 
     # Imprimo resultados de la ejecucion que se guardan luego en el archivo trc para usar en paver
@@ -286,7 +224,6 @@ def executeWithTimeLimit(maxTime):
 
 
 if __name__ == '__main__':
- 
     executeWithTimeLimit(EXECUTION_TIME)
     generator = TraceFileGenerator("output.trc")
     generator.write_trace_record(CASE_NAME, MODEL_NAME, modelStatus, solverStatus, objectiveValue, solverTime)
