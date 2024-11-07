@@ -1,6 +1,5 @@
 import cplex
 from cplex.exceptions import CplexSolverError
-from TraceFileGenerator import TraceFileGenerator
 import multiprocessing
 import time
 from Position_generator_modelo_3 import *
