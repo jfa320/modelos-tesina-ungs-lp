@@ -163,9 +163,9 @@ def executeWithTimeLimit(maxTime):
             solverStatus = message["solverStatus"]
             objectiveValue = message["objectiveValue"]
             solverTime = message["solverTime"]
+    return CASE_NAME, MODEL_NAME, modelStatus, solverStatus, objectiveValue, solverTime
 
-if __name__ == '__main__':
-    # Ejecutar la función con un límite de tiempo de 10 segundos
-    executeWithTimeLimit(EXECUTION_TIME)
-    generator = TraceFileGenerator("output.trc")
-    generator.write_trace_record(CASE_NAME, MODEL_NAME, modelStatus, solverStatus, objectiveValue, solverTime)
+# if __name__ == '__main__':
+#     executeWithTimeLimit(EXECUTION_TIME)
+#     generator = TraceFileGenerator("output.trc")
+#     generator.write_trace_record(CASE_NAME, MODEL_NAME, modelStatus, solverStatus, objectiveValue, solverTime)
