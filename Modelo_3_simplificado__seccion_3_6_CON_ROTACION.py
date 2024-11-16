@@ -2,7 +2,7 @@ import cplex
 from cplex.exceptions import CplexSolverError
 import multiprocessing
 import time
-from Position_generator_modelo_3 import *
+from Position_generator import generatePositionsCidGarcia, createCMatrix
 from Utils.Model_Functions import *
 from Config import *
 
@@ -15,13 +15,15 @@ w = ITEM_WIDTH # Ancho del item
 h = ITEM_HEIGHT  # Alto del item
 
 I = range(ITEMS_QUANTITY)  # Conjunto de items
-J = generate_positions2_without_rotation(W, H, w, h)  # Posiciones sin rotación
+# J = generate_positions2_without_rotation(W, H, w, h)  # Posiciones sin rotación
+J = generatePositionsCidGarcia(W, H, w, h)  # Posiciones sin rotación
 
-J_rot = generate_positions2_without_rotation(W, H, h, w)  # Posiciones con rotación de 90 grados
+# J_rot = generate_positions2_without_rotation(W, H, h, w)  # Posiciones con rotación de 90 grados
+J_rot = generatePositionsCidGarcia(W, H, h, w)  # Posiciones con rotación de 90 grados
 
 P = [(x, y) for x in range(W) for y in range(H)]  # Puntos del bin
-C = create_C_matrix(W, H, J, w, h, P)  # Matriz C para posiciones sin rotación
-C_rot = create_C_matrix(W, H, J_rot, h, w, P)  # Matriz C para posiciones rotadas
+C = createCMatrix(W, H, J, w, h, P)  # Matriz C para posiciones sin rotación
+C_rot = createCMatrix(W, H, J_rot, h, w, P)  # Matriz C para posiciones rotadas
 
 # Conjunto de posiciones válidas por ítem
 T = J

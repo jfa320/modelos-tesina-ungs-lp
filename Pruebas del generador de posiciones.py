@@ -1,4 +1,4 @@
-from Position_generator_modelo_3 import *
+from Position_generator import *
 
 L = 260  # Largo del contenedor
 A = 240   # Altura del contenedor
@@ -13,7 +13,7 @@ print("--------------------------------------------------------")
 
 
 # Constantes
-L, A, l, a = 3,3,2,3
+L, A, l, a = 4,4,2,2
 
 # Conjunto Q
 Q = {i * l + j * a for i in range(L // l + 1) for j in range(A // a + 1) if i * l + j * a <= L - a}
@@ -35,5 +35,5 @@ print("XY_y:", XY_y)
 
 print("------------------")
 
-print(generate_positions_without_rotation(L, A, l, a ))
+print(generatePositionsCidGarcia(L, A, l, a ))
 

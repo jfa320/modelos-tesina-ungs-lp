@@ -2,16 +2,15 @@ import cplex
 from cplex.exceptions import CplexSolverError
 import multiprocessing
 import time
-from Position_generator import generate_positions
+from Position_generator import generatePositionsCastro
 from Utils.Model_Functions import *
 from Config import *
 
 MODEL_NAME="Model2Pos1"
 
 # Generación de posiciones factibles para ítems y sus versiones rotadas
-SET_POS_X, SET_POS_Y, SET_POS_X_I, SET_POS_Y_I = generate_positions(BIN_WIDTH, BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT)
-SET_POS_X_I_ROT = [x for x in range(BIN_WIDTH) if x <= BIN_WIDTH - ITEM_HEIGHT]
-SET_POS_Y_I_ROT = [y for y in range(BIN_HEIGHT) if y <= BIN_HEIGHT - ITEM_WIDTH]
+SET_POS_X, SET_POS_Y, SET_POS_X_I, SET_POS_Y_I = generatePositionsCastro(BIN_WIDTH, BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT)
+SET_POS_X, SET_POS_Y, SET_POS_X_I_ROT, SET_POS_Y_I_ROT = generatePositionsCastro(BIN_WIDTH, BIN_HEIGHT, ITEM_HEIGHT, ITEM_WIDTH)
 
 QUANTITY_X_I = len(SET_POS_X_I)
 QUANTITY_Y_I = len(SET_POS_Y_I)

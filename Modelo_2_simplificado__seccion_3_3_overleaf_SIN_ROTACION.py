@@ -2,7 +2,7 @@ import cplex
 from cplex.exceptions import CplexSolverError
 import multiprocessing
 import time
-from Position_generator import generate_positions
+from Position_generator import generatePositionsCastro
 from Utils.Model_Functions import *
 from Config import *
 
@@ -16,7 +16,7 @@ MODEL_NAME="Model2Pos1"
 #SET_POS_X_I constante X_i en el modelo
 #SET_POS_Y_I constante Y_i en el modelo
 
-SET_POS_X, SET_POS_Y, SET_POS_X_I, SET_POS_Y_I = generate_positions(BIN_WIDTH, BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT)
+SET_POS_X, SET_POS_Y, SET_POS_X_I, SET_POS_Y_I = generatePositionsCastro(BIN_WIDTH, BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT)
 
 QUANTITY_X_I=len(SET_POS_X_I) #constante Q(X_i) del modelo
 QUANTITY_Y_I=len(SET_POS_Y_I) #constante Q(Y_i) del modelo

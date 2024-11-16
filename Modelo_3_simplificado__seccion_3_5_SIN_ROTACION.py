@@ -2,7 +2,7 @@ import cplex
 from cplex.exceptions import CplexSolverError
 import multiprocessing
 import time
-from Position_generator_modelo_3 import *
+from Position_generator import generatePositionsCidGarcia, createCMatrix
 from Utils.Model_Functions import *
 from Config import *
 
@@ -15,9 +15,10 @@ w = ITEM_WIDTH # Ancho del item
 h = ITEM_HEIGHT  # Alto del item
 
 I = range(ITEMS_QUANTITY)  # Conjunto de items
-J = generate_positions2_without_rotation(W, H, w, h) #posiciones
+#J = generate_positions2_without_rotation(W, H, w, h) #posiciones
+J = generatePositionsCidGarcia(W, H, w, h) #posiciones
 P = [(x, y) for x in range(W) for y in range(H)]  #puntos
-C = create_C_matrix(W, H, J,w,h,P)
+C = createCMatrix(W, H, J,w,h,P)
 
 # Conjunto de posiciones válidas por item 
 T = J

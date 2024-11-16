@@ -7,6 +7,8 @@ import Modelo_3_simplificado__seccion_3_6_CON_ROTACION
 
 from TraceFileGenerator import TraceFileGenerator
 
+#Setear caso a probar en archivo Config.py
+
 if __name__ == '__main__':
     EXECUTION_TIME = 2
     generator = TraceFileGenerator("output.trc")
