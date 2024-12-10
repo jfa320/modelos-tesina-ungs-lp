@@ -1,7 +1,10 @@
+import Item
+
 class Rebanada:
-    def __init__(self, alto, items):
+    def __init__(self, alto, items, posicionesOcupadas=None):
         self.set_alto(alto)
         self.set_items(items)
+        self.set_posicionesOcupadas(posicionesOcupadas or [])
 
     def set_alto(self, alto):
         if isinstance(alto, (int, float)) and alto > 0:
@@ -20,5 +23,38 @@ class Rebanada:
     def get_items(self):
         return self.__items
 
+    def contieneItem(self, item):
+        if not isinstance(item, Item):
+            raise TypeError("El parámetro debe ser un objeto de tipo Item.")
+        return item in self.__items
+
+    def set_posicionesOcupadas(self, posiciones):
+        if not isinstance(posiciones, list):
+            raise TypeError("Las posiciones ocupadas deben ser una lista.")
+        if not all(isinstance(pos, tuple) and len(pos) == 2 for pos in posiciones):
+            raise ValueError("Cada posición debe ser una tupla (x, y).")
+        self.__posicionesOcupadas = posiciones
+
+    def get_posicionesOcupadas(self):
+        return self.__posicionesOcupadas
+
+    def agregarPosicionOcupada(self, posicion):
+        if not isinstance(posicion, tuple) or len(posicion) != 2:
+            raise ValueError("La posición debe ser una tupla (x, y).")
+        if posicion not in self.__posicionesOcupadas:
+            self.__posicionesOcupadas.append(posicion)
+
+    def eliminarPosicionOcupada(self, posicion):
+        if not isinstance(posicion, tuple) or len(posicion) != 2:
+            raise ValueError("La posición debe ser una tupla (x, y).")
+        if posicion in self.__posicionesOcupadas:
+            self.__posicionesOcupadas.remove(posicion)
+
+    def posicionEstaOcupada(self, posicion):
+        if not isinstance(posicion, tuple) or len(posicion) != 2:
+            raise ValueError("La posición debe ser una tupla (x, y).")
+        return posicion in self.__posicionesOcupadas
+
     def __repr__(self):
-        return f"Rebanada(id={self.get_id()}, alto={self.get_alto()}, items={self.get_items()})"
+        return (f"Rebanada(alto={self.get_alto()}, items={self.get_items()}, "
+                f"posicionesOcupadas={self.get_posicionesOcupadas()})")
