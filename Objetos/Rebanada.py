@@ -28,14 +28,14 @@ class Rebanada:
             raise TypeError("El parámetro debe ser un objeto de tipo Item.")
         return item in self.__items
 
-    def set_posicionesOcupadas(self, posiciones):
+    def setPosicionesOcupadas(self, posiciones):
         if not isinstance(posiciones, list):
             raise TypeError("Las posiciones ocupadas deben ser una lista.")
         if not all(isinstance(pos, tuple) and len(pos) == 2 for pos in posiciones):
             raise ValueError("Cada posición debe ser una tupla (x, y).")
         self.__posicionesOcupadas = posiciones
 
-    def get_posicionesOcupadas(self):
+    def getPosicionesOcupadas(self):
         return self.__posicionesOcupadas
 
     def agregarPosicionOcupada(self, posicion):

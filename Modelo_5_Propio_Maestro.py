@@ -17,6 +17,7 @@ C_r = {}  # Cantidad de ítems en cada rebanada
 H_r = {}  # Alto de cada rebanada
 H_ab= {} # subconjunto de posiciones que inician en (a, b) para items en orientacion horizontal
 V_ab= {} # subconjunto de posiciones que inician en (a, b) para items en orientacion vertical
+R_r_xy={} # indica si la rebanada r con r ∈ R posee un item en la coordenada (x, y)
 
 # Crear instancia del problema
 model = cplex.Cplex()
@@ -47,30 +48,39 @@ for i in I:
     consSense="L"
     addConstraint(model,coefs,indexes,consRhs,consSense)
 
-model.solve()
+# Ejemplos de conjuntos:
+# H_(0,0)={(0,0),(1,0),(0,1),(1,1),(0,2),(1,2)}
+# V_(5,1)​={(5,1),(6,1)}
+# R_r_xy[1] = [(0, 0), (1, 0), (0, 1), (1, 1)] Coordenadas ocupadas en la rebanada 1
 
 # (2), (3), (4): No solapamiento
 for r in R:
-        for (a, b) in r.getPosicionesOcupadas(): #TODO
-            H_ab_positions = H_ab.get((a, b), [])
-            V_ab_positions = V_ab.get((a, b), [])
+    for (a, b) in R_r_xy[r]:
+        # Obtener posiciones horizontales y verticales
+        H_ab_positions = H_ab.get((a, b), [])
+        V_ab_positions = V_ab.get((a, b), [])
+        
+        # Restricción (2): No solapamiento horizontal
+        if H_ab_positions:
+            coeff = [1 if (x, y) in R_r_xy[r] else 0 for (x, y) in H_ab_positions]
+            vars = [f"p_{r}"] * len(H_ab_positions)
+            addConstraint(model, coeff, vars, rhs=1, sense="L")
+        
+        # Restricción (3): No solapamiento vertical
+        if V_ab_positions:
+            coeff = [1 if (x, y) in R_r_xy[r] else 0 for (x, y) in V_ab_positions]
+            vars = [f"p_{r}"] * len(V_ab_positions)
+            addConstraint(model, coeff, vars, rhs=1, sense="L")
+        
+        # Restricción (4): No solapamiento en intersección
+        overlap_positions = set(H_ab_positions) & set(V_ab_positions)
+        if overlap_positions:
+            coeff = [1 if (x, y) in R_r_xy[r] else 0 for (x, y) in overlap_positions]
+            vars = [f"p_{r}"] * len(overlap_positions)
+            addConstraint(model, coeff, vars, rhs=1, sense="L")
 
-            if H_ab_positions:
-                model.linear_constraints.add(
-                    lin_expr=[[H_ab_positions + [f"p_{r}"],
-                                   [1] * len(H_ab_positions) + [-1]]],
-                    senses="L",
-                    rhs=[0]
-                )
 
-            if V_ab_positions:
-                model.linear_constraints.add(
-                    lin_expr=[[V_ab_positions + [f"p_{r}"],
-                               [1] * len(V_ab_positions) + [-1]]],
-                    senses="L",
-                    rhs=[0]
-                )
-
+model.solve()
 # Obtener resultados
 estado = model.solution.get_status_string()
 print(f"Estado de la solución: {estado}")
