@@ -1,27 +1,32 @@
 import cplex
-from cplex.exceptions import CplexSolverError
 import multiprocessing
 import time
+from cplex.exceptions import CplexSolverError
 from Utils.Model_Functions import *
 from Config import *
 
 MODEL_NAME="Model5Master"
 
-#TODO: Refactor y ajustar estas constantes (moverlas a archivo?)
 
-# Constantes del problema
-H = 10  # Alto del bin (ejemplo)
-W = 10  # Ancho del bin (ejemplo)
-I = []  # Lista de ítems disponibles
-R = []  # Lista de rebanadas disponibles
-I_r = {}  # Diccionario con ítems en cada rebanada
-C_r = {}  # Cantidad de ítems en cada rebanada
-H_r = {}  # Alto de cada rebanada
-H_ab= {} # subconjunto de posiciones que inician en (a, b) para items en orientacion horizontal
-V_ab= {} # subconjunto de posiciones que inician en (a, b) para items en orientacion vertical
-R_r_xy={} # indica si la rebanada r con r ∈ R posee un item en la coordenada (x, y)
-
-def createAndSolveModel(queue,manualInterruption,maxTime):
+def createAndSolveMasterModel(queue,manualInterruption,maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,items,posXY_x,posXY_y):
+    H = altoBin  # Alto del bin 
+    W = anchoBin  # Ancho del bin
+    I = items  # Lista de ítems disponibles
+    R = rebanadas  # Lista de rebanadas disponibles
+    H_ab= {} # subconjunto de posiciones que inician en (a, b) para items en orientacion horizontal.
+    for a, b in posXY_x:
+        H_ab[(a, b)] = [(x, y) for x in range(a, a + anchoItem) for y in range(b, b + altoItem)]
+        
+    V_ab= {} # subconjunto de posiciones que inician en (a, b) para items en orientacion vertical.
+    for a, b in posXY_y:
+        V_ab[(a, b)] = [(x, y) for x in range(a, a + altoItem) for y in range(b, b + anchoItem)]
+        
+    R_r_xy={} # indica si la rebanada r con r ∈ R posee un item en la coordenada (x, y)
+    
+    # Recorrer cada rebanada en R y llenar R_r_xy
+    for r_idx, rebanada in enumerate(R, start=0): 
+        R_r_xy[r_idx] = rebanada.getPosicionesOcupadas()
+        
     #valores por default para enviar a paver
     modelStatus, solverStatus, objectiveValue, solverTime = "1", "1", 0, 1
 
@@ -44,14 +49,14 @@ def createAndSolveModel(queue,manualInterruption,maxTime):
 
 
         # Función objetivo
-        coef_obj = [C_r[r] for r in R]  # Coeficientes de p_r en la función objetivo
+        coef_obj = [r.getTotalItems for r in R]  # Coeficientes de p_r en la función objetivo
         model.objective.set_sense(model.objective.sense.maximize)
         model.objective.set_linear(list(zip(p_r_names, coef_obj)))
 
 
         # Restricción 1: Un ítem no puede estar en más de una rebanada activa
         for i in I:
-            indexes = [p_r_names[r] for r in R if i in I_r[r]]
+            indexes = [p_r_names[r] for r in R if r.contieneItem(i)]
             coefs = [1] * len(indexes)
             consRhs=1.0
             consSense="L"
@@ -123,41 +128,3 @@ def createAndSolveModel(queue,manualInterruption,maxTime):
         handleSolverError(e, queue,solverTime)
 
 
-def executeWithTimeLimit(maxTime):
-    global modelStatus, solverStatus, objectiveValue, solverTime 
-    # Crear una cola para recibir los resultados del subproceso
-    queue = multiprocessing.Queue()
-
-    # Crear una variable compartida para manejar la interrupción manual
-    manualInterruption = multiprocessing.Value('b', True)
-
-    # Crear el subproceso que correrá la función
-    process = multiprocessing.Process(target=createAndSolveModel, args=(queue,manualInterruption,maxTime))
-
-    # Iniciar el subproceso
-    process.start()
-
-    initialTime = time.time()
-
-    # Monitorear la cola mientras el proceso está en ejecución
-    while process.is_alive():
-        if manualInterruption.value and time.time() - initialTime > maxTime:
-            print("Limit time reached. Aborting process.")
-            modelStatus="14" #valor en paver para marcar que el modelo no devolvio respuesta por error
-            solverStatus="4" #el solver finalizo la ejecucion del modelo
-            solverTime=maxTime
-            process.terminate()
-            process.join()
-            break
-        time.sleep(0.1)  # Evitar consumir demasiados recursos
-
-    # Imprimo resultados de la ejecucion que se guardan luego en el archivo trc para usar en paver
-    while not queue.empty():
-        message = queue.get()
-        if isinstance(message, dict):
-            print(message)
-            modelStatus = message["modelStatus"]
-            solverStatus = message["solverStatus"]
-            objectiveValue = message["objectiveValue"]
-            solverTime = message["solverTime"]
-    return CASE_NAME, MODEL_NAME, modelStatus, solverStatus, objectiveValue, solverTime

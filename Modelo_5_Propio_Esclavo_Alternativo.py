@@ -17,7 +17,7 @@ W = 10        # Ancho del bin
 H = 10        # Alto del bin
 P_star = [] # Soluciones duales, una lista con valores duales Y*_i
 
-def createAndSolveModel(queue,manualInterruption,maxTime):
+def createAndSolveSlaveModel(queue,manualInterruption,maxTime):
     #valores por default para enviar a paver
     modelStatus, solverStatus, objectiveValue, solverTime = "1", "1", 0, 1
     
@@ -109,7 +109,7 @@ def executeWithTimeLimit(maxTime):
     manualInterruption = multiprocessing.Value('b', True)
 
     # Crear el subproceso que correrá la función
-    process = multiprocessing.Process(target=createAndSolveModel, args=(queue,manualInterruption,maxTime))
+    process = multiprocessing.Process(target=createAndSolveSlaveModel, args=(queue,manualInterruption,maxTime))
 
     # Iniciar el subproceso
     process.start()

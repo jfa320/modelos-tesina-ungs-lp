@@ -1,0 +1,107 @@
+import math
+import multiprocessing
+import time
+from Objetos import Rebanada
+from Objetos import Item
+from Modelo_5_Propio_Maestro import * 
+
+# Parámetros iniciales TODO: ver donde reubicar esto (otro archivo?)
+numItems = 5  # Número de ítems en el problema
+altoBin = 10  # Altura total del bin
+anchoBin = 5  # Ancho total del bin
+numRebanadas = 3  # Número de rebanadas a generar
+altoItem=2
+anchoItem=2 
+
+def generarListaItems(numItems,altoItem,anchoItem):
+    listaItems=[]
+    for _ in range(numItems):
+        listaItems.append(Item(alto=altoItem, ancho=anchoItem))
+    return listaItems
+
+#TODO: corregir esto. Ubicar items en otro lado
+items= generarListaItems(numItems,altoItem,anchoItem)
+
+def generarRebanadas(altoBin, anchoBin, nRebanadas):
+    # tener en cuenta que en caso de haber remanente en la division, eso no se aprovecha en el bin (TODO: POSIBLE MEJORA)
+    altoRebanada = math.floor(altoBin / nRebanadas)  # Redondea hacia abajo
+    rebanadas = []
+
+    for _ in range(nRebanadas):
+        rebanada = Rebanada(
+            alto=altoRebanada,
+            ancho=anchoBin,  # Ancho constante para cada rebanada
+            items=[],  # Inicialmente vacía
+            posicionesOcupadas=[]
+        )
+        rebanadas.append(rebanada)
+
+    return rebanadas
+
+
+# Orquestador principal
+def orquestador(queue,manualInterruption,maxTime):
+    rebanadas = generarRebanadas(altoBin,anchoBin,numRebanadas)  # Inicialización con rebanadas básicas
+    
+    while True:
+        
+        # Resolver modelo maestro
+        solucion, precios_duales = createAndSolveMasterModel(queue,manualInterruption,maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,items)
+        print(f"Precios duales: {precios_duales}")
+        
+        # Resolver modelo esclavo
+        nueva_rebanada = resolverModeloEsclavo(precios_duales)
+        if nueva_rebanada is None:
+            print("No se encontraron nuevas rebanadas. Fin de la generación de columnas.")
+            break
+        
+        # Agregar nueva rebanada al maestro
+        print(f"Nueva rebanada encontrada: {nueva_rebanada}")
+        rebanadas.append(nueva_rebanada)
+        iteracion += 1
+    
+    print("Resolviendo modelo maestro final...")
+    solucion_final, _ = resolverModeloMaestro(rebanadas)
+    print(f"Solución final: {solucion_final}")
+
+
+
+
+def executeWithTimeLimit(maxTime):
+    global modelStatus, solverStatus, objectiveValue, solverTime 
+    # Crear una cola para recibir los resultados del subproceso
+    queue = multiprocessing.Queue()
+
+    # Crear una variable compartida para manejar la interrupción manual
+    manualInterruption = multiprocessing.Value('b', True)
+
+    # Crear el subproceso que correrá la función
+    process = multiprocessing.Process(target=orquestador, args=(queue,manualInterruption,maxTime))
+
+    # Iniciar el subproceso
+    process.start()
+
+    initialTime = time.time()
+
+    # Monitorear la cola mientras el proceso está en ejecución
+    while process.is_alive():
+        if manualInterruption.value and time.time() - initialTime > maxTime:
+            print("Limit time reached. Aborting process.")
+            modelStatus="14" #valor en paver para marcar que el modelo no devolvio respuesta por error
+            solverStatus="4" #el solver finalizo la ejecucion del modelo
+            solverTime=maxTime
+            process.terminate()
+            process.join()
+            break
+        time.sleep(0.1)  # Evitar consumir demasiados recursos
+
+    # Imprimo resultados de la ejecucion que se guardan luego en el archivo trc para usar en paver
+    while not queue.empty():
+        message = queue.get()
+        if isinstance(message, dict):
+            print(message)
+            modelStatus = message["modelStatus"]
+            solverStatus = message["solverStatus"]
+            objectiveValue = message["objectiveValue"]
+            solverTime = message["solverTime"]
+    return CASE_NAME, MODEL_NAME, modelStatus, solverStatus, objectiveValue, solverTime

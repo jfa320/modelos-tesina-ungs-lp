@@ -1,10 +1,11 @@
 import Item
 
 class Rebanada:
-    def __init__(self, alto, items, posicionesOcupadas=None):
+    def __init__(self, alto, ancho, items, posicionesOcupadas=None):
         self.set_alto(alto)
+        self.set_ancho(ancho)
         self.set_items(items)
-        self.set_posicionesOcupadas(posicionesOcupadas or [])
+        self.setPosicionesOcupadas(posicionesOcupadas or [])
 
     def set_alto(self, alto):
         if isinstance(alto, (int, float)) and alto > 0:
@@ -15,6 +16,15 @@ class Rebanada:
     def get_alto(self):
         return self.__alto
 
+    def set_ancho(self, ancho):
+        if isinstance(ancho, (int, float)) and ancho > 0:
+            self.__ancho = ancho
+        else:
+            raise ValueError("El ancho debe ser un número positivo.")
+
+    def get_ancho(self):
+        return self.__ancho
+
     def set_items(self, items):
         if not isinstance(items, list):
             raise TypeError("Los items deben ser una lista.")
@@ -22,6 +32,9 @@ class Rebanada:
 
     def get_items(self):
         return self.__items
+    
+    def getTotalItems(self):
+        return len(self.__items)
 
     def contieneItem(self, item):
         if not isinstance(item, Item):
@@ -56,5 +69,5 @@ class Rebanada:
         return posicion in self.__posicionesOcupadas
 
     def __repr__(self):
-        return (f"Rebanada(alto={self.get_alto()}, items={self.get_items()}, "
-                f"posicionesOcupadas={self.get_posicionesOcupadas()})")
+        return (f"Rebanada(alto={self.get_alto()}, ancho={self.get_ancho()}, "
+                f"items={self.get_items()}, posicionesOcupadas={self.getPosicionesOcupadas()})")
