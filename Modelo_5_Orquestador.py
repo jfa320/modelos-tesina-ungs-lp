@@ -4,6 +4,7 @@ import time
 from Objetos import Rebanada
 from Objetos import Item
 from Modelo_5_Propio_Maestro import * 
+from Modelo_5_Propio_Esclavo_Alternativo import * 
 
 # Parámetros iniciales TODO: ver donde reubicar esto (otro archivo?)
 numItems = 5  # Número de ítems en el problema
@@ -12,6 +13,8 @@ anchoBin = 5  # Ancho total del bin
 numRebanadas = 3  # Número de rebanadas a generar
 altoItem=2
 anchoItem=2 
+posXY_x={} #TODO: realizar llamado al generador de posiciones 
+posXY_y={} #TODO: realizar llamado al generador de posiciones
 
 def generarListaItems(numItems,altoItem,anchoItem):
     listaItems=[]
@@ -42,15 +45,24 @@ def generarRebanadas(altoBin, anchoBin, nRebanadas):
 # Orquestador principal
 def orquestador(queue,manualInterruption,maxTime):
     rebanadas = generarRebanadas(altoBin,anchoBin,numRebanadas)  # Inicialización con rebanadas básicas
-    
+
     while True:
+        # Creo modelo
+        #TODO: Aca podria mejorar evitando la creacion del modelo en cada vuelta.
+        # En su lugar, podria crear uno y luego agregar las columnas (rebanadas) nuevas
         
+        masterModel = createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,items, posXY_x, posXY_y)
         # Resolver modelo maestro
-        solucion, precios_duales = createAndSolveMasterModel(queue,manualInterruption,maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,items)
+        _ , precios_duales = solveMasterModel(masterModel, queue, manualInterruption)
         print(f"Precios duales: {precios_duales}")
         
+        # Crear modelo esclavo
+        #TODO: Revisar si el formato de precios_duales es el que manejo en el esclavo al realizar las pruebas
+        slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,items,precios_duales)
         # Resolver modelo esclavo
-        nueva_rebanada = resolverModeloEsclavo(precios_duales)
+        #TODO: REVISAR ESTO DE LA NUEVA REBANADA (26/12/2024)
+        nueva_rebanada = solveMasterModel(slaveModel,queue, manualInterruption)
+        
         if nueva_rebanada is None:
             print("No se encontraron nuevas rebanadas. Fin de la generación de columnas.")
             break
