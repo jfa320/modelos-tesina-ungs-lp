@@ -80,3 +80,25 @@ def createCMatrix(W, H, positions, w, h, points): #usado en los modelos
                     C[j, p] = 1
 
     return C
+
+#-------------------------------------------------------------------
+#Generador de posiciones para modelo 5 (nuevo)
+
+def generatePositionsXY(anchoBin, altoBin, anchoItem, altoItem):
+    # Constantes
+    W, H, w, h = anchoBin,altoBin,anchoItem,altoItem
+
+    # Conjunto Q (puntos posibles)
+    Q = {i * w + j * h for i in range(W // w + 1) for j in range(H // h + 1) if i * w + j * h <= W - h}
+    Q = sorted(Q)  # ordeno el conjunto
+
+
+    # Conjunto P (pares de posiciones)
+    P = {x for x in range(0, W - h + 1) if x in Q}
+
+    # Conjuntos que filtran P para que cumplan las condiciones de ancho y alto
+    XY_x = {(x, y) for x in P for y in P if x + w <= W and y + h <= H}
+
+    XY_y = {(x, y) for x in P for y in P if x + h <= W and y + w <= H}
+    
+    return XY_x, XY_y

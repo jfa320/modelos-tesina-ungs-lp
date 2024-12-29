@@ -3,27 +3,27 @@ import multiprocessing
 import time
 from Objetos import Rebanada
 from Objetos import Item
+from Position_generator import generatePositionsXY
 from Modelo_5_Propio_Maestro import * 
 from Modelo_5_Propio_Esclavo_Alternativo import * 
 
-# Parámetros iniciales TODO: ver donde reubicar esto (otro archivo?)
+# TODO: Parámetros iniciales, ver donde reubicar esto (otro archivo?)
 numItems = 5  # Número de ítems en el problema
 altoBin = 10  # Altura total del bin
 anchoBin = 5  # Ancho total del bin
 numRebanadas = 3  # Número de rebanadas a generar
 altoItem=2
 anchoItem=2 
-posXY_x={} #TODO: realizar llamado al generador de posiciones 
-posXY_y={} #TODO: realizar llamado al generador de posiciones
+posXY_x, posXY_y=generatePositionsXY(anchoBin,altoBin, anchoItem, altoItem)
 
+#TODO: corregir esto. Ubicar items en otro lado
 def generarListaItems(numItems, altoItem, anchoItem):
     return [Item(alto=altoItem, ancho=anchoItem) for _ in range(numItems)]
 
-#TODO: corregir esto. Ubicar items en otro lado
-items= generarListaItems(numItems,altoItem,anchoItem)
+items=generarListaItems(numItems,altoItem,anchoItem)
 
-def generarRebanadas(altoBin, anchoBin, nRebanadas):
-    # tener en cuenta que en caso de haber remanente en la division, eso no se aprovecha en el bin (TODO: POSIBLE MEJORA)
+def generarRebanadasIniciales(altoBin, anchoBin, nRebanadas):
+    # TODO: POSIBLE MEJORA, tener en cuenta que en caso de haber remanente en la division, eso no se aprovecha en el bin ()
     altoRebanada = math.floor(altoBin / nRebanadas)  # Redondea hacia abajo
     rebanadas = []
 
@@ -41,7 +41,7 @@ def generarRebanadas(altoBin, anchoBin, nRebanadas):
 
 # Orquestador principal
 def orquestador(queue,manualInterruption,maxTime):
-    rebanadas = generarRebanadas(altoBin,anchoBin,numRebanadas)  # Inicialización con rebanadas básicas
+    rebanadas = generarRebanadasIniciales(altoBin,anchoBin,numRebanadas)  # Inicialización con rebanadas básicas
 
     while True:
         # Creo modelo
@@ -59,7 +59,6 @@ def orquestador(queue,manualInterruption,maxTime):
         # Resolver modelo esclavo
         nueva_rebanada = solveSlaveModel(slaveModel,queue,manualInterruption,anchoBin,altoItem,anchoItem)
         
-        #TODO ver el criterio de parada
         if nueva_rebanada is None:
             print("No se encontraron nuevas rebanadas. Fin de la generación de columnas.")
             break
@@ -67,13 +66,10 @@ def orquestador(queue,manualInterruption,maxTime):
         # Agregar nueva rebanada al maestro
         print(f"Nueva rebanada encontrada: {nueva_rebanada}")
         rebanadas.append(nueva_rebanada)
-        iteracion += 1
     
     print("Resolviendo modelo maestro final...")
     solucion_final, _ = solveMasterModel(masterModel, queue, manualInterruption)
     print(f"Solución final: {solucion_final}")
-
-
 
 
 def executeWithTimeLimit(maxTime):
