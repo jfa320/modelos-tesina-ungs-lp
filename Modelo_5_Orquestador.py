@@ -16,11 +16,8 @@ anchoItem=2
 posXY_x={} #TODO: realizar llamado al generador de posiciones 
 posXY_y={} #TODO: realizar llamado al generador de posiciones
 
-def generarListaItems(numItems,altoItem,anchoItem):
-    listaItems=[]
-    for _ in range(numItems):
-        listaItems.append(Item(alto=altoItem, ancho=anchoItem))
-    return listaItems
+def generarListaItems(numItems, altoItem, anchoItem):
+    return [Item(alto=altoItem, ancho=anchoItem) for _ in range(numItems)]
 
 #TODO: corregir esto. Ubicar items en otro lado
 items= generarListaItems(numItems,altoItem,anchoItem)
@@ -60,9 +57,9 @@ def orquestador(queue,manualInterruption,maxTime):
         #TODO: Revisar si el formato de precios_duales es el que manejo en el esclavo al realizar las pruebas
         slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,items,precios_duales)
         # Resolver modelo esclavo
-        #TODO: REVISAR ESTO DE LA NUEVA REBANADA (26/12/2024)
-        nueva_rebanada = solveMasterModel(slaveModel,queue, manualInterruption)
+        nueva_rebanada = solveSlaveModel(slaveModel,queue,manualInterruption,anchoBin,altoItem,anchoItem)
         
+        #TODO ver el criterio de parada
         if nueva_rebanada is None:
             print("No se encontraron nuevas rebanadas. Fin de la generación de columnas.")
             break
@@ -73,7 +70,7 @@ def orquestador(queue,manualInterruption,maxTime):
         iteracion += 1
     
     print("Resolviendo modelo maestro final...")
-    solucion_final, _ = resolverModeloMaestro(rebanadas)
+    solucion_final, _ = solveMasterModel(masterModel, queue, manualInterruption)
     print(f"Solución final: {solucion_final}")
 
 

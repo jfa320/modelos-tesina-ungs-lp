@@ -1,9 +1,9 @@
 import cplex
 from cplex.exceptions import CplexSolverError
-import multiprocessing
-import time
 from Utils.Model_Functions import *
 from Config import *
+from Objetos import Rebanada
+from Objetos import Item
 
 MODEL_NAME="Model5SlaveAlternative"
 
@@ -16,6 +16,34 @@ MODEL_NAME="Model5SlaveAlternative"
 # W = 10        # Ancho del bin
 # H = 10        # Alto del bin
 # P_star = [] # Soluciones duales, una lista con valores duales Y*_i
+
+
+def construirItems(variableNames, variableValues, altoItem, anchoItem):
+    items = []
+    for name, value in zip(variableNames, variableValues):
+        if value > 0.5:  # Considerar solo las variables activas (a veces toma el 0.999 como un 1)
+            parts = name.split("_")
+            tipo, i = parts[0], int(parts[1])  # Obtener tipo (`onX` o `onY`) y el índice del ítem
+            
+            if tipo == "onX":  # Ítem no rotado
+                items.append(Item(alto=altoItem, ancho=anchoItem, rotado=False))
+            elif tipo == "onY":  # Ítem rotado
+                items.append(Item(alto=anchoItem, ancho=altoItem, rotado=True))
+    return items
+
+def construirPosicionesOcupadas(variableNames, variableValues):
+    posicionesOcupadas = []
+    for name, value in zip(variableNames, variableValues):
+        if value > 0.5:  # Considerar solo variables activas
+            parts = name.split("_")  # Dividir el nombre de la variable
+            x, y = int(parts[2]), int(parts[3])  # Extraer x e y
+            posicionesOcupadas.append((x, y))  # Agregar a la lista
+    return posicionesOcupadas
+
+def obtenerYMaximo(posicionesOcupadas):
+    if not posicionesOcupadas:
+        return None  # Manejar caso donde la lista esté vacía
+    return max(y for _, y in posicionesOcupadas)
 
 def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues):
     XY = set(XY_x).union(set(XY_y)) 
@@ -79,7 +107,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues):
         handleSolverError(e)
 
 
-def solveSlaveModel(model, queue, manualInterruption):
+def solveSlaveModel(model, queue, manualInterruption, anchoBin, altoItem, anchoItem):
     
     #valores por default para enviar a paver
     modelStatus, solverStatus, objectiveValue, solverTime = "1", "1", 0, 1
@@ -112,8 +140,16 @@ def solveSlaveModel(model, queue, manualInterruption):
             "objectiveValue": objectiveValue,
             "solverTime": solverTime
         })
+        variableNames = model.variables.get_names()
+        variableValues = model.solution.get_values()
+        items=construirItems(variableNames, variableValues, altoItem, anchoItem)
+        posicionesOcupadas=construirPosicionesOcupadas(variableNames, variableValues)
+        alto= obtenerYMaximo(posicionesOcupadas)
+        return Rebanada(alto, anchoBin, items , posicionesOcupadas)
     except CplexSolverError as e:
         handleSolverError(e, queue,solverTime)
+
+
 
 # TODO: borrar esto previo a las pruebas
 

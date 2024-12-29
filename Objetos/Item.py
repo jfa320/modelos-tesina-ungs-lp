@@ -1,5 +1,5 @@
 class Item:
-    def __init__(self, alto, ancho,rotado):
+    def __init__(self, alto, ancho,rotado=False):
         self.set_alto(alto)
         self.set_ancho(ancho)
         self.set_rotado(rotado)
