@@ -1,6 +1,4 @@
 import cplex
-import multiprocessing
-import time
 from cplex.exceptions import CplexSolverError
 from Utils.Model_Functions import *
 from Config import *
@@ -9,6 +7,7 @@ MODEL_NAME="Model5Master"
 
 
 def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,items,posXY_x,posXY_y):
+    print("IN - Create Master Model")
     H = altoBin  # Alto del bin 
     W = anchoBin  # Ancho del bin
     I = items  # Lista de ítems disponibles
@@ -36,59 +35,59 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
 
         # Variables
         # Variables p_r (binarias)
-        p_r_names = [f"p_{r}" for r in R]
+        p_r_names = [f"p_{r.getId()}" for r in R]
         model.variables.add(names=p_r_names, types=[model.variables.type.binary] * len(R))
 
         # Variables y_r (enteras)
-        y_r_names = [f"y_{r}" for r in R]
+        y_r_names = [f"y_{r.getId()}" for r in R]
         model.variables.add(names=y_r_names, types=[model.variables.type.integer] * len(R))
 
-
         # Función objetivo
-        coef_obj = [r.getTotalItems for r in R]  # Coeficientes de p_r en la función objetivo
+        coef_obj = [r.getTotalItems() for r in R]  # Coeficientes de p_r en la función objetivo
         model.objective.set_sense(model.objective.sense.maximize)
         model.objective.set_linear(list(zip(p_r_names, coef_obj)))
 
-
+        added_constraints = set()
         # Restricción 1: Un ítem no puede estar en más de una rebanada activa
         for i in I:
-            indexes = [p_r_names[r] for r in R if r.contieneItem(i)]
+            indexes = [p_r_names[r.getId()-1] for r in R if r.contieneItem(i)]
             coefs = [1] * len(indexes)
             consRhs=1.0
             consSense="L"
-            addConstraint(model,coefs,indexes,consRhs,consSense)
+            addConstraintSet(model,coefs,indexes,consRhs,consSense,added_constraints)
 
         # Ejemplos de conjuntos:
         # H_(0,0)={(0,0),(1,0),(0,1),(1,1),(0,2),(1,2)}
         # V_(5,1)​={(5,1),(6,1)}
         # R_r_xy[1] = [(0, 0), (1, 0), (0, 1), (1, 1)] Coordenadas ocupadas en la rebanada 1
-
         # (2), (3), (4): No solapamiento
         for r in R:
-            for (a, b) in R_r_xy[r]:
+            for (a, b) in R_r_xy[r.getId()-1]:
                 # Obtener posiciones horizontales y verticales
                 H_ab_positions = H_ab.get((a, b), [])
                 V_ab_positions = V_ab.get((a, b), [])
                 
                 # Restricción (2): No solapamiento horizontal
                 if H_ab_positions:
-                    coeff = [1 if (x, y) in R_r_xy[r] else 0 for (x, y) in H_ab_positions]
-                    vars = [f"p_{r}"] * len(H_ab_positions)
-                    addConstraint(model, coeff, vars, rhs=1, sense="L")
+                    coeff = [1 if (x, y) in R_r_xy[r.getId()-1] else 0 for (x, y) in H_ab_positions]
+                    vars = [f"p_{r.getId()}"] * len(H_ab_positions)
+                    addConstraintSet(model, coeff, vars, rhs=1, sense="L",added_constraints=added_constraints)
                 
                 # Restricción (3): No solapamiento vertical
                 if V_ab_positions:
-                    coeff = [1 if (x, y) in R_r_xy[r] else 0 for (x, y) in V_ab_positions]
-                    vars = [f"p_{r}"] * len(V_ab_positions)
-                    addConstraint(model, coeff, vars, rhs=1, sense="L")
+                    coeff = [1 if (x, y) in R_r_xy[r.getId()-1] else 0 for (x, y) in V_ab_positions]
+                    vars = [f"p_{r.getId()}"] * len(V_ab_positions)
+                    addConstraintSet(model, coeff, vars, rhs=1, sense="L",added_constraints=added_constraints)
                 
                 # Restricción (4): No solapamiento en intersección
                 overlap_positions = set(H_ab_positions) & set(V_ab_positions)
                 if overlap_positions:
                     coeff = [1 if (x, y) in R_r_xy[r] else 0 for (x, y) in overlap_positions]
                     vars = [f"p_{r}"] * len(overlap_positions)
-                    addConstraint(model, coeff, vars, rhs=1, sense="L")
-
+                    addConstraintSet(model, coeff, vars, rhs=1, sense="L",added_constraints=added_constraints)
+        
+        print("OUT - Create Master Model")
+        
         return model
     
     except CplexSolverError as e:
@@ -96,7 +95,7 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
 
 
 def solveMasterModel(model, queue, manualInterruption):
-    
+    print("IN - Solve Master Model")
     # valores por default para enviar a paver
     modelStatus, solverStatus, objectiveValue, solverTime = "1", "1", 0, 1
 
@@ -134,6 +133,7 @@ def solveMasterModel(model, queue, manualInterruption):
             "solverTime": solverTime
         })
         
+        print("OUT - Solve Master Model")
         return objectiveValue, dualValues
     
     except CplexSolverError as e:

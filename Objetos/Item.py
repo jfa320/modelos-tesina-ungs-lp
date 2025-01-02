@@ -15,7 +15,7 @@ class Item:
     
     def set_ancho(self, ancho):
         if isinstance(ancho, (int, float)) and ancho > 0:
-            self.__alto = ancho
+            self.__ancho = ancho
         else:
             raise ValueError("El ancho debe ser un número positivo.")
 
@@ -39,4 +39,4 @@ class Item:
         self.__rotado=not self.get_rotado()
 
     def __repr__(self):
-        return f"Item(alto={self.get_alto()}, ancho={self.get_ancho}, rotado={self.get_rotado})"
+        return f"Item(alto={self.get_alto()}, ancho={self.get_ancho()}, rotado={self.get_rotado()})"

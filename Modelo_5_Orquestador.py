@@ -3,16 +3,17 @@ import multiprocessing
 import time
 from Objetos import Rebanada
 from Objetos import Item
+
 from Position_generator import generatePositionsXY
 from Modelo_5_Propio_Maestro import * 
 from Modelo_5_Propio_Esclavo_Alternativo import * 
 
 # TODO: Parámetros iniciales, ver donde reubicar esto (otro archivo?)
-numItems = 5  # Número de ítems en el problema
-altoBin = 10  # Altura total del bin
-anchoBin = 5  # Ancho total del bin
-numRebanadas = 3  # Número de rebanadas a generar
-altoItem=2
+numItems = 6  # Número de ítems en el problema
+altoBin = 4  # Altura total del bin
+anchoBin = 6  # Ancho total del bin
+numRebanadas = 2  # Número de rebanadas a generar # TODO: ver esto, esta muy hardcoded
+altoItem=3
 anchoItem=2 
 posXY_x, posXY_y=generatePositionsXY(anchoBin,altoBin, anchoItem, altoItem)
 
@@ -22,26 +23,32 @@ def generarListaItems(numItems, altoItem, anchoItem):
 
 items=generarListaItems(numItems,altoItem,anchoItem)
 
-def generarRebanadasIniciales(altoBin, anchoBin, nRebanadas):
+def generarRebanadasIniciales(altoBin, anchoBin, nRebanadas, items):
     # TODO: POSIBLE MEJORA, tener en cuenta que en caso de haber remanente en la division, eso no se aprovecha en el bin ()
     altoRebanada = math.floor(altoBin / nRebanadas)  # Redondea hacia abajo
     rebanadas = []
 
-    for _ in range(nRebanadas):
+    for i in range(nRebanadas):
         rebanada = Rebanada(
             alto=altoRebanada,
             ancho=anchoBin,  # Ancho constante para cada rebanada
             items=[],  # Inicialmente vacía
             posicionesOcupadas=[]
         )
+        
+        # Agregar un ítem si está disponible
+        if i < len(items):  # Verificar si hay ítems restantes
+            item = items[i]
+            rebanada.appendItem(item)  
+            rebanada.appendPosicionOcupada((0, 0))  
+        
         rebanadas.append(rebanada)
 
     return rebanadas
 
-
 # Orquestador principal
 def orquestador(queue,manualInterruption,maxTime):
-    rebanadas = generarRebanadasIniciales(altoBin,anchoBin,numRebanadas)  # Inicialización con rebanadas básicas
+    rebanadas = generarRebanadasIniciales(altoBin,anchoBin,numRebanadas,items)  # Inicialización con rebanadas básicas
 
     while True:
         # Creo modelo
@@ -74,6 +81,7 @@ def orquestador(queue,manualInterruption,maxTime):
 
 def executeWithTimeLimit(maxTime):
     global modelStatus, solverStatus, objectiveValue, solverTime 
+    
     # Crear una cola para recibir los resultados del subproceso
     queue = multiprocessing.Queue()
 

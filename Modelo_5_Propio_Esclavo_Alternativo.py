@@ -7,15 +7,6 @@ from Objetos import Item
 
 MODEL_NAME="Model5SlaveAlternative"
 
-# Constantes y conjuntos
-# XY_x = []  # Conjunto de posiciones (x, y) para ítems "acostados"
-# XY_y = []  # Conjunto de posiciones (x, y) para ítems "parados"
-# I = []      # Conjunto de ítems
-# w = 5        # Ancho del ítem
-# h = 5        # Alto del ítem
-# W = 10        # Ancho del bin
-# H = 10        # Alto del bin
-# P_star = [] # Soluciones duales, una lista con valores duales Y*_i
 EPSILON = 1e-6
 
 def construirItems(variableNames, variableValues, altoItem, anchoItem):
@@ -45,7 +36,8 @@ def obtenerYMaximo(posicionesOcupadas):
         return None  # Manejar caso donde la lista esté vacía
     return max(y for _, y in posicionesOcupadas)
 
-def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues):
+def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues):    
+    print("IN - Create Slave Model")
     XY = set(XY_x).union(set(XY_y)) 
     I = items  # Lista de ítems disponibles
     P_star=dualValues
@@ -101,14 +93,14 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues):
                 vars.append(f"onY_{i}_{x}_{y}")
                 coefficients.append(1)
             addConstraint(model, coefficients, vars,1,"L")
-            
+        print("OUT - Create Slave Model")    
         return model
     except CplexSolverError as e:
         handleSolverError(e)
 
 
 def solveSlaveModel(model, queue, manualInterruption, anchoBin, altoItem, anchoItem):
-    
+    print("IN - Solve Slave Model")
     #valores por default para enviar a paver
     modelStatus, solverStatus, objectiveValue, solverTime = "1", "1", 0, 1
     
@@ -149,6 +141,7 @@ def solveSlaveModel(model, queue, manualInterruption, anchoBin, altoItem, anchoI
         if objectiveValue < EPSILON:
             print("El valor objetivo del esclavo es insignificante. Fin del proceso.")
             return None
+        print("OUT - Solve Slave Model")
         return Rebanada(alto, anchoBin, items , posicionesOcupadas)
     except CplexSolverError as e:
         handleSolverError(e, queue,solverTime)
