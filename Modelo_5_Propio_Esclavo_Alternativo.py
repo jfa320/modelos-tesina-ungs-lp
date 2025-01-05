@@ -41,7 +41,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues):
     XY = set(XY_x).union(set(XY_y)) 
     I = items  # Lista de ítems disponibles
     P_star=dualValues
-
+    print(f"P_star: {P_star}")
     try:
         # Crear el modelo
         model = cplex.Cplex()
@@ -56,16 +56,16 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues):
 
         # Función objetivo
         variablesNames = []
-        objCoeffs = []        
+        objCoeffs = []      
         for i in I:
             for (x, y) in XY_x:
                 var_name = f"onX_{i}_{x}_{y}"
                 variablesNames.append(var_name)
-                objCoeffs.append(P_star[i])
+                objCoeffs.append(P_star[i.getId()-1])
             for (x, y) in XY_y:
                 var_name = f"onY_{i}_{x}_{y}"
                 variablesNames.append(var_name)
-                objCoeffs.append(P_star[i])
+                objCoeffs.append(P_star[i.getId()-1])
 
         addVariables(model,variablesNames,objCoeffs,"B")
 

@@ -54,7 +54,7 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
             coefs = [1] * len(indexes)
             consRhs=1.0
             consSense="L"
-            addConstraintSet(model,coefs,indexes,consRhs,consSense,added_constraints)
+            addConstraintSet(model,coefs,indexes,consRhs,consSense,added_constraints,f"consItem_{i.getId()}")
 
         # Ejemplos de conjuntos:
         # H_(0,0)={(0,0),(1,0),(0,1),(1,1),(0,2),(1,2)}
@@ -82,8 +82,8 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
                 # Restricción (4): No solapamiento en intersección
                 overlap_positions = set(H_ab_positions) & set(V_ab_positions)
                 if overlap_positions:
-                    coeff = [1 if (x, y) in R_r_xy[r] else 0 for (x, y) in overlap_positions]
-                    vars = [f"p_{r}"] * len(overlap_positions)
+                    coeff = [1 if (x, y) in R_r_xy[r.getId()-1] else 0 for (x, y) in overlap_positions]
+                    vars = [f"p_{r.getId()}"] * len(overlap_positions)
                     addConstraintSet(model, coeff, vars, rhs=1, sense="L",added_constraints=added_constraints)
         
         print("OUT - Create Master Model")
@@ -94,7 +94,7 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
         handleSolverError(e)
 
 
-def solveMasterModel(model, queue, manualInterruption):
+def solveMasterModel(model, queue, manualInterruption, items):
     print("IN - Solve Master Model")
     # valores por default para enviar a paver
     modelStatus, solverStatus, objectiveValue, solverTime = "1", "1", 0, 1
@@ -103,10 +103,17 @@ def solveMasterModel(model, queue, manualInterruption):
         # Desactivar la interrupción manual aquí
         initialTime = model.get_time()
         manualInterruption.value = False
+        # relajo el modelo
+        model.set_problem_type(cplex.Cplex.problem_type.LP)
         # Resolver el modelo
         model.solve()
         objectiveValue = model.solution.get_objective_value()
         # Obtener los valores duales de las restricciones
+        relevantNames = [f"consItem_{i+1}" for i in range(len(items))] 
+        # relevantIndexes = [model.linear_constraints.get_indices(name) for name in relevantNames]
+        for name in relevantNames:
+            print(model.linear_constraints.get_indices(name))
+        
         dualValues = model.solution.get_dual_values()
 
         # Imprimir resultados

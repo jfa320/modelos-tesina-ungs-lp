@@ -1,9 +1,22 @@
 class Item:
+    _id_counter = 1
+    
     def __init__(self, alto, ancho,rotado=False):
+        self.setId(Item._id_counter)
+        Item._id_counter += 1
         self.set_alto(alto)
         self.set_ancho(ancho)
         self.set_rotado(rotado)
 
+    def setId(self, id):
+        if isinstance(id, int) and id > 0:
+            self.__id = id
+        else:
+            raise ValueError("El id debe ser un número entero positivo.")
+
+    def getId(self):
+        return self.__id
+    
     def set_alto(self, alto):
         if isinstance(alto, (int, float)) and alto > 0:
             self.__alto = alto

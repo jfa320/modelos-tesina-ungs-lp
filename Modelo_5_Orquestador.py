@@ -57,9 +57,11 @@ def orquestador(queue,manualInterruption,maxTime):
         
         masterModel = createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,items, posXY_x, posXY_y)
         # Resolver modelo maestro
-        _ , precios_duales = solveMasterModel(masterModel, queue, manualInterruption)
+        _ , precios_duales = solveMasterModel(masterModel, queue, manualInterruption, items)
         print(f"Precios duales: {precios_duales}")
-        
+        #TODO: borrar este hardcodeo
+        precios_duales=[2.0, 1.0]
+        print(f"Precios duales: {precios_duales}")
         # Crear modelo esclavo
         #TODO: Revisar si el formato de precios_duales es el que manejo en el esclavo al realizar las pruebas
         slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,items,precios_duales)
@@ -75,7 +77,7 @@ def orquestador(queue,manualInterruption,maxTime):
         rebanadas.append(nueva_rebanada)
     
     print("Resolviendo modelo maestro final...")
-    solucion_final, _ = solveMasterModel(masterModel, queue, manualInterruption)
+    solucion_final, _ = solveMasterModel(masterModel, queue, manualInterruption, items)
     print(f"Solución final: {solucion_final}")
 
 
