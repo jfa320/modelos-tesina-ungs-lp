@@ -9,10 +9,10 @@ from Modelo_5_Propio_Maestro import *
 from Modelo_5_Propio_Esclavo_Alternativo import * 
 
 # TODO: Parámetros iniciales, ver donde reubicar esto (otro archivo?)
-numItems = 6  # Número de ítems en el problema
+numItems = 3  # Número de ítems en el problema
 altoBin = 4  # Altura total del bin
 anchoBin = 6  # Ancho total del bin
-numRebanadas = 2  # Número de rebanadas a generar # TODO: ver esto, esta muy hardcoded
+numRebanadas = 4  # Número de rebanadas a generar # TODO: ver esto, esta muy hardcoded
 altoItem=3
 anchoItem=2 
 posXY_x, posXY_y=generatePositionsXY(anchoBin,altoBin, anchoItem, altoItem)
@@ -61,7 +61,7 @@ def orquestador(queue,manualInterruption,maxTime):
         print(f"Precios duales: {precios_duales}")
         #TODO: borrar este hardcodeo
         precios_duales=[2.0, 1.0]
-        print(f"Precios duales: {precios_duales}")
+        print(f"Precios duales hard: {precios_duales}")
         # Crear modelo esclavo
         #TODO: Revisar si el formato de precios_duales es el que manejo en el esclavo al realizar las pruebas
         slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,items,precios_duales)

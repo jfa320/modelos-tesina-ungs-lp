@@ -51,10 +51,10 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
         # Restricción 1: Un ítem no puede estar en más de una rebanada activa
         for i in I:
             indexes = [p_r_names[r.getId()-1] for r in R if r.contieneItem(i)]
-            coefs = [1] * len(indexes)
+            coeffs = [1] * len(indexes)
             consRhs=1.0
             consSense="L"
-            addConstraintSet(model,coefs,indexes,consRhs,consSense,added_constraints,f"consItem_{i.getId()}")
+            addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consItem_{i.getId()}")
 
         # Ejemplos de conjuntos:
         # H_(0,0)={(0,0),(1,0),(0,1),(1,1),(0,2),(1,2)}
@@ -86,6 +86,40 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
                     vars = [f"p_{r.getId()}"] * len(overlap_positions)
                     addConstraintSet(model, coeff, vars, rhs=1, sense="L",added_constraints=added_constraints)
         
+        # Generación del conjunto de posiciones válidas
+        posicionesValidas = set()  # Usamos un conjunto para evitar duplicados
+
+        # Unimos todas las posiciones de H_a,b y V_a,b para cada (a, b)
+        for (a, b) in H_ab.keys():  # Iteramos sobre todas las claves de H_a,b
+            posicionesValidas.update(H_ab[(a, b)])  # Agregamos las posiciones horizontales
+        for (a, b) in V_ab.keys():  # Iteramos sobre todas las claves de V_a,b
+            posicionesValidas.update(V_ab[(a, b)])  # Agregamos las posiciones verticales
+
+        # Convertimos el conjunto a una lista si se necesita orden específico
+        posicionesValidas = list(posicionesValidas)
+        print("pos: ",posicionesValidas)
+        print("aca: ",R_r_xy)
+        # Generación de la restricción en CPLEX
+        for (a, b) in posicionesValidas:  # Iteramos sobre las posiciones válidas
+            restriccion = cplex.SparsePair()  # Creamos una nueva restricción
+            restriccion.ind = []  # Índices de las variables que participan en la restricción
+            restriccion.val = []  # Coeficientes correspondientes a esas variables
+
+            for r in R:  # Iteramos sobre cada rebanada
+                # Verificamos posiciones en H_{a,b}
+                for (x, y) in H_ab.get((a, b), []):  # Posiciones horizontales asociadas a (a, b)
+                    if (x, y) in R_r_xy[r.getId() - 1]:  # Si (x, y) está ocupado por la rebanada r
+                        restriccion.ind.append(p_r_names[r.getId()-1])  # Agregamos la variable p_r[r]
+                        restriccion.val.append(1)  # Coeficiente de la variable es 1 indicando que esa pos existe en r
+
+                # Verificamos posiciones en V_{a,b}
+                for (x, y) in V_ab.get((a, b), []):  # Posiciones verticales asociadas a (a, b)
+                    if (x, y) in R_r_xy[r.getId() - 1]:  # Si (x, y) está ocupado por la rebanada r
+                        restriccion.ind.append(p_r_names[r.getId()-1])  # Agregamos la variable p_r[r]
+                        restriccion.val.append(1)  # Coeficiente de la variable es 1 indicando que esa pos existe en r
+            
+            addConstraintSet(model, restriccion.val, restriccion.ind, rhs=1, sense="L",added_constraints=added_constraints)
+        
         print("OUT - Create Master Model")
         
         return model
@@ -98,6 +132,12 @@ def solveMasterModel(model, queue, manualInterruption, items):
     print("IN - Solve Master Model")
     # valores por default para enviar a paver
     modelStatus, solverStatus, objectiveValue, solverTime = "1", "1", 0, 1
+    
+    # Obtener la cantidad de restricciones
+    cantidad_restricciones = model.linear_constraints.get_num()
+
+    # Imprimir el resultado
+    print(f"Cantidad de restricciones: {cantidad_restricciones}")
 
     try:    
         # Desactivar la interrupción manual aquí
@@ -109,11 +149,6 @@ def solveMasterModel(model, queue, manualInterruption, items):
         model.solve()
         objectiveValue = model.solution.get_objective_value()
         # Obtener los valores duales de las restricciones
-        relevantNames = [f"consItem_{i+1}" for i in range(len(items))] 
-        # relevantIndexes = [model.linear_constraints.get_indices(name) for name in relevantNames]
-        for name in relevantNames:
-            print(model.linear_constraints.get_indices(name))
-        
         dualValues = model.solution.get_dual_values()
 
         # Imprimir resultados

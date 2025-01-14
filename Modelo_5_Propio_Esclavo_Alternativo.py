@@ -41,7 +41,6 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues):
     XY = set(XY_x).union(set(XY_y)) 
     I = items  # Lista de ítems disponibles
     P_star=dualValues
-    print(f"P_star: {P_star}")
     try:
         # Crear el modelo
         model = cplex.Cplex()
