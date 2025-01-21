@@ -5,7 +5,6 @@ def addVariables(model, varNames, objCoeffs, varType):
     model.variables.add(names=varNames, obj=objCoeffs, types=varType * len(varNames))
 
 def addConstraint(model, coeff, vars, rhs, sense,constraintName=None):
-    print("loco: ",cplex.SparsePair(vars, coeff))
     if(constraintName):
         model.linear_constraints.add(
             lin_expr=[cplex.SparsePair(vars, coeff)],
@@ -30,17 +29,13 @@ def addConstraintSet(model, coeff, vars, rhs, sense, added_constraints,constrain
         coeff, vars = (), ()
         
     new_constraint = (tuple(coeff), tuple(vars), rhs, sense)
-    print("added_constraints: ",added_constraints)
-    print("new_constraint: ",new_constraint)
-    # TODO: descomentar esta logica al arreglar error. Se observa que no se generan todos los valores duales por restriccion sin esto
+
     if new_constraint in added_constraints:
-        
         print(f"La restricción ya existe: {new_constraint}. No se agrega nuevamente.")
         return
     
     # Agregar la restricción al modelo
     if vars:
-        print(f"agrego restriccion nro: {len(added_constraints)+1}")
         addConstraint(model, coeff, vars, rhs, sense, constraintName)
         # Registrar la nueva restricción
         added_constraints.add(new_constraint)

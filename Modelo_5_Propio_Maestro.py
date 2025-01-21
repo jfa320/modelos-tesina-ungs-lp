@@ -97,28 +97,33 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
 
         # Convertimos el conjunto a una lista si se necesita orden específico
         posicionesValidas = list(posicionesValidas)
-        print("pos: ",posicionesValidas)
-        print("aca: ",R_r_xy)
+        print("pos: ", posicionesValidas)
+        print("aca: ", R_r_xy)
+        print("nombres: ", p_r_names)
+
         # Generación de la restricción en CPLEX
         for (a, b) in posicionesValidas:  # Iteramos sobre las posiciones válidas
-            restriccion = cplex.SparsePair()  # Creamos una nueva restricción
-            restriccion.ind = []  # Índices de las variables que participan en la restricción
-            restriccion.val = []  # Coeficientes correspondientes a esas variables
+            coeficientes = {}  # Diccionario para consolidar coeficientes de cada p_r
 
             for r in R:  # Iteramos sobre cada rebanada
                 # Verificamos posiciones en H_{a,b}
                 for (x, y) in H_ab.get((a, b), []):  # Posiciones horizontales asociadas a (a, b)
                     if (x, y) in R_r_xy[r.getId() - 1]:  # Si (x, y) está ocupado por la rebanada r
-                        restriccion.ind.append(p_r_names[r.getId()-1])  # Agregamos la variable p_r[r]
-                        restriccion.val.append(1)  # Coeficiente de la variable es 1 indicando que esa pos existe en r
+                        var_name = p_r_names[r.getId() - 1]  # Nombre de la variable p_r[r]
+                        coeficientes[var_name] = coeficientes.get(var_name, 0) + 1  # Sumar contribución
 
                 # Verificamos posiciones en V_{a,b}
                 for (x, y) in V_ab.get((a, b), []):  # Posiciones verticales asociadas a (a, b)
                     if (x, y) in R_r_xy[r.getId() - 1]:  # Si (x, y) está ocupado por la rebanada r
-                        restriccion.ind.append(p_r_names[r.getId()-1])  # Agregamos la variable p_r[r]
-                        restriccion.val.append(1)  # Coeficiente de la variable es 1 indicando que esa pos existe en r
+                        var_name = p_r_names[r.getId() - 1]  # Nombre de la variable p_r[r]
+                        coeficientes[var_name] = coeficientes.get(var_name, 0) + 1  # Sumar contribución
+
+            # Crear SparsePair consolidado
+            restriccion = cplex.SparsePair()
+            restriccion.ind = list(coeficientes.keys())  # Variables involucradas
+            restriccion.val = list(coeficientes.values())  # Coeficientes consolidados
             
-            addConstraintSet(model, restriccion.val, restriccion.ind, rhs=1, sense="L",added_constraints=added_constraints)
+            addConstraintSet(model,  restriccion.val, restriccion.ind , rhs=1, sense="L",added_constraints=added_constraints)
         
         print("OUT - Create Master Model")
         

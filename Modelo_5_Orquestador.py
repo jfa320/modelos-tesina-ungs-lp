@@ -60,8 +60,8 @@ def orquestador(queue,manualInterruption,maxTime):
         _ , precios_duales = solveMasterModel(masterModel, queue, manualInterruption, items)
         print(f"Precios duales: {precios_duales}")
         #TODO: borrar este hardcodeo
-        precios_duales=[2.0, 1.0]
-        print(f"Precios duales hard: {precios_duales}")
+        # precios_duales=[2.0, 1.0]
+        # print(f"Precios duales hard: {precios_duales}")
         # Crear modelo esclavo
         #TODO: Revisar si el formato de precios_duales es el que manejo en el esclavo al realizar las pruebas
         slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,items,precios_duales)

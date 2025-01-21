@@ -37,6 +37,7 @@ def obtenerYMaximo(posicionesOcupadas):
     return max(y for _, y in posicionesOcupadas)
 
 def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues):    
+    print("--------------------------------------------------------------------------------------------------------------------")
     print("IN - Create Slave Model")
     XY = set(XY_x).union(set(XY_y)) 
     I = items  # Lista de ítems disponibles
@@ -49,7 +50,8 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues):
 
         model.parameters.timelimit.set(maxTime)
         initialTime=model.get_time()
-
+        added_constraints = set()
+        
         # Configurar como un problema de maximización
         model.objective.set_sense(model.objective.sense.maximize)
 
@@ -70,28 +72,44 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues):
 
         # Restricción 1: No solapamiento de ítems
         for (x, y) in XY:
-            vars = []
-            coefficients = []
+            coeficientes = {}  # Diccionario para consolidar coeficientes de las variables
+
             for i in I:
-                if (x, y) in XY_x:
-                    vars.append(f"onX_{i}_{x}_{y}")
-                    coefficients.append(1)
-                if (x, y) in XY_y:
-                    vars.append(f"onY_{i}_{x}_{y}")
-                    coefficients.append(1)
-            addConstraint(model, coefficients, vars, 1,"L")
+                if (x, y) in XY_x:  # Si la posición está en XY_x
+                    var_name = f"onX_{i}_{x}_{y}"
+                    coeficientes[var_name] = coeficientes.get(var_name, 0) + 1
+
+                if (x, y) in XY_y:  # Si la posición está en XY_y
+                    var_name = f"onY_{i}_{x}_{y}"
+                    coeficientes[var_name] = coeficientes.get(var_name, 0) + 1
+
+            # Crear listas de variables y coeficientes consolidados
+            vars = list(coeficientes.keys())
+            coefficients = list(coeficientes.values())
+
+            # Agregar restricción al modelo
+            addConstraintSet(model, coefficients, vars, rhs=1, sense="L", added_constraints=added_constraints)
+
 
         # Restricción 2: Un ítem no puede estar acostado y parado al mismo tiempo
         for i in I:
-            vars = []
-            coefficients = []
-            for (x, y) in XY_x:
-                vars.append(f"onX_{i}_{x}_{y}")
-                coefficients.append(1)
-            for (x, y) in XY_y:
-                vars.append(f"onY_{i}_{x}_{y}")
-                coefficients.append(1)
-            addConstraint(model, coefficients, vars,1,"L")
+            coeficientes = {}  # Diccionario para consolidar coeficientes de las variables
+
+            for (x, y) in XY_x:  # Posiciones en XY_x
+                var_name = f"onX_{i}_{x}_{y}"
+                coeficientes[var_name] = coeficientes.get(var_name, 0) + 1
+
+            for (x, y) in XY_y:  # Posiciones en XY_y
+                var_name = f"onY_{i}_{x}_{y}"
+                coeficientes[var_name] = coeficientes.get(var_name, 0) + 1
+
+            # Crear listas de variables y coeficientes consolidados
+            vars = list(coeficientes.keys())
+            coefficients = list(coeficientes.values())
+
+            # Agregar restricción al modelo
+            addConstraintSet(model, coefficients, vars, rhs=1, sense="L", added_constraints=added_constraints)
+
         print("OUT - Create Slave Model")    
         return model
     except CplexSolverError as e:
