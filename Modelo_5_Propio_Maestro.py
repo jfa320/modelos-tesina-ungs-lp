@@ -29,7 +29,7 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
     try:
         # Crear instancia del problema
         model = cplex.Cplex()
-        model.set_problem_type(cplex.Cplex.problem_type.LP) 
+        model.set_problem_type(cplex.Cplex.problem_type.MILP) 
 
         model.parameters.timelimit.set(maxTime)
 
@@ -55,7 +55,7 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
             consRhs=1.0
             consSense="L"
             addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consItem_{i.getId()}")
-
+        
         # Ejemplos de conjuntos:
         # H_(0,0)={(0,0),(1,0),(0,1),(1,1),(0,2),(1,2)}
         # V_(5,1)​={(5,1),(6,1)}
@@ -71,13 +71,13 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
                 if H_ab_positions:
                     coeff = [1 if (x, y) in R_r_xy[r.getId()-1] else 0 for (x, y) in H_ab_positions]
                     vars = [f"p_{r.getId()}"] * len(H_ab_positions)
-                    addConstraintSet(model, coeff, vars, rhs=1, sense="L",added_constraints=added_constraints)
+                    addConstraintSet(model, coeff, vars, rhs=1, sense="L",added_constraints=added_constraints, constraintName=f"consH_{a}_{b}")
                 
                 # Restricción (3): No solapamiento vertical
                 if V_ab_positions:
                     coeff = [1 if (x, y) in R_r_xy[r.getId()-1] else 0 for (x, y) in V_ab_positions]
                     vars = [f"p_{r.getId()}"] * len(V_ab_positions)
-                    addConstraintSet(model, coeff, vars, rhs=1, sense="L",added_constraints=added_constraints)
+                    addConstraintSet(model, coeff, vars, rhs=1, sense="L",added_constraints=added_constraints, constraintName=f"consV_{a}_{b}")
                 
                 # Restricción (4): No solapamiento en intersección
                 overlap_positions = set(H_ab_positions) & set(V_ab_positions)
@@ -85,6 +85,7 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
                     coeff = [1 if (x, y) in R_r_xy[r.getId()-1] else 0 for (x, y) in overlap_positions]
                     vars = [f"p_{r.getId()}"] * len(overlap_positions)
                     addConstraintSet(model, coeff, vars, rhs=1, sense="L",added_constraints=added_constraints)
+       
         
         # Generación del conjunto de posiciones válidas
         posicionesValidas = set()  # Usamos un conjunto para evitar duplicados
@@ -97,10 +98,7 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
 
         # Convertimos el conjunto a una lista si se necesita orden específico
         posicionesValidas = list(posicionesValidas)
-        print("pos: ", posicionesValidas)
-        print("aca: ", R_r_xy)
-        print("nombres: ", p_r_names)
-
+        
         # Generación de la restricción en CPLEX
         for (a, b) in posicionesValidas:  # Iteramos sobre las posiciones válidas
             coeficientes = {}  # Diccionario para consolidar coeficientes de cada p_r
@@ -126,14 +124,14 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
             addConstraintSet(model,  restriccion.val, restriccion.ind , rhs=1, sense="L",added_constraints=added_constraints)
         
         print("OUT - Create Master Model")
-        
+         
         return model
     
     except CplexSolverError as e:
         handleSolverError(e)
 
 
-def solveMasterModel(model, queue, manualInterruption, items):
+def solveMasterModel(model, queue, manualInterruption, relajarModelo, items, posXY_x, posXY_y):
     print("IN - Solve Master Model")
     # valores por default para enviar a paver
     modelStatus, solverStatus, objectiveValue, solverTime = "1", "1", 0, 1
@@ -148,17 +146,23 @@ def solveMasterModel(model, queue, manualInterruption, items):
         # Desactivar la interrupción manual aquí
         initialTime = model.get_time()
         manualInterruption.value = False
-        # relajo el modelo
-        model.set_problem_type(cplex.Cplex.problem_type.LP)
+        
+        
+        if(relajarModelo):
+            # relajo el modelo
+            model.set_problem_type(cplex.Cplex.problem_type.LP)
+        
         # Resolver el modelo
         model.solve()
+            
         objectiveValue = model.solution.get_objective_value()
-        # Obtener los valores duales de las restricciones
-        dualValues = model.solution.get_dual_values()
+        
+        # Obtener valores duales
+        dualValues=getDualValues(model, items, posXY_x, posXY_y)
 
         # Imprimir resultados
         print("Optimal value:", objectiveValue)
-                
+        print("Dual values:", dualValues)        
         # #imprimo valor que toman las variables
         # for i, varName in enumerate(nVars):
         #     print(f"{varName} = {model.solution.get_values(varName)}")
@@ -179,9 +183,47 @@ def solveMasterModel(model, queue, manualInterruption, items):
             "objectiveValue": objectiveValue,
             "solverTime": solverTime
         })
+        # Obtener la cantidad de restricciones
         
         print("OUT - Solve Master Model")
-        return objectiveValue, dualValues
+        return objectiveValue,dualValues
     
     except CplexSolverError as e:
         handleSolverError(e, queue,solverTime)
+        
+
+def getDualValues(model, I, posXY_x, posXY_y):
+    
+    print("Extrayendo valores duales...")
+    # Inicializar diccionarios para cada componente de P_star
+    P_star = {"pi": {}, "lambda": {}, "mu": {}}
+    
+    # Obtener los valores duales de las restricciones
+    dualValues = model.solution.get_dual_values()
+    constraintNames=model.linear_constraints.get_names()
+    print("dual values ",dualValues)
+    # Recorrer las restricciones y mapear duales
+    for _, (name, dualValue) in enumerate(zip(constraintNames, dualValues)):
+        if name.startswith("consItem_"):
+            # Restricciones relacionadas a ítems
+            itemId = int(name.split("_")[1])  # Extraer el ID del ítem
+            P_star["pi"][itemId] = dualValue
+            print(f"Dual para ítem {itemId}: {dualValue}")
+        
+        elif name.startswith("consH_"):
+            # Restricciones relacionadas a posiciones horizontales
+            # Extraer las coordenadas x, y del nombre de la restricción
+            x, y = map(int, name.split("_")[1:])
+            pos = (x, y)  # Crear la tupla de posición
+            P_star["lambdaH"][pos] = dualValue
+            print(f"Dual para posición horizontal {pos}: {dualValue}")
+        
+        elif name.startswith("consV_"):
+            # Restricciones relacionadas a posiciones verticales
+            # Extraer las coordenadas x, y del nombre de la restricción
+            x, y = map(int, name.split("_")[1:])
+            pos = (x, y)  # Crear la tupla de posición
+            P_star["lambdaV"][pos] = dualValue
+            print(f"Dual para posición vertical {pos}: {dualValue}")
+        
+    return P_star

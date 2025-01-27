@@ -9,12 +9,12 @@ from Modelo_5_Propio_Maestro import *
 from Modelo_5_Propio_Esclavo_Alternativo import * 
 
 # TODO: Parámetros iniciales, ver donde reubicar esto (otro archivo?)
-numItems = 3  # Número de ítems en el problema
+numItems = 6  # Número de ítems en el problema
 altoBin = 4  # Altura total del bin
 anchoBin = 6  # Ancho total del bin
-numRebanadas = 4  # Número de rebanadas a generar # TODO: ver esto, esta muy hardcoded
 altoItem=3
 anchoItem=2 
+numRebanadas = 4  # Número de rebanadas a generar # TODO: ver esto, esta muy hardcoded
 posXY_x, posXY_y=generatePositionsXY(anchoBin,altoBin, anchoItem, altoItem)
 
 #TODO: corregir esto. Ubicar items en otro lado
@@ -57,7 +57,7 @@ def orquestador(queue,manualInterruption,maxTime):
         
         masterModel = createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,items, posXY_x, posXY_y)
         # Resolver modelo maestro
-        _ , precios_duales = solveMasterModel(masterModel, queue, manualInterruption, items)
+        _ , precios_duales = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=True, items=items, posXY_x=posXY_x, posXY_y= posXY_y)
         print(f"Precios duales: {precios_duales}")
         #TODO: borrar este hardcodeo
         # precios_duales=[2.0, 1.0]
@@ -77,7 +77,7 @@ def orquestador(queue,manualInterruption,maxTime):
         rebanadas.append(nueva_rebanada)
     
     print("Resolviendo modelo maestro final...")
-    solucion_final, _ = solveMasterModel(masterModel, queue, manualInterruption, items)
+    solucion_final, _ =  solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=True, items=items, posXY_x=posXY_x, posXY_y= posXY_y)
     print(f"Solución final: {solucion_final}")
 
 

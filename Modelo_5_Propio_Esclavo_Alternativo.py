@@ -56,17 +56,47 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues):
         model.objective.set_sense(model.objective.sense.maximize)
 
         # Función objetivo
+        # variablesNames = []
+        # objCoeffs = []
+        # print("aca: "+str(P_star))
+        # print("aca: "+str(I))      
+        # for i in I:
+        #     for (x, y) in XY_x:
+        #         var_name = f"onX_{i}_{x}_{y}"
+        #         variablesNames.append(var_name)
+        #         objCoeffs.append(P_star[i.getId()-1])
+        #     for (x, y) in XY_y:
+        #         var_name = f"onY_{i}_{x}_{y}"
+        #         variablesNames.append(var_name)
+        #         objCoeffs.append(P_star[i.getId()-1])
+        
+        # Función objetivo
         variablesNames = []
-        objCoeffs = []      
+        objCoeffs = []
+
+        # Crear las variables para ítems acostados
         for i in I:
             for (x, y) in XY_x:
                 var_name = f"onX_{i}_{x}_{y}"
                 variablesNames.append(var_name)
-                objCoeffs.append(P_star[i.getId()-1])
+                
+                # Coeficiente de la variable en la función objetivo
+                pi_i = P_star["pi"].get(i, 0)
+                lambda_xy = P_star["lambda"].get((x, y), 0)
+                coeff = pi_i - lambda_xy
+                objCoeffs.append(coeff)
+
+        # Crear las variables para ítems parados
+        for i in I:
             for (x, y) in XY_y:
                 var_name = f"onY_{i}_{x}_{y}"
                 variablesNames.append(var_name)
-                objCoeffs.append(P_star[i.getId()-1])
+                
+                # Coeficiente de la variable en la función objetivo
+                pi_i = P_star["pi"].get(i, 0)
+                mu_xy = P_star["mu"].get((x, y), 0)
+                coeff = pi_i - mu_xy
+                objCoeffs.append(coeff)
 
         addVariables(model,variablesNames,objCoeffs,"B")
 
