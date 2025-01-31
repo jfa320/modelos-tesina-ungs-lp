@@ -75,6 +75,7 @@ def orquestador(queue,manualInterruption,maxTime):
         rebanadas.append(nueva_rebanada)
     
     print("Resolviendo modelo maestro final...")
+    masterModel = createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,items, posXY_x, posXY_y)
     solucion_final, _ =  solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=False, items=items, posXY_x=posXY_x, posXY_y= posXY_y)
     print(f"Solución final: {solucion_final}")
 
@@ -112,7 +113,6 @@ def executeWithTimeLimit(maxTime):
     while not queue.empty():
         message = queue.get()
         if isinstance(message, dict):
-            print(message)
             modelStatus = message["modelStatus"]
             solverStatus = message["solverStatus"]
             objectiveValue = message["objectiveValue"]
