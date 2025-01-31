@@ -26,6 +26,7 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
     for r_idx, rebanada in enumerate(R, start=0): 
         R_r_xy[r_idx] = rebanada.getPosicionesOcupadas()
 
+    
     try:
         # Crear instancia del problema
         model = cplex.Cplex()
@@ -44,6 +45,7 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
 
         # Función objetivo
         coef_obj = [r.getTotalItems() for r in R]  # Coeficientes de p_r en la función objetivo
+    
         model.objective.set_sense(model.objective.sense.maximize)
         model.objective.set_linear(list(zip(p_r_names, coef_obj)))
 
@@ -54,6 +56,7 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
             coeffs = [1] * len(indexes)
             consRhs=1.0
             consSense="L"
+            print(f"Agregando restricción consItem_{i.getId()} con variables: {indexes} y coeficientes: {coeffs}")
             addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consItem_{i.getId()}")
         
         # Ejemplos de conjuntos:
@@ -84,7 +87,7 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
                 if overlap_positions:
                     coeff = [1 if (x, y) in R_r_xy[r.getId()-1] else 0 for (x, y) in overlap_positions]
                     vars = [f"p_{r.getId()}"] * len(overlap_positions)
-                    addConstraintSet(model, coeff, vars, rhs=1, sense="L",added_constraints=added_constraints)
+                    addConstraintSet(model, coeff, vars, rhs=1, sense="L",added_constraints=added_constraints, constraintName=f"consHV_{a}_{b}")
        
         
         # Generación del conjunto de posiciones válidas
@@ -121,7 +124,7 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
             restriccion.ind = list(coeficientes.keys())  # Variables involucradas
             restriccion.val = list(coeficientes.values())  # Coeficientes consolidados
             
-            addConstraintSet(model,  restriccion.val, restriccion.ind , rhs=1, sense="L",added_constraints=added_constraints)
+            addConstraintSet(model,  restriccion.val, restriccion.ind , rhs=1, sense="L",added_constraints=added_constraints, constraintName=f"consColisionRebanadas_{a}_{b}")
         
         print("OUT - Create Master Model")
          
@@ -149,20 +152,24 @@ def solveMasterModel(model, queue, manualInterruption, relajarModelo, items, pos
         
         
         if(relajarModelo):
-            # relajo el modelo
+            print("Relajando modelo...")
             model.set_problem_type(cplex.Cplex.problem_type.LP)
+        else:
+            print("NO RELAJO MODELO - QUEDA COMO MILP")
+            model.set_problem_type(cplex.Cplex.problem_type.MILP)
         
         # Resolver el modelo
         model.solve()
             
         objectiveValue = model.solution.get_objective_value()
-        
-        # Obtener valores duales
-        dualValues=getDualValues(model, items, posXY_x, posXY_y)
-
         # Imprimir resultados
         print("Optimal value:", objectiveValue)
-        print("Dual values:", dualValues)        
+        dualValues=None
+        if(relajarModelo):
+            # Obtener valores duales
+            dualValues=getDualValues(model, items, posXY_x, posXY_y)
+            print("Dual values:", dualValues)     
+            
         # #imprimo valor que toman las variables
         # for i, varName in enumerate(nVars):
         #     print(f"{varName} = {model.solution.get_values(varName)}")
@@ -225,5 +232,6 @@ def getDualValues(model, I, posXY_x, posXY_y):
             pos = (x, y)  # Crear la tupla de posición
             P_star["lambdaV"][pos] = dualValue
             print(f"Dual para posición vertical {pos}: {dualValue}")
+            
         
     return P_star

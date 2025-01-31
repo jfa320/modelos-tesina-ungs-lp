@@ -14,7 +14,7 @@ altoBin = 4  # Altura total del bin
 anchoBin = 6  # Ancho total del bin
 altoItem=3
 anchoItem=2 
-numRebanadas = 4  # Número de rebanadas a generar # TODO: ver esto, esta muy hardcoded
+numRebanadas = 1  # Número de rebanadas a generar # TODO: ver esto, esta muy hardcoded
 posXY_x, posXY_y=generatePositionsXY(anchoBin,altoBin, anchoItem, altoItem)
 
 #TODO: corregir esto. Ubicar items en otro lado
@@ -59,25 +59,23 @@ def orquestador(queue,manualInterruption,maxTime):
         # Resolver modelo maestro
         _ , precios_duales = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=True, items=items, posXY_x=posXY_x, posXY_y= posXY_y)
         print(f"Precios duales: {precios_duales}")
-        #TODO: borrar este hardcodeo
-        # precios_duales=[2.0, 1.0]
-        # print(f"Precios duales hard: {precios_duales}")
+        
         # Crear modelo esclavo
-        #TODO: Revisar si el formato de precios_duales es el que manejo en el esclavo al realizar las pruebas
         slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,items,precios_duales)
         # Resolver modelo esclavo
         nueva_rebanada = solveSlaveModel(slaveModel,queue,manualInterruption,anchoBin,altoItem,anchoItem)
-        
+        vueltaNro=1
+        print(f"Vuelta Nro: {vueltaNro}")
         if nueva_rebanada is None:
             print("No se encontraron nuevas rebanadas. Fin de la generación de columnas.")
             break
-        
+        vueltaNro+=1
         # Agregar nueva rebanada al maestro
         print(f"Nueva rebanada encontrada: {nueva_rebanada}")
         rebanadas.append(nueva_rebanada)
     
     print("Resolviendo modelo maestro final...")
-    solucion_final, _ =  solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=True, items=items, posXY_x=posXY_x, posXY_y= posXY_y)
+    solucion_final, _ =  solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=False, items=items, posXY_x=posXY_x, posXY_y= posXY_y)
     print(f"Solución final: {solucion_final}")
 
 

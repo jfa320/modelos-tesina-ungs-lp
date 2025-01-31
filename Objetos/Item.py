@@ -52,4 +52,4 @@ class Item:
         self.__rotado=not self.get_rotado()
 
     def __repr__(self):
-        return f"Item(alto={self.get_alto()}, ancho={self.get_ancho()}, rotado={self.get_rotado()})"
+        return f"Item(id={self.getId()},alto={self.get_alto()}, ancho={self.get_ancho()}, rotado={self.get_rotado()})"
