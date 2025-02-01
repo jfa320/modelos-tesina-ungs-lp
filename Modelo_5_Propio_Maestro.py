@@ -56,7 +56,6 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
             coeffs = [1] * len(indexes)
             consRhs=1.0
             consSense="L"
-            print(f"Agregando restricción consItem_{i.getId()} con variables: {indexes} y coeficientes: {coeffs}")
             addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consItem_{i.getId()}")
         
         # Ejemplos de conjuntos:
@@ -160,6 +159,7 @@ def solveMasterModel(model, queue, manualInterruption, relajarModelo, items, pos
         
         # Resolver el modelo
         model.solve()
+
             
         objectiveValue = model.solution.get_objective_value()
         # Imprimir resultados
@@ -168,7 +168,8 @@ def solveMasterModel(model, queue, manualInterruption, relajarModelo, items, pos
         if(relajarModelo):
             # Obtener valores duales
             dualValues=getDualValues(model, items, posXY_x, posXY_y)
-            print("Dual values:", dualValues)     
+            print("Dual values:", dualValues)    
+            
             
         # #imprimo valor que toman las variables
         # for i, varName in enumerate(nVars):
@@ -222,7 +223,7 @@ def getDualValues(model, I, posXY_x, posXY_y):
             # Extraer las coordenadas x, y del nombre de la restricción
             x, y = map(int, name.split("_")[1:])
             pos = (x, y)  # Crear la tupla de posición
-            P_star["lambdaH"][pos] = dualValue
+            P_star["lambda"][pos] = dualValue
             print(f"Dual para posición horizontal {pos}: {dualValue}")
         
         elif name.startswith("consV_"):
@@ -230,7 +231,7 @@ def getDualValues(model, I, posXY_x, posXY_y):
             # Extraer las coordenadas x, y del nombre de la restricción
             x, y = map(int, name.split("_")[1:])
             pos = (x, y)  # Crear la tupla de posición
-            P_star["lambdaV"][pos] = dualValue
+            P_star["mu"][pos] = dualValue
             print(f"Dual para posición vertical {pos}: {dualValue}")
             
         
