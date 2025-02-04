@@ -102,28 +102,48 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
         posicionesValidas = list(posicionesValidas)
         
         # Generación de la restricción en CPLEX
-        for (a, b) in posicionesValidas:  # Iteramos sobre las posiciones válidas
-            coeficientes = {}  # Diccionario para consolidar coeficientes de cada p_r
+        # for (a, b) in posicionesValidas:  # Iteramos sobre las posiciones válidas
+        #     coeficientes = {}  # Diccionario para consolidar coeficientes de cada p_r
 
-            for r in R:  # Iteramos sobre cada rebanada
-                # Verificamos posiciones en H_{a,b}
-                for (x, y) in H_ab.get((a, b), []):  # Posiciones horizontales asociadas a (a, b)
-                    if (x, y) in R_r_xy[r.getId() - 1]:  # Si (x, y) está ocupado por la rebanada r
-                        var_name = p_r_names[r.getId() - 1]  # Nombre de la variable p_r[r]
-                        coeficientes[var_name] = coeficientes.get(var_name, 0) + 1  # Sumar contribución
+        #     for r in R:  # Iteramos sobre cada rebanada
+        #         # Verificamos posiciones en H_{a,b}
+        #         for (x, y) in H_ab.get((a, b), []):  # Posiciones horizontales asociadas a (a, b)
+        #             if (x, y) in R_r_xy[r.getId() - 1]:  # Si (x, y) está ocupado por la rebanada r
+        #                 var_name = p_r_names[r.getId() - 1]  # Nombre de la variable p_r[r]
+        #                 coeficientes[var_name] = coeficientes.get(var_name, 0) + 1  # Sumar contribución
 
-                # Verificamos posiciones en V_{a,b}
-                for (x, y) in V_ab.get((a, b), []):  # Posiciones verticales asociadas a (a, b)
-                    if (x, y) in R_r_xy[r.getId() - 1]:  # Si (x, y) está ocupado por la rebanada r
-                        var_name = p_r_names[r.getId() - 1]  # Nombre de la variable p_r[r]
-                        coeficientes[var_name] = coeficientes.get(var_name, 0) + 1  # Sumar contribución
+        #         # Verificamos posiciones en V_{a,b}
+        #         for (x, y) in V_ab.get((a, b), []):  # Posiciones verticales asociadas a (a, b)
+        #             if (x, y) in R_r_xy[r.getId() - 1]:  # Si (x, y) está ocupado por la rebanada r
+        #                 var_name = p_r_names[r.getId() - 1]  # Nombre de la variable p_r[r]
+        #                 coeficientes[var_name] = coeficientes.get(var_name, 0) + 1  # Sumar contribución
 
-            # Crear SparsePair consolidado
-            restriccion = cplex.SparsePair()
-            restriccion.ind = list(coeficientes.keys())  # Variables involucradas
-            restriccion.val = list(coeficientes.values())  # Coeficientes consolidados
+        #     # Crear SparsePair consolidado
+        #     restriccion = cplex.SparsePair()
+        #     restriccion.ind = list(coeficientes.keys())  # Variables involucradas
+        #     restriccion.val = list(coeficientes.values())  # Coeficientes consolidados
             
-            addConstraintSet(model,  restriccion.val, restriccion.ind , rhs=1, sense="L",added_constraints=added_constraints, constraintName=f"consColisionRebanadas_{a}_{b}")
+        #     addConstraintSet(model,  restriccion.val, restriccion.ind , rhs=1, sense="L",added_constraints=added_constraints, constraintName=f"consColisionRebanadas_{a}_{b}")
+        
+        # Restricción para evitar colisiones de ítems entre distintas rebanadas
+        for (a, b) in posicionesValidas:
+            # Construir la suma de términos en la restricción
+            terms = []
+            coefs = []
+
+            for r in R:
+                for (x, y) in H_ab.get((a, b), []):  # Asegurar que H_a_b[(a,b)] existe
+                    if (x, y) in R_r_xy[r.getId()-1]:
+                        terms.append(f"p_{r.getId()}")
+                        coefs.append(1)
+
+                for (x, y) in V_ab.get((a, b), []):  # Asegurar que V_a_b[(a,b)] existe
+                    if (r, x, y) in R_r_xy:
+                        terms.append(f"p_{r.getId()}")
+                        coefs.append(1)
+            # Agregar la restricción al modelo: suma de términos ≤ 1
+            if terms:
+                addConstraintSet(model,  coefs, terms , rhs=1, sense="L",added_constraints=added_constraints, constraintName=f"consNoSolapamiento_{a}_{b}")
         
         print("OUT - Create Master Model")
          
@@ -138,12 +158,6 @@ def solveMasterModel(model, queue, manualInterruption, relajarModelo, items, pos
     # valores por default para enviar a paver
     modelStatus, solverStatus, objectiveValue, solverTime = "1", "1", 0, 1
     
-    # Obtener la cantidad de restricciones
-    cantidad_restricciones = model.linear_constraints.get_num()
-
-    # Imprimir el resultado
-    print(f"Cantidad de restricciones: {cantidad_restricciones}")
-
     try:    
         # Desactivar la interrupción manual aquí
         initialTime = model.get_time()

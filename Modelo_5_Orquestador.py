@@ -14,7 +14,7 @@ altoBin = 4  # Altura total del bin
 anchoBin = 6  # Ancho total del bin
 altoItem=3
 anchoItem=2 
-numRebanadas = 1  # Número de rebanadas a generar # TODO: ver esto, esta muy hardcoded
+numRebanadas = 4  # Número de rebanadas a generar # TODO: ver esto, esta muy hardcoded
 posXY_x, posXY_y=generatePositionsXY(anchoBin,altoBin, anchoItem, altoItem)
 
 #TODO: corregir esto. Ubicar items en otro lado
@@ -54,6 +54,7 @@ def orquestador(queue,manualInterruption,maxTime):
         # Creo modelo
         #TODO: Aca podria mejorar evitando la creacion del modelo en cada vuelta.
         # En su lugar, podria crear uno y luego agregar las columnas (rebanadas) nuevas
+        
         
         masterModel = createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,items, posXY_x, posXY_y)
         # Resolver modelo maestro
