@@ -126,7 +126,8 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
             addConstraintSet(model,  restriccion.val, restriccion.ind , rhs=1, sense="L",added_constraints=added_constraints, constraintName=f"consColisionRebanadas_{a}_{b}")
         
         print("OUT - Create Master Model")
-         
+        print("H_a,b: ",H_ab) 
+        print("V_a,b: ",V_ab) 
         return model
     
     except CplexSolverError as e:
