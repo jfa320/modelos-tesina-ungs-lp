@@ -6,6 +6,7 @@ from Config import *
 MODEL_NAME="Model5Master"
 
 
+# TODO: borrar si no es util este modelo
 def createMasterModelAlt(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,items,posXY_x,posXY_y):
     print("IN - Create Master Model")
     H = altoBin  # Alto del bin 
@@ -69,7 +70,7 @@ def createMasterModelAlt(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,i
                 lin_expr=[[[y_r_names[r.getId()-1]],[1]]],
                 senses=["L"],
                 rhs=[H-r.get_alto()],
-                names=[f"consH_{r}"]
+                names=[f"consH_{r.getId()}"]
             )
 
         
@@ -79,20 +80,22 @@ def createMasterModelAlt(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,i
             for r_ in R:
                 if r != r_:
                     model.linear_constraints.add(
-                        lin_expr=[
-                            [[[y_r_names[r.getId()-1], y_r_names[r_.getId()-1], f"z_{r.getId()}_{r_.getId()}"], [1, -1, M]]]
-                        ],
+                        lin_expr=[[
+                            [y_r_names[r.getId()-1], y_r_names[r_.getId()-1], f"z_{r.getId()}_{r_.getId()}"],  # Variables
+                            [1, -1, M]  # Coeficientes
+                        ]],
                         senses=["L"],
                         rhs=[M-r.get_alto()],
-                        names=[f"consV_{r}_{r_}_1"]
+                        names=[f"consV_{r.getId()}_{r_.getId()}_1"]
                     )
                     model.linear_constraints.add(
-                        lin_expr=[
-                            [[[y_r_names[r_.getId()-1], y_r_names[r.getId()-1], f"z_{r.getId()}_{r_.getId()}"], [1, -1,- M]]]
-                        ],
+                        lin_expr=[[
+                            [y_r_names[r_.getId()-1], y_r_names[r.getId()-1], f"z_{r.getId()}_{r_.getId()}"]
+                            , [1, -1, -M]
+                        ]],  
                         senses=["L"],
-                        rhs=[M-r_.get_alto()],
-                        names=[f"consV_{r}_{r_}_2"]
+                        rhs=[M - r_.get_alto()],
+                        names=[f"consV_{r.getId()}_{r_.getId()}_2"]
                     )
     
         for r in R:
@@ -168,91 +171,89 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
         # V_(5,1)​={(5,1),(6,1)}
         # R_r_xy[1] = [(0, 0), (1, 0), (0, 1), (1, 1)] Coordenadas ocupadas en la rebanada 1
         # (2), (3), (4): No solapamiento
-        for r in R:
-            for (a, b) in R_r_xy[r.getId()-1]:
-                # Obtener posiciones horizontales y verticales
-                H_ab_positions = H_ab.get((a, b), [])
-                V_ab_positions = V_ab.get((a, b), [])
+        # for r in R:
+        #     for (a, b) in R_r_xy[r.getId()-1]:
+        #         # Obtener posiciones horizontales y verticales
+        #         H_ab_positions = H_ab.get((a, b), [])
+        #         V_ab_positions = V_ab.get((a, b), [])
                 
-                # Restricción (2): No solapamiento horizontal
-                if H_ab_positions:
-                    coeff = [1 if (x, y) in R_r_xy[r.getId()-1] else 0 for (x, y) in H_ab_positions]
-                    vars = [f"p_{r.getId()}"] * len(H_ab_positions)
-                    addConstraintSet(model, coeff, vars, rhs=1, sense="L",added_constraints=added_constraints, constraintName=f"consH_{a}_{b}")
+        #         # Restricción (2): No solapamiento horizontal
+        #         if H_ab_positions:
+        #             coeff = [1 if (x, y) in R_r_xy[r.getId()-1] else 0 for (x, y) in H_ab_positions]
+        #             vars = [f"p_{r.getId()}"] * len(H_ab_positions)
+        #             addConstraintSet(model, coeff, vars, rhs=1, sense="L",added_constraints=added_constraints, constraintName=f"consH_{a}_{b}")
                 
-                # Restricción (3): No solapamiento vertical
-                if V_ab_positions:
-                    coeff = [1 if (x, y) in R_r_xy[r.getId()-1] else 0 for (x, y) in V_ab_positions]
-                    vars = [f"p_{r.getId()}"] * len(V_ab_positions)
-                    addConstraintSet(model, coeff, vars, rhs=1, sense="L",added_constraints=added_constraints, constraintName=f"consV_{a}_{b}")
+        #         # Restricción (3): No solapamiento vertical
+        #         if V_ab_positions:
+        #             coeff = [1 if (x, y) in R_r_xy[r.getId()-1] else 0 for (x, y) in V_ab_positions]
+        #             vars = [f"p_{r.getId()}"] * len(V_ab_positions)
+        #             addConstraintSet(model, coeff, vars, rhs=1, sense="L",added_constraints=added_constraints, constraintName=f"consV_{a}_{b}")
                 
-                # Restricción (4): No solapamiento en intersección
-                overlap_positions = set(H_ab_positions) & set(V_ab_positions)
-                if overlap_positions:
-                    coeff = [1 if (x, y) in R_r_xy[r.getId()-1] else 0 for (x, y) in overlap_positions]
-                    vars = [f"p_{r.getId()}"] * len(overlap_positions)
-                    addConstraintSet(model, coeff, vars, rhs=1, sense="L",added_constraints=added_constraints, constraintName=f"consHV_{a}_{b}")
+        #         # Restricción (4): No solapamiento en intersección
+        #         overlap_positions = set(H_ab_positions) & set(V_ab_positions)
+        #         if overlap_positions:
+        #             coeff = [1 if (x, y) in R_r_xy[r.getId()-1] else 0 for (x, y) in overlap_positions]
+        #             vars = [f"p_{r.getId()}"] * len(overlap_positions)
+        #             addConstraintSet(model, coeff, vars, rhs=1, sense="L",added_constraints=added_constraints, constraintName=f"consHV_{a}_{b}")
        
         
-        # Generación del conjunto de posiciones válidas
-        posicionesValidas = set()  # Usamos un conjunto para evitar duplicados
+        # # Generación del conjunto de posiciones válidas
+        # posicionesValidas = set()  # Usamos un conjunto para evitar duplicados
 
-        # Unimos todas las posiciones de H_a,b y V_a,b para cada (a, b)
-        for (a, b) in H_ab.keys():  # Iteramos sobre todas las claves de H_a,b
-            posicionesValidas.update(H_ab[(a, b)])  # Agregamos las posiciones horizontales
-        for (a, b) in V_ab.keys():  # Iteramos sobre todas las claves de V_a,b
-            posicionesValidas.update(V_ab[(a, b)])  # Agregamos las posiciones verticales
+        # # Unimos todas las posiciones de H_a,b y V_a,b para cada (a, b)
+        # for (a, b) in H_ab.keys():  # Iteramos sobre todas las claves de H_a,b
+        #     posicionesValidas.update(H_ab[(a, b)])  # Agregamos las posiciones horizontales
+        # for (a, b) in V_ab.keys():  # Iteramos sobre todas las claves de V_a,b
+        #     posicionesValidas.update(V_ab[(a, b)])  # Agregamos las posiciones verticales
 
-        # Convertimos el conjunto a una lista si se necesita orden específico
-        posicionesValidas = list(posicionesValidas)
+        # # Convertimos el conjunto a una lista si se necesita orden específico
+        # posicionesValidas = list(posicionesValidas)
         
-        # Generación de la restricción en CPLEX
-        # for (a, b) in posicionesValidas:  # Iteramos sobre las posiciones válidas
-        #     coeficientes = {}  # Diccionario para consolidar coeficientes de cada p_r
+        # # Generación de la restricción en CPLEX
+        # # for (a, b) in posicionesValidas:  # Iteramos sobre las posiciones válidas
+        # #     coeficientes = {}  # Diccionario para consolidar coeficientes de cada p_r
 
-        #     for r in R:  # Iteramos sobre cada rebanada
-        #         # Verificamos posiciones en H_{a,b}
-        #         for (x, y) in H_ab.get((a, b), []):  # Posiciones horizontales asociadas a (a, b)
-        #             if (x, y) in R_r_xy[r.getId() - 1]:  # Si (x, y) está ocupado por la rebanada r
-        #                 var_name = p_r_names[r.getId() - 1]  # Nombre de la variable p_r[r]
-        #                 coeficientes[var_name] = coeficientes.get(var_name, 0) + 1  # Sumar contribución
+        # #     for r in R:  # Iteramos sobre cada rebanada
+        # #         # Verificamos posiciones en H_{a,b}
+        # #         for (x, y) in H_ab.get((a, b), []):  # Posiciones horizontales asociadas a (a, b)
+        # #             if (x, y) in R_r_xy[r.getId() - 1]:  # Si (x, y) está ocupado por la rebanada r
+        # #                 var_name = p_r_names[r.getId() - 1]  # Nombre de la variable p_r[r]
+        # #                 coeficientes[var_name] = coeficientes.get(var_name, 0) + 1  # Sumar contribución
 
-        #         # Verificamos posiciones en V_{a,b}
-        #         for (x, y) in V_ab.get((a, b), []):  # Posiciones verticales asociadas a (a, b)
-        #             if (x, y) in R_r_xy[r.getId() - 1]:  # Si (x, y) está ocupado por la rebanada r
-        #                 var_name = p_r_names[r.getId() - 1]  # Nombre de la variable p_r[r]
-        #                 coeficientes[var_name] = coeficientes.get(var_name, 0) + 1  # Sumar contribución
+        # #         # Verificamos posiciones en V_{a,b}
+        # #         for (x, y) in V_ab.get((a, b), []):  # Posiciones verticales asociadas a (a, b)
+        # #             if (x, y) in R_r_xy[r.getId() - 1]:  # Si (x, y) está ocupado por la rebanada r
+        # #                 var_name = p_r_names[r.getId() - 1]  # Nombre de la variable p_r[r]
+        # #                 coeficientes[var_name] = coeficientes.get(var_name, 0) + 1  # Sumar contribución
 
-        #     # Crear SparsePair consolidado
-        #     restriccion = cplex.SparsePair()
-        #     restriccion.ind = list(coeficientes.keys())  # Variables involucradas
-        #     restriccion.val = list(coeficientes.values())  # Coeficientes consolidados
+        # #     # Crear SparsePair consolidado
+        # #     restriccion = cplex.SparsePair()
+        # #     restriccion.ind = list(coeficientes.keys())  # Variables involucradas
+        # #     restriccion.val = list(coeficientes.values())  # Coeficientes consolidados
             
-        #     addConstraintSet(model,  restriccion.val, restriccion.ind , rhs=1, sense="L",added_constraints=added_constraints, constraintName=f"consColisionRebanadas_{a}_{b}")
+        # #     addConstraintSet(model,  restriccion.val, restriccion.ind , rhs=1, sense="L",added_constraints=added_constraints, constraintName=f"consColisionRebanadas_{a}_{b}")
         
-        # Restricción para evitar colisiones de ítems entre distintas rebanadas
-        for (a, b) in posicionesValidas:
-            # Construir la suma de términos en la restricción
-            terms = []
-            coefs = []
+        # # Restricción para evitar colisiones de ítems entre distintas rebanadas
+        # for (a, b) in posicionesValidas:
+        #     # Construir la suma de términos en la restricción
+        #     terms = []
+        #     coefs = []
 
-            for r in R:
-                for (x, y) in H_ab.get((a, b), []):  # Asegurar que H_a_b[(a,b)] existe
-                    if (x, y) in R_r_xy[r.getId()-1]:
-                        terms.append(f"p_{r.getId()}")
-                        coefs.append(1)
+        #     for r in R:
+        #         for (x, y) in H_ab.get((a, b), []):  # Asegurar que H_a_b[(a,b)] existe
+        #             if (x, y) in R_r_xy[r.getId()-1]:
+        #                 terms.append(f"p_{r.getId()}")
+        #                 coefs.append(1)
 
-                for (x, y) in V_ab.get((a, b), []):  # Asegurar que V_a_b[(a,b)] existe
-                    if (r, x, y) in R_r_xy:
-                        terms.append(f"p_{r.getId()}")
-                        coefs.append(1)
-            # Agregar la restricción al modelo: suma de términos ≤ 1
-            if terms:
-                addConstraintSet(model,  coefs, terms , rhs=1, sense="L",added_constraints=added_constraints, constraintName=f"consNoSolapamiento_{a}_{b}")
+        #         for (x, y) in V_ab.get((a, b), []):  # Asegurar que V_a_b[(a,b)] existe
+        #             if (r, x, y) in R_r_xy:
+        #                 terms.append(f"p_{r.getId()}")
+        #                 coefs.append(1)
+        #     # Agregar la restricción al modelo: suma de términos ≤ 1
+        #     if terms:
+        #         addConstraintSet(model,  coefs, terms , rhs=1, sense="L",added_constraints=added_constraints, constraintName=f"consNoSolapamiento_{a}_{b}")
         
         print("OUT - Create Master Model")
-        print("H_a,b: ",H_ab) 
-        print("V_a,b: ",V_ab) 
         return model
     
     except CplexSolverError as e:
@@ -279,7 +280,7 @@ def solveMasterModel(model, queue, manualInterruption, relajarModelo, items, pos
         
         # Resolver el modelo
         model.solve()
-
+        print("CANTIDAD DE RESTRICCIONES: ",model.linear_constraints.get_num())
             
         objectiveValue = model.solution.get_objective_value()
         # Imprimir resultados

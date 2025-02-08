@@ -7,19 +7,21 @@ from Objetos import Item
 
 MODEL_NAME="Model5SlaveAlternative"
 
-EPSILON = 1e-6
+
 
 def construirItems(variableNames, variableValues, altoItem, anchoItem):
     items = []
+    print("CONSTRUIR ITEMS")
+    print("variableNames: ",variableNames)
+    print("variableValues: ",variableValues)
     for name, value in zip(variableNames, variableValues):
         if value > 0.5:  # Considerar solo las variables activas (a veces toma el 0.999 como un 1)
             parts = name.split("_")
-            tipo, i = parts[0], int(parts[1])  # Obtener tipo (`onX` o `onY`) y el índice del ítem
+            tipo, idValue = parts[0], int(parts[1])  # Obtener tipo (`onX` o `onY`) y el índice del ítem
             
-            if tipo == "onX":  # Ítem no rotado
-                items.append(Item(alto=altoItem, ancho=anchoItem, rotado=False))
-            elif tipo == "onY":  # Ítem rotado
-                items.append(Item(alto=anchoItem, ancho=altoItem, rotado=True))
+            rotado = True if tipo == "onY" else False
+            items.append(Item(alto=altoItem, ancho=anchoItem, rotado=rotado,id=idValue))
+            
     return items
 
 def construirPosicionesOcupadas(variableNames, variableValues):
@@ -77,11 +79,11 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues):
         # Crear las variables para ítems acostados
         for i in I:
             for (x, y) in XY_x:
-                var_name = f"onX_{i}_{x}_{y}"
+                var_name = f"onX_{i.getId()}_{x}_{y}"
                 variablesNames.append(var_name)
                 
                 # Coeficiente de la variable en la función objetivo
-                pi_i = P_star["pi"].get(i, 0)
+                pi_i = P_star["pi"].get(i.getId(), 0)
                 lambda_xy = P_star["lambda"].get((x, y), 0)
                 coeff = pi_i - lambda_xy
                 objCoeffs.append(coeff)
@@ -89,7 +91,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues):
         # Crear las variables para ítems parados
         for i in I:
             for (x, y) in XY_y:
-                var_name = f"onY_{i}_{x}_{y}"
+                var_name = f"onY_{i.getId()}_{x}_{y}"
                 variablesNames.append(var_name)
                 
                 # Coeficiente de la variable en la función objetivo
@@ -100,45 +102,45 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues):
 
         addVariables(model,variablesNames,objCoeffs,"B")
 
-        # Restricción 1: No solapamiento de ítems
-        for (x, y) in XY:
-            coeficientes = {}  # Diccionario para consolidar coeficientes de las variables
+        # # Restricción 1: No solapamiento de ítems
+        # for (x, y) in XY:
+        #     coeficientes = {}  # Diccionario para consolidar coeficientes de las variables
 
-            for i in I:
-                if (x, y) in XY_x:  # Si la posición está en XY_x
-                    var_name = f"onX_{i}_{x}_{y}"
-                    coeficientes[var_name] = coeficientes.get(var_name, 0) + 1
+        #     for i in I:
+        #         if (x, y) in XY_x:  # Si la posición está en XY_x
+        #             var_name = f"onX_{i}_{x}_{y}"
+        #             coeficientes[var_name] = coeficientes.get(var_name, 0) + 1
 
-                if (x, y) in XY_y:  # Si la posición está en XY_y
-                    var_name = f"onY_{i}_{x}_{y}"
-                    coeficientes[var_name] = coeficientes.get(var_name, 0) + 1
+        #         if (x, y) in XY_y:  # Si la posición está en XY_y
+        #             var_name = f"onY_{i}_{x}_{y}"
+        #             coeficientes[var_name] = coeficientes.get(var_name, 0) + 1
 
-            # Crear listas de variables y coeficientes consolidados
-            vars = list(coeficientes.keys())
-            coefficients = list(coeficientes.values())
+        #     # Crear listas de variables y coeficientes consolidados
+        #     vars = list(coeficientes.keys())
+        #     coefficients = list(coeficientes.values())
 
-            # Agregar restricción al modelo
-            addConstraintSet(model, coefficients, vars, rhs=1, sense="L", added_constraints=added_constraints)
+        #     # Agregar restricción al modelo
+        #     addConstraintSet(model, coefficients, vars, rhs=1, sense="L", added_constraints=added_constraints)
 
 
-        # Restricción 2: Un ítem no puede estar acostado y parado al mismo tiempo
-        for i in I:
-            coeficientes = {}  # Diccionario para consolidar coeficientes de las variables
+        # # Restricción 2: Un ítem no puede estar acostado y parado al mismo tiempo
+        # for i in I:
+        #     coeficientes = {}  # Diccionario para consolidar coeficientes de las variables
 
-            for (x, y) in XY_x:  # Posiciones en XY_x
-                var_name = f"onX_{i}_{x}_{y}"
-                coeficientes[var_name] = coeficientes.get(var_name, 0) + 1
+        #     for (x, y) in XY_x:  # Posiciones en XY_x
+        #         var_name = f"onX_{i}_{x}_{y}"
+        #         coeficientes[var_name] = coeficientes.get(var_name, 0) + 1
 
-            for (x, y) in XY_y:  # Posiciones en XY_y
-                var_name = f"onY_{i}_{x}_{y}"
-                coeficientes[var_name] = coeficientes.get(var_name, 0) + 1
+        #     for (x, y) in XY_y:  # Posiciones en XY_y
+        #         var_name = f"onY_{i}_{x}_{y}"
+        #         coeficientes[var_name] = coeficientes.get(var_name, 0) + 1
 
-            # Crear listas de variables y coeficientes consolidados
-            vars = list(coeficientes.keys())
-            coefficients = list(coeficientes.values())
+        #     # Crear listas de variables y coeficientes consolidados
+        #     vars = list(coeficientes.keys())
+        #     coefficients = list(coeficientes.values())
 
-            # Agregar restricción al modelo
-            addConstraintSet(model, coefficients, vars, rhs=1, sense="L", added_constraints=added_constraints)
+        #     # Agregar restricción al modelo
+        #     addConstraintSet(model, coefficients, vars, rhs=1, sense="L", added_constraints=added_constraints)
 
         print("OUT - Create Slave Model")    
         return model
@@ -162,6 +164,16 @@ def solveSlaveModel(model, queue, manualInterruption, anchoBin, altoItem, anchoI
 
         # Imprimir resultados
         print("Optimal value:", objectiveValue)
+        
+        # Obtener la función objetivo y sus coeficientes
+        obj_coefs = model.objective.get_linear()  # Obtiene los coeficientes
+        var_names = model.variables.get_names()   # Obtiene los nombres de las variables
+
+        # Imprimir la función objetivo en formato legible
+        objetivo_str = " + ".join([f"{coef}*{var}" for coef, var in zip(obj_coefs, var_names)])
+        print(f"Función Objetivo: {objetivo_str}")
+        
+        
 
         status = model.solution.get_status()
         finalTime = model.get_time()
@@ -185,7 +197,8 @@ def solveSlaveModel(model, queue, manualInterruption, anchoBin, altoItem, anchoI
         posicionesOcupadas=construirPosicionesOcupadas(variableNames, variableValues)
         alto= obtenerYMaximo(posicionesOcupadas)
         
-        if objectiveValue < EPSILON:
+        print("Valor objetivo del esclavo", objectiveValue)
+        if objectiveValue <= 0:
             print("El valor objetivo del esclavo es insignificante. Fin del proceso.")
             return None
         print("OUT - Solve Slave Model")

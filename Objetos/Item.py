@@ -1,9 +1,12 @@
 class Item:
     _id_counter = 1
     
-    def __init__(self, alto, ancho,rotado=False):
-        self.setId(Item._id_counter)
-        Item._id_counter += 1
+    def __init__(self, alto, ancho,rotado=False,id=None):
+        if(id==None):
+            self.setId(Item._id_counter)
+            Item._id_counter += 1
+        else:
+            self.setId(id)
         self.set_alto(alto)
         self.set_ancho(ancho)
         self.set_rotado(rotado)

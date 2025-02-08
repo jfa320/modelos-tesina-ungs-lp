@@ -81,10 +81,11 @@ class Rebanada:
             raise ValueError("La posición debe ser una tupla (x, y).")
         return posicion in self.__posicionesOcupadas
     
-    def appendItem(self, item):
+    def appendItem(self, item, posicion=None):
         if not isinstance(item, Item):
             raise TypeError("El parámetro debe ser un objeto de tipo Item.")
         self.__items.append(item)
+        self.appendPosicionOcupada(posicion)
     
     def appendPosicionOcupada(self, posicion):
         if not isinstance(posicion, tuple) or len(posicion) != 2:
