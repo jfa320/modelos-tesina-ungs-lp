@@ -56,3 +56,6 @@ class Item:
 
     def __repr__(self):
         return f"Item(id={self.getId()},alto={self.get_alto()}, ancho={self.get_ancho()}, rotado={self.get_rotado()})"
+    
+    def __eq__(self, other):
+        return self.getId() == other.getId()

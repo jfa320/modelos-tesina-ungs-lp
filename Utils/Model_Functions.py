@@ -29,6 +29,10 @@ def addConstraintSet(model, coeff, vars, rhs, sense, added_constraints,constrain
         coeff, vars = (), ()
         
     new_constraint = (tuple(coeff), tuple(vars), rhs, sense)
+    
+    print("ACAAA")
+    print(new_constraint)
+    print(added_constraints)
 
     if new_constraint in added_constraints:
         # print(f"La restricción ya existe: {new_constraint}. No se agrega nuevamente.")
@@ -37,7 +41,7 @@ def addConstraintSet(model, coeff, vars, rhs, sense, added_constraints,constrain
     # Agregar la restricción al modelo
     if vars:
         addConstraint(model, coeff, vars, rhs, sense, constraintName)
-        print(f"Añadiendo restricción: {constraintName} con {len(vars)} variables")
+        print(f"Añadí restricción: {constraintName} con {len(vars)} variables")
 
         # Registrar la nueva restricción
         added_constraints.add(new_constraint)

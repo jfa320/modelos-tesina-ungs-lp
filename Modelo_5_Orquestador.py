@@ -16,6 +16,7 @@ altoItem=3
 anchoItem=2 
 numRebanadas = 3  # Número de rebanadas a generar # TODO: ver esto, esta muy hardcoded
 posXY_x, posXY_y=generatePositionsXY(anchoBin,altoBin, anchoItem, altoItem)
+altoRebanada = 0  # Inicializar la altura de la rebanada (se calculará más adelante) 
 
 #TODO: corregir esto. Ubicar items en otro lado
 def generarListaItems(numItems, altoItem, anchoItem):
@@ -56,12 +57,13 @@ def orquestador(queue,manualInterruption,maxTime):
         # En su lugar, podria crear uno y luego agregar las columnas (rebanadas) nuevas
         print("rebanadas: ACA:::: ",rebanadas)
         masterModel = createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,items, posXY_x, posXY_y)
+        posicionesBin = set(posXY_x) | set(posXY_y)
         # Resolver modelo maestro
         _ , precios_duales = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=True, items=items, posXY_x=posXY_x, posXY_y= posXY_y)
         print(f"Precios duales: {precios_duales}")
         
         # Crear modelo esclavo
-        slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,items,precios_duales)
+        slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,items,precios_duales,altoRebanada, anchoBin,altoItem,anchoItem)
         # Resolver modelo esclavo
         nueva_rebanada = solveSlaveModel(slaveModel,queue,manualInterruption,anchoBin,altoItem,anchoItem)
         
