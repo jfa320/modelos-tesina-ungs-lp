@@ -370,3 +370,6 @@ inst2,Model1,1,1,3.0,0.05
 inst2,Model5SlaveAlternative,1,1,3.0,0.0
 inst2,Model1,1,1,2.0,0.03
 inst2,Model1,1,1,3.0,0.03
+inst2,Model5SlaveAlternative,1,1,3.0,0.02
+inst2,Model1,1,1,2.0,0.02
+inst2,Model1,1,1,3.0,0.03

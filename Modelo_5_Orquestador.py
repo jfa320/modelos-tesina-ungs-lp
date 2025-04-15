@@ -9,34 +9,28 @@ from Modelo_5_Propio_Maestro import *
 from Modelo_5_Propio_Esclavo_Alternativo import * 
 from Config import *
 
-# TODO: Parámetros iniciales, ver donde reubicar esto (otro archivo?)
 
-numItems = ITEMS_QUANTITY  # Número de ítems en el problema
-anchoBin = BIN_WIDTH  # Ancho total del bin
-altoBin = BIN_HEIGHT  # Altura total del bin
-anchoItem=ITEM_WIDTH 
-altoItem=ITEM_HEIGHT
-numRebanadas = 3  # Número de rebanadas a generar # TODO: ver esto, esta muy hardcoded
-posXY_x, posXY_y=generatePositionsXY(anchoBin,altoBin, anchoItem, altoItem)
+numRebanadas = 3  # Número de rebanadas a generar # TODO: ver esto, esta muy hardcoded - aca corregir
+posXY_x, posXY_y=generatePositionsXY(BIN_WIDTH,BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT)
 altoRebanada = 0  # Inicializar la altura de la rebanada (se calculará más adelante) 
 
 #TODO: corregir esto. Ubicar items en otro lado
-def generarListaItems(numItems, altoItem, anchoItem):
-    return [Item(alto=altoItem, ancho=anchoItem) for _ in range(numItems)]
+def generarListaItems(ITEMS_QUANTITY, ITEM_HEIGHT, ITEM_WIDTH):
+    return [Item(alto=ITEM_HEIGHT, ancho=ITEM_WIDTH) for _ in range(ITEMS_QUANTITY)]
 
-items=generarListaItems(numItems,altoItem,anchoItem)
+items=generarListaItems(ITEMS_QUANTITY,ITEM_HEIGHT,ITEM_WIDTH)
 
-def generarRebanadasIniciales(altoBin, anchoBin, nRebanadas, items):
+def generarRebanadasIniciales(BIN_HEIGHT, BIN_WIDTH, nRebanadas, items):
     # TODO: POSIBLE MEJORA, tener en cuenta que en caso de haber remanente en la division, eso no se aprovecha en el bin ()
-    altoRebanada = math.floor(altoBin / nRebanadas)  # Redondea hacia abajo
+    altoRebanada = math.floor(BIN_HEIGHT / nRebanadas)  # Redondea hacia abajo
     rebanadas = []
-    print(f"altoBin: {altoBin}")
+    print(f"BIN_HEIGHT: {BIN_HEIGHT}")
     print(f"nRebanadas: {nRebanadas}")
     print(f"altoRebanada: {altoRebanada}")
     for i in range(nRebanadas):
         rebanada = Rebanada(
             alto=altoRebanada,
-            ancho=anchoBin,  # Ancho constante para cada rebanada
+            ancho=BIN_WIDTH,  # Ancho constante para cada rebanada
             items=[],  # Inicialmente vacía
             posicionesOcupadas=[]
         )
@@ -52,7 +46,7 @@ def generarRebanadasIniciales(altoBin, anchoBin, nRebanadas, items):
 
 # Orquestador principal
 def orquestador(queue,manualInterruption,maxTime):
-    rebanadas = generarRebanadasIniciales(altoBin,anchoBin,numRebanadas,items)  # Inicialización con rebanadas básicas
+    rebanadas = generarRebanadasIniciales(BIN_HEIGHT,BIN_WIDTH,numRebanadas,items)  # Inicialización con rebanadas básicas
     rebanadas[0].appendItem(items[1], (2, 0))
     vueltaNro=1
     while True:
@@ -60,16 +54,16 @@ def orquestador(queue,manualInterruption,maxTime):
         #TODO: Aca podria mejorar evitando la creacion del modelo en cada vuelta.
         # En su lugar, podria crear uno y luego agregar las columnas (rebanadas) nuevas
         print("rebanadas: ACA:::: ",rebanadas)
-        masterModel = createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,items, posXY_x, posXY_y)
+        masterModel = createMasterModel(maxTime,rebanadas,BIN_HEIGHT,BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH,items, posXY_x, posXY_y)
         posicionesBin = set(posXY_x) | set(posXY_y)
         # Resolver modelo maestro
         _ , precios_duales = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=True, items=items, posXY_x=posXY_x, posXY_y= posXY_y)
         print(f"Precios duales: {precios_duales}")
         
         # Crear modelo esclavo
-        slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,items,precios_duales,altoRebanada, anchoBin,altoItem,anchoItem)
+        slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,items,precios_duales,altoRebanada, BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH)
         # Resolver modelo esclavo
-        nueva_rebanada = solveSlaveModel(slaveModel,queue,manualInterruption,anchoBin,altoItem,anchoItem)
+        nueva_rebanada = solveSlaveModel(slaveModel,queue,manualInterruption,BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH)
         
         print(f"Vuelta Nro: {vueltaNro}")
         if nueva_rebanada is None:
@@ -81,7 +75,7 @@ def orquestador(queue,manualInterruption,maxTime):
         rebanadas.append(nueva_rebanada)
     
     print("Resolviendo modelo maestro final...")
-    masterModel = createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,items, posXY_x, posXY_y)
+    masterModel = createMasterModel(maxTime,rebanadas,BIN_HEIGHT,BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH,items, posXY_x, posXY_y)
     solucion_final, _ =  solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=False, items=items, posXY_x=posXY_x, posXY_y= posXY_y)
     print(f"Solución final: {solucion_final}")
 
