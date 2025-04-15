@@ -195,47 +195,51 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, ancho
 
         # Crear las variables para indicar si incluyo item en la rebanada (z_i)
         for i in I:
-            var_name = f"z_{i.getId()}"
+            var_name = f"z_{i.getId()-1}"
             z_i_names.append(var_name)
             # Coeficiente de la variable en la función objetivo
-            A_i_valor = A_i["pi"].get(i.getId(), 0)
+            A_i_valor = A_i["pi"].get(i.getId()-1, 0)
             coeff = A_i_valor
             objCoeffs.append(coeff)
             
         addVariables(model,z_i_names,objCoeffs,"B")
         
+        objCoeffs.clear()
         # Crear variables para determinar si el item está rotado (s_i)
         for i in I:
-            var_name = f"s_{i.getId()}"
+            var_name = f"s_{i.getId()-1}"
             s_i_names.append(var_name)
             coeff = 0
             objCoeffs.append(coeff)
         addVariables(model,s_i_names,objCoeffs,"B")
             
         # Crear variables para determinar si el item i está a la izquierda de j (l_ij)
+        objCoeffs.clear()
         for i in I:
             for j in I:
                 if i != j:
-                    var_name = f"l_{i.getId()}_{j.getId()}"
+                    var_name = f"l_{i.getId()-1}_{j.getId()-1}"
                     l_ij_names.append(var_name)
                     coeff = 0
                     objCoeffs.append(coeff)
         addVariables(model,l_ij_names,objCoeffs,"B")
         
+        objCoeffs.clear()
         # Crear variables para determinar si el item i está debajo de j (d_ij)
         for i in I:
             for j in I:
                 if i != j:
-                    var_name = f"d_{i.getId()}_{j.getId()}"
+                    var_name = f"d_{i.getId()-1}_{j.getId()-1}"
                     d_ij_names.append(var_name)
                     coeff = 0
                     objCoeffs.append(coeff)            
         
         addVariables(model,d_ij_names,objCoeffs,"B")
           
+        objCoeffs.clear()
         # Crear las variables para posicion sobre eje x del item i (x_i)
         for i in I:
-            var_name = f"x_{i.getId()}"
+            var_name = f"x_{i.getId()-1}"
             x_i_names.append(var_name)
             # Coeficiente de la variable en la función objetivo
             coeff = 0
@@ -243,9 +247,10 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, ancho
             
         addVariables(model,x_i_names,objCoeffs,"I")
         
+        objCoeffs.clear()
         # Crear las variables para posicion sobre eje Y del item i (Y_i)
         for i in I:
-            var_name = f"y_{i.getId()}"
+            var_name = f"y_{i.getId()-1}"
             y_i_names.append(var_name)
             # Coeficiente de la variable en la función objetivo
             coeff = 0
@@ -253,6 +258,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, ancho
 
         addVariables(model,y_i_names,objCoeffs,"I")
         
+        objCoeffs.clear()
 
         # Restricción 1: Relacion item y rotacion
         for i in I:
@@ -260,7 +266,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, ancho
             coeffs = [1,-1]
             consRhs=0.0
             consSense="L"
-            addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consItemRotado_{i.getId()}")
+            addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consItemRotado_{i.getId()-1}")
         
         # Restricción 2: No exceder limite a lo ancho de la rebanada
         for i in I:
@@ -268,7 +274,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, ancho
             coeffs = [1,h-w]
             consRhs=W-w
             consSense="L"
-            addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consLimiteAncho_{i.getId()}")
+            addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consLimiteAncho_{i.getId()-1}")
         
         # Restricción 3: No exceder limite a lo alto de la rebanada
         for i in I:
@@ -276,32 +282,32 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, ancho
             coeffs = [1,w-h]
             consRhs=H_r-h
             consSense="L"
-            addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consLimiteAlto_{i.getId()}")
+            addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consLimiteAlto_{i.getId()-1}")
         
         # Restricciones (4-5-6) para evitar superposicion entre items
         for i in I:
             for j in I:
-                if i < j:
+                if i.getId() < j.getId():
                     # x_i + w(1 - s_i) + h s_i <= x_j + M(1 - l_ij)
-                    indexes = [x_i_names[i.getId()-1],s_i_names[i.getId()-1],x_i_names[j.getId(-1)],f"l_{i.getId()-1}_{j.getId()-1}"]
+                    indexes = [x_i_names[i.getId()-1],s_i_names[i.getId()-1],x_i_names[j.getId()-1],f"l_{i.getId()-1}_{j.getId()-1}"]
                     coeffs = [1,h-w,-1,M]
                     consRhs=M-w
                     consSense="L"
-                    addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consSuperposicionX_{i.getId()}")
+                    addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consSuperposicionX_{i.getId()-1}")
 
                     # y_i + h(1 - s_i) + w s_i <= y_j + M(1 - d_ij)
                     indexes = [y_i_names[i.getId()-1],s_i_names[i.getId()-1],y_i_names[j.getId()-1],f"d_{i.getId()-1}_{j.getId()-1}"]
                     coeffs = [1,w-h,-1,M]
                     consRhs=M-h
                     consSense="L"
-                    addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consSuperposicionY_{i.getId()}")
+                    addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consSuperposicionY_{i.getId()-1}")
 
                     # l_ij + d_ij >= z_i + z_j - 1
                     indexes = [f"l_{i.getId()-1}_{j.getId()-1}",f"d_{i.getId()-1}_{j.getId()-1}", z_i_names[i.getId()-1],z_i_names[j.getId()-1]]
                     coeffs = [1,1,-1,-1]
                     consRhs=-1
                     consSense="L"
-                    addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consDisyuncion_{i.getId()}")
+                    addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consDisyuncion_{i.getId()-1}")
         print("OUT - Create Slave Model")    
         return model
     except CplexSolverError as e:

@@ -9,13 +9,13 @@ CASE_NAME="inst2"
 # EXECUTION_TIME = 2  # Tiempo de ejecución en segundos para cada modelo
 
 # Caso 1:
-ITEMS_QUANTITY=6 # constante N del modelo
-ITEMS = list(range(1, ITEMS_QUANTITY + 1)) 
-BIN_WIDTH = 6 # W en el modelo
-BIN_HEIGHT = 4 # H en el modelo
+# ITEMS_QUANTITY=6 # constante N del modelo
+# ITEMS = list(range(1, ITEMS_QUANTITY + 1)) 
+# BIN_WIDTH = 6 # W en el modelo
+# BIN_HEIGHT = 4 # H en el modelo
 
-ITEM_WIDTH= 2 # w en el modelo
-ITEM_HEIGHT= 3 # h en el modelo
+# ITEM_WIDTH= 2 # w en el modelo
+# ITEM_HEIGHT= 3 # h en el modelo
 
 
 
@@ -42,13 +42,13 @@ ITEM_HEIGHT= 3 # h en el modelo
 
 #Caso 4: 
 
-# ITEMS_QUANTITY=5 # constante N del modelo
-# ITEMS = list(range(1, ITEMS_QUANTITY + 1)) 
-# BIN_WIDTH = 7 # W en el modelo
-# BIN_HEIGHT = 3 # H en el modelo
+ITEMS_QUANTITY=5 # constante N del modelo
+ITEMS = list(range(1, ITEMS_QUANTITY + 1)) 
+BIN_WIDTH = 7 # W en el modelo
+BIN_HEIGHT = 3 # H en el modelo
 
-# ITEM_WIDTH= 3 # w en el modelo
-# ITEM_HEIGHT= 2 # h en el modelo
+ITEM_WIDTH= 3 # w en el modelo
+ITEM_HEIGHT= 2 # h en el modelo
 
 # Caso 5: 
 

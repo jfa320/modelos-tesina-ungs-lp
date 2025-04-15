@@ -23,8 +23,14 @@ if __name__ == '__main__':
     #     Modelo_3_simplificado__seccion_3_6_CON_ROTACION,
     # ]
     
+    # models = [
+    #     Modelo_5_Orquestador
+    # ]
+    
     models = [
-        Modelo_5_Orquestador
+        Modelo_5_Orquestador,
+        Modelo_1_simplificado__seccion_2_8_overleaf_SIN_ROTACION,
+        Modelo_1_simplificado__seccion_2_9_overleaf_CON_ROTACION
     ]
     
     for model in models:

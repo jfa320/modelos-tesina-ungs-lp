@@ -7,13 +7,15 @@ from Objetos import Item
 from Position_generator import generatePositionsXY
 from Modelo_5_Propio_Maestro import * 
 from Modelo_5_Propio_Esclavo_Alternativo import * 
+from Config import *
 
 # TODO: Parámetros iniciales, ver donde reubicar esto (otro archivo?)
-numItems = 6  # Número de ítems en el problema
-altoBin = 4  # Altura total del bin
-anchoBin = 6  # Ancho total del bin
-altoItem=3
-anchoItem=2 
+
+numItems = ITEMS_QUANTITY  # Número de ítems en el problema
+anchoBin = BIN_WIDTH  # Ancho total del bin
+altoBin = BIN_HEIGHT  # Altura total del bin
+anchoItem=ITEM_WIDTH 
+altoItem=ITEM_HEIGHT
 numRebanadas = 3  # Número de rebanadas a generar # TODO: ver esto, esta muy hardcoded
 posXY_x, posXY_y=generatePositionsXY(anchoBin,altoBin, anchoItem, altoItem)
 altoRebanada = 0  # Inicializar la altura de la rebanada (se calculará más adelante) 
@@ -28,7 +30,9 @@ def generarRebanadasIniciales(altoBin, anchoBin, nRebanadas, items):
     # TODO: POSIBLE MEJORA, tener en cuenta que en caso de haber remanente en la division, eso no se aprovecha en el bin ()
     altoRebanada = math.floor(altoBin / nRebanadas)  # Redondea hacia abajo
     rebanadas = []
-
+    print(f"altoBin: {altoBin}")
+    print(f"nRebanadas: {nRebanadas}")
+    print(f"altoRebanada: {altoRebanada}")
     for i in range(nRebanadas):
         rebanada = Rebanada(
             alto=altoRebanada,
