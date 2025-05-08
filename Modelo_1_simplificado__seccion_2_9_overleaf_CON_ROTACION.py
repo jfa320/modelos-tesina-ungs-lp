@@ -91,9 +91,13 @@ def createAndSolveModel(queue,manualInterruption,maxTime):
 
         # Obtener y mostrar los resultados
         objectiveValue = model.solution.get_objective_value()
-
+        
+        
+        print("-------------------------------------------")
+        print("Modelo 1 - Con Rotacion")
         print(f"Optimal value: {objectiveValue}")
         
+        # solutionValues=model.solution.get_values
         # print("Variables values:")
         # for var_name, value in zip(varsNames, solutionValues):
         #     print(f"{var_name} = {value}")

@@ -98,6 +98,8 @@ def createAndSolveModel(queue,manualInterruption,maxTime):
 
         # Obtener y mostrar los resultados
         objectiveValue = model.solution.get_objective_value()
+        print("-------------------------------------------")
+        print("Modelo 1 - Sin Rotacion")
         print(f"Optimal value: {objectiveValue}")
         
         #aca puedo imprimir los valores que toman las variables

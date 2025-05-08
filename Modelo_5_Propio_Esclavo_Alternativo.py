@@ -11,6 +11,30 @@ MODEL_NAME="Model5SlaveAlternative"
 
 def construirItems(variableNames, variableValues, altoItem, anchoItem):
     items = []
+    varsNameFiltered = [elemento for elemento in variableNames if elemento.startswith('z') or elemento.startswith('s')]
+    valuesFiltered= variableValues[:len(varsNameFiltered)]
+    
+    z_dict = {}
+    s_dict = {}
+
+    for i, elemento in enumerate(varsNameFiltered):
+        if elemento.startswith('z'):
+            z_dict[elemento] = valuesFiltered[i]
+        elif elemento.startswith('s'):
+            s_dict[elemento] = valuesFiltered[i]
+    
+    for name, value in z_dict.items():
+        if value > 0.5:  # Considerar solo las variables activas (a veces toma el 0.999 como un 1)
+            parts = name.split("_")
+            idValue = int(parts[1])  
+            rotado = True if s_dict.get("s_"+str(idValue)) > 0.5 else False
+            itemAgregar=Item(alto=altoItem, ancho=anchoItem, rotado=rotado,id=idValue+1)
+            if(not itemAgregar in items):
+                items.append(itemAgregar)
+    return items
+
+def construirItemsOld(variableNames, variableValues, altoItem, anchoItem):
+    items = []
     print("CONSTRUIR ITEMS")
     print("variableNames: ",variableNames)
     print("variableValues: ",variableValues)
@@ -27,6 +51,22 @@ def construirItems(variableNames, variableValues, altoItem, anchoItem):
     return items
 
 def construirPosicionesOcupadas(variableNames, variableValues):
+    # TODO: Hacer algo similar a lo hecho con los items, es decir usar un id para acceder a la variable y 
+    posicionesOcupadas = []
+    diccionarioPosiciones =dict([(letra, numero) for letra, numero in zip(variableNames, variableValues) if letra.startswith('x') or letra.startswith('y')])
+    
+    print("posiciones aca: ",diccionarioPosiciones)
+    
+    for name, value in diccionarioPosiciones.items():
+        if 'x' in name:  
+            xVal=diccionarioPosiciones[name]
+            idValue=name.split("_")[1]
+            yVal=diccionarioPosiciones["y_"+idValue]
+            posicionesOcupadas.append((xVal, yVal))
+    return posicionesOcupadas
+    
+
+def construirPosicionesOcupadasOLD(variableNames, variableValues):
     posicionesOcupadas = []
        
     for name, value in zip(variableNames, variableValues):
@@ -169,8 +209,8 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, ancho
     H_r= altoRebanada
     W= anchoBin
     M= max(H_r, W) #maximo entre la altura de la rebanada y el ancho del bin
-    
-    
+    print(f"H_r: {H_r}, W: {W}, h: {h}, w: {w}, M: {M}")
+    print("A_i: ",A_i)
     try:
         # Crear el modelo
         model = cplex.Cplex()
@@ -186,12 +226,13 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, ancho
 
         # Función objetivo
         z_i_names = []
+        x_i_names = []
+        y_i_names = []
         s_i_names = []
         l_ij_names=[]
         d_ij_names=[]
+        
         objCoeffs = []
-        x_i_names = []
-        y_i_names = []
 
         # Crear las variables para indicar si incluyo item en la rebanada (z_i)
         for i in I:
@@ -217,7 +258,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, ancho
         objCoeffs.clear()
         for i in I:
             for j in I:
-                if i != j:
+                if i.getId()-1 < j.getId()-1:
                     var_name = f"l_{i.getId()-1}_{j.getId()-1}"
                     l_ij_names.append(var_name)
                     coeff = 0
@@ -228,7 +269,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, ancho
         # Crear variables para determinar si el item i está debajo de j (d_ij)
         for i in I:
             for j in I:
-                if i != j:
+                if i.getId()-1 < j.getId()-1:
                     var_name = f"d_{i.getId()-1}_{j.getId()-1}"
                     d_ij_names.append(var_name)
                     coeff = 0
@@ -259,12 +300,14 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, ancho
         addVariables(model,y_i_names,objCoeffs,"I")
         
         objCoeffs.clear()
+        
+        
 
         # Restricción 1: Relacion item y rotacion
         for i in I:
             indexes = [s_i_names[i.getId()-1],z_i_names[i.getId()-1]]
             coeffs = [1,-1]
-            consRhs=0.0
+            consRhs=0
             consSense="L"
             addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consItemRotado_{i.getId()-1}")
         
@@ -283,31 +326,30 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, ancho
             consRhs=H_r-h
             consSense="L"
             addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consLimiteAlto_{i.getId()-1}")
-        
         # Restricciones (4-5-6) para evitar superposicion entre items
         for i in I:
             for j in I:
                 if i.getId() < j.getId():
+                    id_i = i.getId() - 1
+                    id_j = j.getId() - 1
+                    
                     # x_i + w(1 - s_i) + h s_i <= x_j + M(1 - l_ij)
-                    indexes = [x_i_names[i.getId()-1],s_i_names[i.getId()-1],x_i_names[j.getId()-1],f"l_{i.getId()-1}_{j.getId()-1}"]
-                    coeffs = [1,h-w,-1,M]
-                    consRhs=M-w
-                    consSense="L"
-                    addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consSuperposicionX_{i.getId()-1}")
+                    indexes = [x_i_names[id_i], s_i_names[id_i], x_i_names[id_j], f"l_{id_i}_{id_j}"]
+                    coeffs = [1, h - w, -1, M]
+                    consRhs = M - w
+                    addConstraintSet(model, coeffs, indexes, consRhs, "L", added_constraints, f"consSuperposicionX_{id_i}_{id_j}")
 
                     # y_i + h(1 - s_i) + w s_i <= y_j + M(1 - d_ij)
-                    indexes = [y_i_names[i.getId()-1],s_i_names[i.getId()-1],y_i_names[j.getId()-1],f"d_{i.getId()-1}_{j.getId()-1}"]
-                    coeffs = [1,w-h,-1,M]
-                    consRhs=M-h
-                    consSense="L"
-                    addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consSuperposicionY_{i.getId()-1}")
+                    indexes = [y_i_names[id_i], s_i_names[id_i], y_i_names[id_j], f"d_{id_i}_{id_j}"]
+                    coeffs = [1, w - h, -1, M]
+                    consRhs = M - h
+                    addConstraintSet(model, coeffs, indexes, consRhs, "L", added_constraints, f"consSuperposicionY_{id_i}_{id_j}")
 
                     # l_ij + d_ij >= z_i + z_j - 1
-                    indexes = [f"l_{i.getId()-1}_{j.getId()-1}",f"d_{i.getId()-1}_{j.getId()-1}", z_i_names[i.getId()-1],z_i_names[j.getId()-1]]
-                    coeffs = [1,1,-1,-1]
-                    consRhs=-1
-                    consSense="L"
-                    addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consDisyuncion_{i.getId()-1}")
+                    indexes = [f"l_{id_i}_{id_j}", f"d_{id_i}_{id_j}", z_i_names[id_i], z_i_names[id_j]]
+                    coeffs = [1, 1, -1, -1]
+                    consRhs = -1
+                    addConstraintSet(model, coeffs, indexes, consRhs, "G", added_constraints, f"consDisyuncion_{id_i}_{id_j}")
         print("OUT - Create Slave Model")    
         return model
     except CplexSolverError as e:
@@ -318,19 +360,21 @@ def solveSlaveModel(model, queue, manualInterruption, anchoBin, altoItem, anchoI
     print("IN - Solve Slave Model")
     #valores por default para enviar a paver
     modelStatus, solverStatus, objectiveValue, solverTime = "1", "1", 0, 1
-    
     try:
         # Desactivar la interrupción manual aquí
         initialTime = model.get_time()
         manualInterruption.value = False
-        
+        print("Voy a resolver el esclavo")
         # Resolver el modelo
         model.solve()
         objectiveValue = model.solution.get_objective_value()
 
         # Imprimir resultados
         print("Optimal value:", objectiveValue)
-        
+        #imprimo valor que toman las variables
+        for _, varName in enumerate(model.variables.get_names()):
+            print(f"{varName} = {model.solution.get_values(varName)}")
+            
         # Obtener la función objetivo y sus coeficientes
         obj_coefs = model.objective.get_linear()  # Obtiene los coeficientes
         var_names = model.variables.get_names()   # Obtiene los nombres de las variables
@@ -360,18 +404,21 @@ def solveSlaveModel(model, queue, manualInterruption, anchoBin, altoItem, anchoI
         variableNames = model.variables.get_names()
         variableValues = model.solution.get_values()
         items=construirItems(variableNames, variableValues, altoItem, anchoItem)
+        
         posicionesOcupadas=construirPosicionesOcupadas(variableNames, variableValues)
         alto= obtenerYMaximo(posicionesOcupadas,altoItem)
         
         print("Valor objetivo del esclavo", objectiveValue)
-        if objectiveValue <= 0:
+        # if objectiveValue <= 0:
+        EPSILON = 1e-5
+        if objectiveValue  <= EPSILON:
             print("El valor objetivo del esclavo es insignificante. Fin del proceso.")
             return None
         print("OUT - Solve Slave Model")
         
         rebanadaEncontrada=Rebanada(alto, anchoBin, items , posicionesOcupadas)
-        print("Rebanada encontrada en ESCLAVO:", rebanadaEncontrada)
         return rebanadaEncontrada
     except CplexSolverError as e:
+        print("Error al resolver el modelo esclavo:", e)
         handleSolverError(e, queue,solverTime)
 

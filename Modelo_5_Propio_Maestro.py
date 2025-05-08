@@ -180,7 +180,7 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
 
         # Variables
         # Variables p_r (binarias)
-        p_r_names = [f"p_{r.getId()-1}" for r in R]
+        p_r_names = [f"p_{r.getId()}" for r in R]
         model.variables.add(names=p_r_names, types=[model.variables.type.binary] * len(R))
 
         # Variables y_r (enteras)
@@ -197,6 +197,10 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
                     z_rr_names.append(name)
                     z_rr_indices[(r1.getId(), r2.getId())] = name
         model.variables.add(names=z_rr_names, types=[model.variables.type.binary] * len(z_rr_names))
+
+        print("TOTAL ITEMS POR REBANADA")
+        for r in R:
+            print(r.getTotalItems() )
 
         # Función objetivo
         coef_obj = [r.getTotalItems() for r in R]  # Coeficientes de p_r en la función objetivo
@@ -351,15 +355,16 @@ def solveMasterModel(model, queue, manualInterruption, relajarModelo, items, pos
             print("Dual values:", dualValues)    
             
             
-        # #imprimo valor que toman las variables
-        # for i, varName in enumerate(nVars):
-        #     print(f"{varName} = {model.solution.get_values(varName)}")
+        #imprimo valor que toman las variables
+        for i, varName in enumerate(model.variables.get_names()):
+            print(f"{varName} = {model.solution.get_values(varName)}")
 
         status = model.solution.get_status()
         finalTime = model.get_time()
         solverTime=finalTime-initialTime
         solverTime=round(solverTime, 2)
-                
+        
+        
         if status == 105:  # CPLEX código 105 = Time limit exceeded
             print("The solver stopped because it reached the time limit.")
             modelStatus="2" #valor en paver para marcar un optimo local
@@ -388,11 +393,10 @@ def getDualValues(model, I, posXY_x, posXY_y):
     
     # Obtener los valores duales de las restricciones
     dualValues = model.solution.get_dual_values()
+    print(f"todos los valores : {dualValues}")
     constraintNames=model.linear_constraints.get_names()
-    print("dual values ",dualValues)
     # Recorrer las restricciones y mapear duales
     
-    print("constraintNames: ",constraintNames)
     for _, (name, dualValue) in enumerate(zip(constraintNames, dualValues)):
         if name.startswith("consItem_"):
             # Restricciones relacionadas a ítems
