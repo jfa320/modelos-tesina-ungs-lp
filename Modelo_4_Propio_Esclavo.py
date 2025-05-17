@@ -212,7 +212,7 @@ def createAndSolveSlaveModel(queue,manualInterruption,maxTime):
                     i = int(parts[0])
                     y = int(parts[2])
                     item.set_id(i)
-                    item.set_alto(ITEM_HEIGHT) 
+                    item.setAlto(ITEM_HEIGHT) 
                     item.set_posicion_y(y)
                     item.set_rotado(False)
                     
@@ -222,7 +222,7 @@ def createAndSolveSlaveModel(queue,manualInterruption,maxTime):
                     i = int(parts[0])
                     y = int(parts[2])
                     item.set_id(i)
-                    item.set_alto(ITEM_WIDTH) 
+                    item.setAlto(ITEM_WIDTH) 
                     item.set_posicion_y(y)
                     item.set_rotado(True)
                 sliceItems.append(item)

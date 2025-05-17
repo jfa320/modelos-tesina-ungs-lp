@@ -162,7 +162,79 @@ def createMasterModelOLD(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,i
         handleSolverError(e)
 
 
+
+
+
+
+def calcularPosicionesOcupadas(posicion, ancho, alto):
+        """
+        Retorna todas las posiciones ocupadas por un ítem ubicado en `posicion` con dimensiones `ancho` x `alto`.
+        """
+        x, y = posicion
+        posicionesOcupadas = set()
+        for dx in range(ancho):
+            for dy in range(alto):
+                posicionesOcupadas.add((x + dx, y + dy))
+        return posicionesOcupadas
+
 def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,items,posXY_x,posXY_y):
+    print("IN - Create Master Model")
+    H = altoBin  # Alto del bin 
+    R = rebanadas  # Lista de rebanadas disponibles
+    posiciones= set() 
+    posiciones =  posXY_x.union(posXY_y) 
+    #C_r= se puede modelar usando el metodo rebanada.getTotalItems() - Cantidad de items en rebanadas
+    
+    try:
+        # Crear instancia del problema
+        model = cplex.Cplex()
+        model.set_problem_type(cplex.Cplex.problem_type.MILP) 
+        model.parameters.timelimit.set(maxTime)
+
+        # Variables
+        # Variables p_r (binarias)
+        p_r_names = [f"p_{r.getId()}" for r in R]
+        coeffs_p_r = [r.getTotalItems() for r in R] 
+        addVariables(model, p_r_names,coeffs_p_r, model.variables.type.binary)
+        # Función objetivo
+        coef_obj = [r.getTotalItems() for r in R]  # Coeficientes de p_r en la función objetivo
+    
+        model.objective.set_sense(model.objective.sense.maximize)
+
+        added_constraints = set()
+        
+        for (a, b) in posiciones:
+            rebanadasQueOcupanPos = []  # Lista de rebanadas que ocupan (a, b)
+
+            for r in R:
+                posicionesOcupadas = set()
+                rebanada = r  # Obtener la rebanada correspondiente
+
+                for item in rebanada.getItems():
+                    if item.getPosicionX() is not None and item.getPosicionY() is not None:
+                        posicion = item.getPosicion()
+                        if item.getRotado():
+                            posicionesOcupadas.update(calcularPosicionesOcupadas(posicion, item.getAlto(), item.getAncho()))
+                        else:
+                            posicionesOcupadas.update(calcularPosicionesOcupadas(posicion, item.getAncho(), item.getAlto()))
+
+                if (a, b) in posicionesOcupadas:
+                    rebanadasQueOcupanPos.append(r)
+
+            if rebanadasQueOcupanPos:
+                    indexes = [p_r_names[r.getId()-1] for r in rebanadasQueOcupanPos]
+                    coeffs = [1] * len(rebanadasQueOcupanPos)
+                    consRhs=1.0
+                    consSense="L"
+                    addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consItem_{a}_{b}")
+               
+        print("OUT - Create Master Model")
+        return model
+    
+    except CplexSolverError as e:
+        handleSolverError(e)
+
+def createMasterModelDeprecated(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,items,posXY_x,posXY_y):
     print("IN - Create Master Model")
     H = altoBin  # Alto del bin 
     R = rebanadas  # Lista de rebanadas disponibles

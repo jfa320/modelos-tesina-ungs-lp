@@ -20,7 +20,25 @@ def generarListaItems(ITEMS_QUANTITY, ITEM_HEIGHT, ITEM_WIDTH):
 
 items=generarListaItems(ITEMS_QUANTITY,ITEM_HEIGHT,ITEM_WIDTH)
 
-def generarRebanadasIniciales(BIN_HEIGHT, BIN_WIDTH, nRebanadas, items):
+
+def generarRebanadasIniciales(binHeight,binWidth, itemWidth, itemHeight):
+    rebanadas = []
+    y = 0
+
+    while y + itemHeight <= binHeight:
+        x = 0
+        rebanada = Rebanada(alto=altoRebanada, ancho=binWidth)
+
+        while x + itemWidth <= binWidth:
+            rebanada.agregarItem(itemHeight,itemWidth,x, y)
+            x += itemWidth
+
+        if rebanada.getPosicionesOcupadas():
+            rebanadas.append(rebanada)
+        y += itemHeight
+    return rebanadas
+
+def generarRebanadasInicialesB(BIN_HEIGHT, BIN_WIDTH, nRebanadas, items):
     # Este genera rebanadas ubicando solo un item en ellas pero tiene fallos porque a veces genera rebanadas que no respeta dimensiones del bin
     # TODO: POSIBLE MEJORA, tener en cuenta que en caso de haber remanente en la division, eso no se aprovecha en el bin ()
     
@@ -86,9 +104,9 @@ def generarRebanadasInicialesA(binHeight, binWidth, nRebanadas, items):
 # Orquestador principal
 def orquestador(queue,manualInterruption,maxTime):
     MAX_ITERACIONES = 70
-    rebanadas = generarRebanadasIniciales(BIN_HEIGHT,BIN_WIDTH,numRebanadas,items)  # Inicialización con rebanadas básicas
+    # rebanadas = generarRebanadasIniciales(BIN_HEIGHT,BIN_WIDTH,numRebanadas,items)  # Inicialización con rebanadas básicas
+    rebanadas= generarRebanadasIniciales(BIN_HEIGHT,BIN_WIDTH, ITEM_WIDTH, ITEM_HEIGHT)  # Inicialización con rebanadas básicas
     iteracion = 0
-    rebanadas[1].appendItem(items[0], (2, 0))  
     print(f"Rebanadas iniciales: {rebanadas}")
     vueltaNro=1
     while True:
@@ -140,6 +158,7 @@ def executeWithTimeLimit(maxTime):
     print(f"BIN_WIDTH: {BIN_WIDTH}")
     print(f"ITEM_WIDTH: {ITEM_WIDTH}")
     print(f"ITEM_HEIGHT: {ITEM_HEIGHT}")  
+    print(f"altoRebanada: {altoRebanada}")
 
     # Crear una cola para recibir los resultados del subproceso
     queue = multiprocessing.Queue()

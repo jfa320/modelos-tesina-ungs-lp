@@ -3,12 +3,12 @@ from Objetos import Item
 class Rebanada:
     _id_counter = 1
 
-    def __init__(self, alto, ancho, items, posicionesOcupadas=None):
+    def __init__(self, alto, ancho, items=None, posicionesOcupadas=None):
         self.setId(Rebanada._id_counter)
         Rebanada._id_counter += 1
         self.set_alto(alto)
         self.set_ancho(ancho)
-        self.set_items(items)
+        self.setItems(items or [])
         self.setPosicionesOcupadas(posicionesOcupadas or [])
 
     def setId(self, id):
@@ -38,12 +38,12 @@ class Rebanada:
     def get_ancho(self):
         return self.__ancho
 
-    def set_items(self, items):
+    def setItems(self, items):
         if not isinstance(items, list):
             raise TypeError("Los items deben ser una lista.")
         self.__items = items
 
-    def get_items(self):
+    def getItems(self):
         return self.__items
     
     def getTotalItems(self):
@@ -92,6 +92,21 @@ class Rebanada:
             raise ValueError("La posición debe ser una tupla (x, y).")
         self.__posicionesOcupadas.append(posicion)
         
+    def agregarItem(self, alto, ancho, x, y):
+        if not isinstance(x, (int, float)) or not isinstance(y, (int, float)):
+            raise ValueError("Las coordenadas deben ser números.")
+        
+        if (x, y) in self.__posicionesOcupadas:
+            raise ValueError("La posición ya está ocupada.")
+        
+        # Crear el ítem y asignarle la posición
+        nuevoItem = Item(alto=alto, ancho=ancho)
+        nuevoItem.setPosicionX(x)
+        nuevoItem.setPosicionY(y)
+        # Agregar a la lista de ítems y posiciones ocupadas
+        self.appendItem(nuevoItem, (x, y))
+        self.agregarPosicionOcupada((x, y))
+            
     def __repr__(self):
         return (f"Rebanada(id={self.getId()}, alto={self.get_alto()}, ancho={self.get_ancho()}, "
-            f"items={self.get_items()}, posicionesOcupadas={self.getPosicionesOcupadas()})")
+            f"items={self.getItems()}, posicionesOcupadas={self.getPosicionesOcupadas()})")

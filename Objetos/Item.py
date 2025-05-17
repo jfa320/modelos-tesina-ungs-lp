@@ -1,15 +1,18 @@
 class Item:
     _id_counter = 1
     
-    def __init__(self, alto, ancho,rotado=False,id=None):
-        if(id==None):
+    def __init__(self, alto, ancho, rotado=False, id=None):
+        if id is None:
             self.setId(Item._id_counter)
             Item._id_counter += 1
         else:
             self.setId(id)
-        self.set_alto(alto)
-        self.set_ancho(ancho)
-        self.set_rotado(rotado)
+
+        self.setAlto(alto)
+        self.setAncho(ancho)
+        self.setRotado(rotado)
+        self.setPosicionX(None)
+        self.setPosicionY(None)
 
     def setId(self, id):
         if isinstance(id, int) and id > 0:
@@ -20,42 +23,63 @@ class Item:
     def getId(self):
         return self.__id
     
-    def set_alto(self, alto):
+    def setAlto(self, alto):
         if isinstance(alto, (int, float)) and alto > 0:
             self.__alto = alto
         else:
             raise ValueError("El alto debe ser un número positivo.")
 
-    def get_alto(self):
+    def getAlto(self):
         return self.__alto
     
-    def set_ancho(self, ancho):
+    def setAncho(self, ancho):
         if isinstance(ancho, (int, float)) and ancho > 0:
             self.__ancho = ancho
         else:
             raise ValueError("El ancho debe ser un número positivo.")
 
-    def get_ancho(self):
+    def getAncho(self):
         return self.__ancho
-
     
-    def set_rotado(self, rotado):
+    def setRotado(self, rotado):
         if isinstance(rotado, bool):
             self.__rotado = rotado
         else:
             raise ValueError("Rotado debe ser un booleano.")
 
-    def get_rotado(self):
+    def getRotado(self):
         return self.__rotado
     
     def rotar(self):
-        altoAux=self.get_alto()
-        self.__alto = self.get_ancho()
-        self.__ancho =altoAux
-        self.__rotado=not self.get_rotado()
+        altoAux = self.getAlto()
+        self.__alto = self.getAncho()
+        self.__ancho = altoAux
+        self.__rotado = not self.get_rotado()
+
+    def setPosicionX(self, x):
+        if isinstance(x, (int, float)) or x is None:
+            self.__posX = x
+        else:
+            raise ValueError("La posición X debe ser un número o None.")
+
+    def getPosicionX(self):
+        return self.__posX
+
+    def setPosicionY(self, y):
+        if isinstance(y, (int, float)) or y is None:
+            self.__posY = y
+        else:
+            raise ValueError("La posición Y debe ser un número o None.")
+
+    def getPosicionY(self):
+        return self.__posY
+    
+    def getPosicion(self):
+        return (self.getPosicionX(), self.getPosicionY())
 
     def __repr__(self):
-        return f"Item(id={self.getId()},alto={self.get_alto()}, ancho={self.get_ancho()}, rotado={self.get_rotado()})"
+        return (f"Item(id={self.getId()}, alto={self.getAlto()}, ancho={self.getAncho()}, "
+                f"rotado={self.getRotado()}, x={self.getPosicionX()}, y={self.getPosicionY()})")
     
     def __eq__(self, other):
         return self.getId() == other.getId()
