@@ -8,8 +8,32 @@ from Objetos import Item
 MODEL_NAME="Model5SlaveAlternative"
 
 
-
 def construirItems(variableNames, variableValues, altoItem, anchoItem):
+    items = []
+    varsNameFiltered = [elemento for elemento in variableNames if elemento.startswith('z') or elemento.startswith('s')]
+    valuesFiltered= variableValues[:len(varsNameFiltered)]
+    
+    z_dict = {}
+    s_dict = {}
+
+    for i, elemento in enumerate(varsNameFiltered):
+        if elemento.startswith('z'):
+            z_dict[elemento] = valuesFiltered[i]
+        elif elemento.startswith('s'):
+            s_dict[elemento] = valuesFiltered[i]
+    
+    for name, value in z_dict.items():
+        #TODO 01.06: aca habria que ajustar la forma en que leo s_dict ahora que la variable s tiene otra forma (coordenadas) 
+        if value > 0.5:  # Considerar solo las variables activas (a veces toma el 0.999 como un 1)
+            parts = name.split("_")
+            idValue = int(parts[1])  
+            rotado = True if s_dict.get("s_"+str(idValue)) > 0.5 else False
+            itemAgregar=Item(alto=altoItem, ancho=anchoItem, rotado=rotado,id=idValue+1)
+            if(not itemAgregar in items):
+                items.append(itemAgregar)
+    return items
+
+def construirItems28052025(variableNames, variableValues, altoItem, anchoItem):
     items = []
     varsNameFiltered = [elemento for elemento in variableNames if elemento.startswith('z') or elemento.startswith('s')]
     valuesFiltered= variableValues[:len(varsNameFiltered)]
@@ -248,7 +272,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, ancho
         
         objCoeffs.clear()
         # Crear variables para determinar si el item está rotado (s_a_b)
-        for i in I:
+        for (a, b) in P:
             var_name = f"s_{a}_{b}"
             sVars.append(var_name)
             coeff = 0
@@ -259,8 +283,8 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, ancho
         objCoeffs.clear()
         pairs = [(p1, p2) for idx1, p1 in enumerate(P) for idx2, p2 in enumerate(P) if idx1 < idx2]
         for (a, b), (a2, b2) in pairs:
-            lName = f"l_{a},{b}_{a2},{b2}"
-            dName = f"d_{a},{b}_{a2},{b2}"
+            lName = f"l_{a}_{b}_{a2}_{b2}"
+            dName = f"d_{a}_{b}_{a2}_{b2}"
             coeff = 0
             lVars.append(lName)
             dVars.append(dName)
@@ -273,8 +297,8 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, ancho
         
         # Restricciones
         for (a, b) in P:
-            sVar = f"s_{a},{b}"
-            zVar = f"z_{a},{b}"
+            sVar = f"s_{a}_{b}"
+            zVar = f"z_{a}_{b}"
             
             # Restricción 1: Relacion item y rotacion
             # s_{a,b} ≤ z_{a,b}
@@ -283,6 +307,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, ancho
             coeffs = [1,-1]
             consRhs=0
             consSense="L"
+            
             addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consItemRotado_{a}_{b}")
 
             # Restricción 2: No exceder limite a lo ancho de la rebanada
@@ -301,13 +326,11 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, ancho
             consSense="L"
             addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consLimiteAlto_{a}_{b}")
         
-        #TODO: SEGUIR ACÁ CON LAS RESTRICCIONES
-       
         for (a, b), (aPrime, bPrime) in pairs:
-            zVar1, zVar2 = f"z_{a},{b}", f"z_{aPrime},{bPrime}"
-            sVar1, sVar2 = f"s_{a},{b}", f"s_{aPrime},{bPrime}"
-            lVar = f"l_{a},{b}_{aPrime},{bPrime}"
-            dVar = f"d_{a},{b}_{aPrime},{bPrime}"
+            zVar1, zVar2 = f"z_{a}_{b}", f"z_{aPrime}_{bPrime}"
+            sVar1, sVar2 = f"s_{a}_{b}", f"s_{aPrime}_{bPrime}"
+            lVar = f"l_{a}_{b}_{aPrime}_{bPrime}"
+            dVar = f"d_{a}_{b}_{aPrime}_{bPrime}"
 
             # Restricción 4: No solape horizontal
             # a + w(1-s) + h s ≤ a2 + M(1 - l)
