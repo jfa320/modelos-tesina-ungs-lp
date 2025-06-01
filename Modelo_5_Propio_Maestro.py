@@ -162,10 +162,6 @@ def createMasterModelOLD(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,i
         handleSolverError(e)
 
 
-
-
-
-
 def calcularPosicionesOcupadas(posicion, ancho, alto):
         """
         Retorna todas las posiciones ocupadas por un ítem ubicado en `posicion` con dimensiones `ancho` x `alto`.
@@ -203,12 +199,13 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
 
         added_constraints = set()
         
+        
         for (a, b) in posiciones:
             rebanadasQueOcupanPos = []  # Lista de rebanadas que ocupan (a, b)
 
             for r in R:
                 posicionesOcupadas = set()
-                rebanada = r  # Obtener la rebanada correspondiente
+                rebanada = r 
 
                 for item in rebanada.getItems():
                     if item.getPosicionX() is not None and item.getPosicionY() is not None:
@@ -217,10 +214,11 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
                             posicionesOcupadas.update(calcularPosicionesOcupadas(posicion, item.getAlto(), item.getAncho()))
                         else:
                             posicionesOcupadas.update(calcularPosicionesOcupadas(posicion, item.getAncho(), item.getAlto()))
-
                 if (a, b) in posicionesOcupadas:
                     rebanadasQueOcupanPos.append(r)
-
+            print("posicion: ",(a,b))
+            print("rebanadas que ocupan la posicion: ",rebanadasQueOcupanPos)
+            
             if rebanadasQueOcupanPos:
                     indexes = [p_r_names[r.getId()-1] for r in rebanadasQueOcupanPos]
                     coeffs = [1] * len(rebanadasQueOcupanPos)
@@ -423,7 +421,7 @@ def solveMasterModel(model, queue, manualInterruption, relajarModelo, items, pos
         dualValues=None
         if(relajarModelo):
             # Obtener valores duales
-            dualValues=getDualValues(model, items, posXY_x, posXY_y)
+            dualValues=getDualValues(model)
             print("Dual values:", dualValues)    
             
             
@@ -456,8 +454,31 @@ def solveMasterModel(model, queue, manualInterruption, relajarModelo, items, pos
     except CplexSolverError as e:
         handleSolverError(e, queue,solverTime)
         
+def getDualValues(model):
+    print("Extrayendo valores duales...")
+    # Inicializar diccionarios para cada componente de P_star
+    P_star = {"pi": {}}
+    
+    # Obtener los valores duales de las restricciones
+    dualValues = model.solution.get_dual_values()
+    print(f"todos los valores : {dualValues}")
+    constraintNames=model.linear_constraints.get_names()
+    # Recorrer las restricciones y mapear duales
+    print("constraintNames: ",constraintNames)
+    print("dualValues: ",dualValues)
+    for _, (name, dualValue) in enumerate(zip(constraintNames, dualValues)):
+        if name.startswith("consItem_"):
+            # Restricciones relacionadas a ítems
+            xPos = str(name.split("_")[1])  # Extraer el ID del ítem
+            yPos = str(name.split("_")[2])  # Extraer el ID del ítem
+            P_star["pi"][f"({xPos},{yPos})"] = dualValue
+            print(f"Dual para ítem ({xPos},{yPos}): {dualValue}")
+            
+        
+    return P_star
 
-def getDualValues(model, I, posXY_x, posXY_y):
+
+def getDualValuesOLD(model, I, posXY_x, posXY_y):
     
     print("Extrayendo valores duales...")
     # Inicializar diccionarios para cada componente de P_star

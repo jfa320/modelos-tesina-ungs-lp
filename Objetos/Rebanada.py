@@ -64,11 +64,11 @@ class Rebanada:
     def getPosicionesOcupadas(self):
         return self.__posicionesOcupadas
 
-    def agregarPosicionOcupada(self, posicion):
-        if not isinstance(posicion, tuple) or len(posicion) != 2:
-            raise ValueError("La posición debe ser una tupla (x, y).")
-        if posicion not in self.__posicionesOcupadas:
-            self.__posicionesOcupadas.append(posicion)
+    # def agregarPosicionOcupada(self, posicion):
+    #     if not isinstance(posicion, tuple) or len(posicion) != 2:
+    #         raise ValueError("La posición debe ser una tupla (x, y).")
+    #     if posicion not in self.__posicionesOcupadas:
+    #         self.__posicionesOcupadas.append(posicion)
 
     def eliminarPosicionOcupada(self, posicion):
         if not isinstance(posicion, tuple) or len(posicion) != 2:
@@ -92,20 +92,18 @@ class Rebanada:
             raise ValueError("La posición debe ser una tupla (x, y).")
         self.__posicionesOcupadas.append(posicion)
         
-    def agregarItem(self, alto, ancho, x, y):
+    def agregarItem(self, nuevoItem, x, y):
         if not isinstance(x, (int, float)) or not isinstance(y, (int, float)):
             raise ValueError("Las coordenadas deben ser números.")
         
         if (x, y) in self.__posicionesOcupadas:
             raise ValueError("La posición ya está ocupada.")
         
-        # Crear el ítem y asignarle la posición
-        nuevoItem = Item(alto=alto, ancho=ancho)
         nuevoItem.setPosicionX(x)
         nuevoItem.setPosicionY(y)
         # Agregar a la lista de ítems y posiciones ocupadas
         self.appendItem(nuevoItem, (x, y))
-        self.agregarPosicionOcupada((x, y))
+        # self.agregarPosicionOcupada((x, y))
             
     def __repr__(self):
         return (f"Rebanada(id={self.getId()}, alto={self.get_alto()}, ancho={self.get_ancho()}, "

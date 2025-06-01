@@ -32,7 +32,7 @@ def addConstraintSet(model, coeff, vars, rhs, sense, added_constraints,constrain
     
 
     if new_constraint in added_constraints:
-        # print(f"La restricción ya existe: {new_constraint}. No se agrega nuevamente.")
+        print(f"La restricción ya existe: {new_constraint}. No se agrega nuevamente.")
         return
     
     # Agregar la restricción al modelo

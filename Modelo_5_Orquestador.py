@@ -30,7 +30,8 @@ def generarRebanadasIniciales(binHeight,binWidth, itemWidth, itemHeight):
         rebanada = Rebanada(alto=altoRebanada, ancho=binWidth)
 
         while x + itemWidth <= binWidth:
-            rebanada.agregarItem(itemHeight,itemWidth,x, y)
+            item = Item(alto=itemHeight, ancho=itemWidth)
+            rebanada.agregarItem(item,x, y)
             x += itemWidth
 
         if rebanada.getPosicionesOcupadas():
@@ -106,6 +107,11 @@ def orquestador(queue,manualInterruption,maxTime):
     MAX_ITERACIONES = 70
     # rebanadas = generarRebanadasIniciales(BIN_HEIGHT,BIN_WIDTH,numRebanadas,items)  # Inicialización con rebanadas básicas
     rebanadas= generarRebanadasIniciales(BIN_HEIGHT,BIN_WIDTH, ITEM_WIDTH, ITEM_HEIGHT)  # Inicialización con rebanadas básicas
+    itemAux=Item(alto=ITEM_HEIGHT, ancho=ITEM_WIDTH)
+    rebanadaAux=Rebanada(alto=altoRebanada, ancho=BIN_WIDTH, items=[], posicionesOcupadas=[])
+    rebanadaAux.agregarItem(itemAux, 0, 0)  # Agregar un ítem a la rebanada auxiliar
+    rebanadas.append(rebanadaAux)  
+
     iteracion = 0
     print(f"Rebanadas iniciales: {rebanadas}")
     vueltaNro=1

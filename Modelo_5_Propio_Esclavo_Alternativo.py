@@ -198,8 +198,148 @@ def createSlaveModelOLD(maxTime, XY_x, XY_y, items, dualValues):
         return model
     except CplexSolverError as e:
         handleSolverError(e)
-
+        
+        
 def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, anchoBin,altoItemSinRotar,anchoItemSinRotar):    
+    print("--------------------------------------------------------------------------------------------------------------------")
+    print("IN - Create Slave Model")
+    I = items  # Lista de ítems disponibles
+    A_i=dualValues
+    h = altoItemSinRotar
+    w = anchoItemSinRotar
+    H_r= altoRebanada
+    W= anchoBin
+    M= max(H_r, W) #maximo entre la altura de la rebanada y el ancho del bin
+    P = set(XY_x).union(XY_y)
+    print(f"H_r: {H_r}, W: {W}, h: {h}, w: {w}, M: {M}")
+    print("A_i: ",A_i)
+    print("ITEMS: ",I)
+    
+    try:
+        # Crear el modelo
+        model = cplex.Cplex()
+
+        model.set_problem_type(cplex.Cplex.problem_type.LP)
+
+        model.parameters.timelimit.set(maxTime)
+        initialTime=model.get_time()
+        added_constraints = set()
+        
+        # Configurar como un problema de maximización
+        model.objective.set_sense(model.objective.sense.maximize)
+
+        # Función objetivo
+        zVars  = []
+        sVars  = []
+        lVars, dVars = [], []
+        
+        objCoeffs = []
+
+        # Crear las variables para indicar si incluyo item en la rebanada (z_a_b)
+        for (a, b) in P:
+            var_name = f"z_{a}_{b}" 
+            zVars.append(var_name)
+            # Coeficiente de la variable en la función objetivo
+            A_i_valor = A_i["pi"].get((a,b), 0) 
+            coeff = A_i_valor
+            objCoeffs.append(coeff)
+            
+        addVariables(model,zVars,objCoeffs,"B")
+        
+        objCoeffs.clear()
+        # Crear variables para determinar si el item está rotado (s_a_b)
+        for i in I:
+            var_name = f"s_{a}_{b}"
+            sVars.append(var_name)
+            coeff = 0
+            objCoeffs.append(coeff)
+        addVariables(model,sVars,objCoeffs,"B")
+            
+        # creo variables para determinar si el item a esta a la izquierda de b (l_a,b) o si esta debajo (d_a,b)
+        objCoeffs.clear()
+        pairs = [(p1, p2) for idx1, p1 in enumerate(P) for idx2, p2 in enumerate(P) if idx1 < idx2]
+        for (a, b), (a2, b2) in pairs:
+            lName = f"l_{a},{b}_{a2},{b2}"
+            dName = f"d_{a},{b}_{a2},{b2}"
+            coeff = 0
+            lVars.append(lName)
+            dVars.append(dName)
+     
+        objCoeffs=[0] * len(lVars+dVars)  
+        addVariables(model,lVars+dVars,objCoeffs,"B")
+        
+        objCoeffs.clear()
+        
+        
+        # Restricciones
+        for (a, b) in P:
+            sVar = f"s_{a},{b}"
+            zVar = f"z_{a},{b}"
+            
+            # Restricción 1: Relacion item y rotacion
+            # s_{a,b} ≤ z_{a,b}
+            
+            indexes = [sVar,zVar]
+            coeffs = [1,-1]
+            consRhs=0
+            consSense="L"
+            addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consItemRotado_{a}_{b}")
+
+            # Restricción 2: No exceder limite a lo ancho de la rebanada
+            # a + w(1-s_{a,b}) + h s_{a,b} ≤ W + M(1 - z_{a,b})
+            indexes = [sVar,zVar]
+            coeffs = [-w+h,M]
+            consRhs=W+M-a-w
+            consSense="L"
+            addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consLimiteAncho_{a}_{b}")
+
+            # Restricción 3: No exceder limite a lo alto de la rebanada
+            # b + h(1-s_{a,b}) + w s_{a,b} ≤ H_r + M(1 - z_{a,b})
+            indexes = [sVar,zVar]
+            coeffs = [-h+w,M]
+            consRhs=H_r+M-b-h
+            consSense="L"
+            addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consLimiteAlto_{a}_{b}")
+        
+        #TODO: SEGUIR ACÁ CON LAS RESTRICCIONES
+       
+        for (a, b), (aPrime, bPrime) in pairs:
+            zVar1, zVar2 = f"z_{a},{b}", f"z_{aPrime},{bPrime}"
+            sVar1, sVar2 = f"s_{a},{b}", f"s_{aPrime},{bPrime}"
+            lVar = f"l_{a},{b}_{aPrime},{bPrime}"
+            dVar = f"d_{a},{b}_{aPrime},{bPrime}"
+
+            # Restricción 4: No solape horizontal
+            # a + w(1-s) + h s ≤ a2 + M(1 - l)
+            
+            indexes = [sVar1,lVar]
+            coeffs = [-w+h,M]
+            consRhs=aPrime+M-a-w
+            consSense="L"
+            addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consNoSolapamientoX_{a}_{b}_{aPrime}_{bPrime}")
+
+            # Restricción 5: No solape vertical
+            # b + h(1-s) + w s ≤ b2 + M(1 - d)
+            indexes = [sVar1, dVar]
+            coeffs = [-h+w, M]
+            consRhs = bPrime+M-b-h
+            consSense="L"
+            addConstraintSet(model, coeffs, indexes, consRhs, consSense, added_constraints, f"consNoSolapamientoY_{a}_{b}_{aPrime}_{bPrime}")
+
+            # Restricción 6: Disyunción
+            # l + d ≥ z1 + z2 - 1
+            indexes = [lVar, dVar, zVar1, zVar2]
+            coeffs = [1, 1, -1, -1]
+            consRhs = -1
+            consSense="G"
+            addConstraintSet(model, coeffs, indexes, consRhs, consSense, added_constraints, f"consDisyuncion_{a}_{b}_{aPrime}_{bPrime}")
+            
+        print("OUT - Create Slave Model")    
+        return model
+    except CplexSolverError as e:
+        handleSolverError(e)
+
+def createSlaveModel28052025(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, anchoBin,altoItemSinRotar,anchoItemSinRotar):    
     print("--------------------------------------------------------------------------------------------------------------------")
     print("IN - Create Slave Model")
     I = items  # Lista de ítems disponibles
@@ -211,6 +351,8 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, ancho
     M= max(H_r, W) #maximo entre la altura de la rebanada y el ancho del bin
     print(f"H_r: {H_r}, W: {W}, h: {h}, w: {w}, M: {M}")
     print("A_i: ",A_i)
+    print("ITEMS: ",I)
+    
     try:
         # Crear el modelo
         model = cplex.Cplex()
@@ -236,10 +378,10 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, ancho
 
         # Crear las variables para indicar si incluyo item en la rebanada (z_i)
         for i in I:
-            var_name = f"z_{i.getId()-1}"
+            var_name = f"z_{i.getId()-1}" 
             z_i_names.append(var_name)
             # Coeficiente de la variable en la función objetivo
-            A_i_valor = A_i["pi"].get(i.getId()-1, 0)
+            A_i_valor = A_i["pi"].get(i.getId()-1, 0) #TODO MODIFICAR ACA PARA QUE TOME LA POSICION DE PI
             coeff = A_i_valor
             objCoeffs.append(coeff)
             

@@ -7,7 +7,6 @@ class Item:
             Item._id_counter += 1
         else:
             self.setId(id)
-
         self.setAlto(alto)
         self.setAncho(ancho)
         self.setRotado(rotado)
@@ -76,6 +75,10 @@ class Item:
     
     def getPosicion(self):
         return (self.getPosicionX(), self.getPosicionY())
+    
+    def setPosicion(self, x, y):
+        self.setPosicionX(x)
+        self.setPosicionY(y)
 
     def __repr__(self):
         return (f"Item(id={self.getId()}, alto={self.getAlto()}, ancho={self.getAncho()}, "
