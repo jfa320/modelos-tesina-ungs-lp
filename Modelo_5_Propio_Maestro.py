@@ -216,8 +216,6 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
                             posicionesOcupadas.update(calcularPosicionesOcupadas(posicion, item.getAncho(), item.getAlto()))
                 if (a, b) in posicionesOcupadas:
                     rebanadasQueOcupanPos.append(r)
-            print("posicion: ",(a,b))
-            print("rebanadas que ocupan la posicion: ",rebanadasQueOcupanPos)
             
             if rebanadasQueOcupanPos:
                     indexes = [p_r_names[r.getId()-1] for r in rebanadasQueOcupanPos]
