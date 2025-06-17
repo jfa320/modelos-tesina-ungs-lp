@@ -1,7 +1,7 @@
 class Item:
     _id_counter = 1
     
-    def __init__(self, alto, ancho, rotado=False, id=None):
+    def __init__(self, alto, ancho, rotado=False, id=None,posicionX=None, posicionY=None):
         if id is None:
             self.setId(Item._id_counter)
             Item._id_counter += 1
@@ -10,8 +10,8 @@ class Item:
         self.setAlto(alto)
         self.setAncho(ancho)
         self.setRotado(rotado)
-        self.setPosicionX(None)
-        self.setPosicionY(None)
+        self.setPosicionX(posicionX)
+        self.setPosicionY(posicionY)
 
     def setId(self, id):
         if isinstance(id, int) and id > 0:

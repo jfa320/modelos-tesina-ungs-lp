@@ -25,13 +25,17 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
     posiciones= set() 
     posiciones =  posXY_x.union(posXY_y) 
     #C_r= se puede modelar usando el metodo rebanada.getTotalItems() - Cantidad de items en rebanadas
-    
+   
     try:
         # Crear instancia del problema
         model = cplex.Cplex()
         model.set_problem_type(cplex.Cplex.problem_type.MILP) 
         model.parameters.timelimit.set(maxTime)
-
+        
+        #Desactivo el presolve
+        model.parameters.preprocessing.presolve.set(0)
+        #Seteo el metodo simplex para resolver el modelo
+        model.parameters.lpmethod.set(1)
         # Variables
         # Variables p_r (binarias)
         p_r_names = [f"p_{r.getId()}" for r in R]
@@ -55,20 +59,22 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
                 for item in rebanada.getItems():
                     if item.getPosicionX() is not None and item.getPosicionY() is not None:
                         posicion = item.getPosicion()
-                        if item.getRotado():
-                            posicionesOcupadas.update(calcularPosicionesOcupadas(posicion, item.getAlto(), item.getAncho()))
-                        else:
-                            posicionesOcupadas.update(calcularPosicionesOcupadas(posicion, item.getAncho(), item.getAlto()))
+                        # if item.getRotado():
+                        #     posicionesOcupadas.update(calcularPosicionesOcupadas(posicion, item.getAlto(), item.getAncho()))
+                        # else:
+                        posicionesOcupadas.update(calcularPosicionesOcupadas(posicion, item.getAncho(), item.getAlto()))
                 if (a, b) in posicionesOcupadas:
                     rebanadasQueOcupanPos.append(r)
             
             if rebanadasQueOcupanPos:
+                    print(f"Agregando restricción para la posición ({a}, {b})")
                     indexes = [p_r_names[r.getId()-1] for r in rebanadasQueOcupanPos]
                     coeffs = [1] * len(rebanadasQueOcupanPos)
                     consRhs=1.0
                     consSense="L"
                     addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consItem_{a}_{b}")
-               
+        
+        print(f"Rebanadas usadas: {R}")
         print("OUT - Create Master Model")
         return model
     

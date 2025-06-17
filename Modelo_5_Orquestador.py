@@ -20,8 +20,91 @@ def generarListaItems(ITEMS_QUANTITY, ITEM_HEIGHT, ITEM_WIDTH):
 
 items=generarListaItems(ITEMS_QUANTITY,ITEM_HEIGHT,ITEM_WIDTH)
 
+def generarRebanadasIniciales(binHeight, binWidth, itemWidth, itemHeight, posXY_x, posXY_y):
+    rebanadas = []
+    rebanadaId = 0
 
-def generarRebanadasIniciales(binHeight,binWidth, itemWidth, itemHeight):
+    # Agrupar posiciones por coordenada Y para ítems NO rotados
+    posicionesPorFila_x = {}
+    for (x, y) in posXY_x:
+        posicionesPorFila_x.setdefault(y, []).append((x, y))
+
+    for y in sorted(posicionesPorFila_x.keys()):
+        rebanada = Rebanada(alto=binHeight, ancho=binWidth)
+        ocupadas = set()
+        for (x, _) in sorted(posicionesPorFila_x[y]):
+            if x + itemWidth <= binWidth:
+                region = {(x + dx, y + dy) for dx in range(itemWidth) for dy in range(itemHeight)}
+                if not region & ocupadas:
+                    item = Item(alto=itemHeight, ancho=itemWidth, rotado=False)
+                    rebanada.agregarItem(item, x, y)
+                    ocupadas |= region
+        if rebanada.getPosicionesOcupadas():
+            rebanadas.append(rebanada)
+            rebanadaId += 1
+
+    # Agrupar posiciones por coordenada Y para ítems ROTADOS
+    posicionesPorFila_y = {}
+    for (x, y) in posXY_y:
+        posicionesPorFila_y.setdefault(y, []).append((x, y))
+
+    for y in sorted(posicionesPorFila_y.keys()):
+        rebanada = Rebanada(alto=binHeight, ancho=binWidth)
+        ocupadas = set()
+        for (x, _) in sorted(posicionesPorFila_y[y]):
+            if x + itemHeight <= binWidth:
+                region = {(x + dx, y + dy) for dx in range(itemHeight) for dy in range(itemWidth)}
+                if not region & ocupadas:
+                    item = Item(alto=itemWidth, ancho=itemHeight, rotado=True)
+                    rebanada.agregarItem(item, x, y)
+                    ocupadas |= region
+        if rebanada.getPosicionesOcupadas():
+            rebanadas.append(rebanada)
+            rebanadaId += 1
+
+    return rebanadas
+
+
+
+def generarRebanadasIniciale08062025(binHeight, binWidth, itemWidth, itemHeight):
+    rebanadas = []
+
+    # Rebanadas con ítems NO rotados
+    y = 0
+    while y + itemHeight <= binHeight:
+        x = 0
+        rebanadaNoRotada = Rebanada(alto=altoRebanada, ancho=binWidth)
+
+        while x + itemWidth <= binWidth:
+            item = Item(alto=itemHeight, ancho=itemWidth, rotado=False)
+            rebanadaNoRotada.agregarItem(item, x, y)
+            x += itemWidth
+
+        if rebanadaNoRotada.getPosicionesOcupadas():
+            rebanadas.append(rebanadaNoRotada)
+
+        y += itemHeight  # Avanza según ítems no rotados
+
+    # Rebanadas con ítems ROTADOS
+    y = 0
+    while y + itemWidth <= binHeight:
+        x = 0
+        rebanadaRotada = Rebanada(alto=altoRebanada, ancho=binWidth)
+
+        while x + itemHeight <= binWidth:
+            item = Item(alto=itemWidth, ancho=itemHeight, rotado=True)
+            rebanadaRotada.agregarItem(item, x, y)
+            x += itemHeight
+
+        if rebanadaRotada.getPosicionesOcupadas():
+            rebanadas.append(rebanadaRotada)
+
+        y += itemWidth  # Avanza según ítems rotados
+
+    return rebanadas
+
+
+def generarRebanadasIniciales07062025(binHeight,binWidth, itemWidth, itemHeight):
     rebanadas = []
     y = 0
 
@@ -104,16 +187,23 @@ def generarRebanadasInicialesA(binHeight, binWidth, nRebanadas, items):
 
 # Orquestador principal
 def orquestador(queue,manualInterruption,maxTime):
-    MAX_ITERACIONES = 70
+    MAX_ITERACIONES = 1
     # rebanadas = generarRebanadasIniciales(BIN_HEIGHT,BIN_WIDTH,numRebanadas,items)  # Inicialización con rebanadas básicas
-    rebanadas= generarRebanadasIniciales(BIN_HEIGHT,BIN_WIDTH, ITEM_WIDTH, ITEM_HEIGHT)  # Inicialización con rebanadas básicas
-    itemAux=Item(alto=ITEM_HEIGHT, ancho=ITEM_WIDTH)
-    rebanadaAux=Rebanada(alto=altoRebanada, ancho=BIN_WIDTH, items=[], posicionesOcupadas=[])
-    rebanadaAux.agregarItem(itemAux, 0, 0)  # Agregar un ítem a la rebanada auxiliar
-    rebanadas.append(rebanadaAux)  
+    rebanadas= generarRebanadasIniciales(BIN_HEIGHT,BIN_WIDTH, ITEM_WIDTH, ITEM_HEIGHT,posXY_x,posXY_y)  # Inicialización con rebanadas básicas
+    # itemAux=Item(alto=ITEM_HEIGHT, ancho=ITEM_WIDTH)
+    # rebanadaAux=Rebanada(alto=altoRebanada, ancho=BIN_WIDTH, items=[], posicionesOcupadas=[])
+    # rebanadaAux.agregarItem(itemAux, 0, 0)  # Agregar un ítem a la rebanada auxiliar
+    # rebanadas.append(rebanadaAux)  
+    
+    # itemAux=Item(alto=ITEM_WIDTH, ancho=ITEM_HEIGHT,rotado=True)
+    # rebanadaAux=Rebanada(alto=altoRebanada, ancho=BIN_WIDTH, items=[], posicionesOcupadas=[])
+    # rebanadaAux.agregarItem(itemAux, 0, 2)  # Agregar un ítem a la rebanada auxiliar
+    # rebanadas.append(rebanadaAux)  
 
     iteracion = 0
     print(f"Rebanadas iniciales: {rebanadas}")
+    print(f"posXY_x: {posXY_x}")
+    print(f"posXY_y: {posXY_y}")
     vueltaNro=1
     while True:
         # Creo modelo

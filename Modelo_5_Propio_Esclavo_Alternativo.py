@@ -6,7 +6,7 @@ from Objetos import Rebanada
 from Objetos import Item
 
 MODEL_NAME="Model5SlaveAlternative"
-
+EPSILON = 1e-5
 
 def construirItems(variableNames, variableValues, altoItem, anchoItem):
     items = []
@@ -29,9 +29,13 @@ def construirItems(variableNames, variableValues, altoItem, anchoItem):
             xValue = int(parts[1])  
             yValue = int(parts[2])  
             rotado = True if s_dict.get(f"s_{str(xValue)}_{str(yValue)}") > 0.5 else False
-            itemAgregar=Item(alto=altoItem, ancho=anchoItem, rotado=rotado)
+            itemAgregar=Item(alto=altoItem, ancho=anchoItem, rotado=rotado,posicionX=xValue, posicionY=yValue)
+            if rotado:
+                itemAgregar.setAlto(anchoItem)
+                itemAgregar.setAncho(altoItem)
             if(not itemAgregar in items):
                 items.append(itemAgregar)
+    print("Items construidos: ", items)
     return items
 
 
@@ -50,13 +54,19 @@ def construirPosicionesOcupadas(variableNames, variableValues):
 
     
 
-def obtenerYMaximo(posicionesOcupadas,altoItem,anchoItem):
+def obtenerYMaximo(posicionesOcupadas,altoItem,anchoItem,items):
+    #TODO: Revisar si este metodo es necesario
+    if not posicionesOcupadas:
+        return None  # Manejar caso donde la lista esté vacía
+    itemPosYMax = max(items, key=lambda item: item.getPosicionY())
+    return itemPosYMax.getPosicionY() + itemPosYMax.getAlto()
+
+def obtenerYMaximo080602025(posicionesOcupadas,altoItem,anchoItem):
     #TODO: Revisar si este metodo es necesario
     if not posicionesOcupadas:
         return None  # Manejar caso donde la lista esté vacía
     altoFinal=max(y for _, y in posicionesOcupadas) + max(altoItem,anchoItem)
     return altoFinal
-
         
 def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, anchoBin,altoItemSinRotar,anchoItemSinRotar):    
     print("--------------------------------------------------------------------------------------------------------------------")
@@ -69,9 +79,12 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, ancho
     W= anchoBin
     M= max(H_r, W) #maximo entre la altura de la rebanada y el ancho del bin
     P = set(XY_x).union(XY_y)
+    P = list(P)  # Convertir a lista para iterar
+    P.sort()  # Ordenar los pares (a, b) para consistencia
     print(f"H_r: {H_r}, W: {W}, h: {h}, w: {w}, M: {M}")
     print("A_i: ",A_i)
     print("ITEMS: ",I)
+    print("P: ", P)
     
     try:
         # Crear el modelo
@@ -98,7 +111,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, ancho
             var_name = f"z_{a}_{b}" 
             zVars.append(var_name)
             # Coeficiente de la variable en la función objetivo
-            A_i_valor = A_i["pi"].get((a,b), 0) 
+            A_i_valor = A_i["pi"].get(f"({a},{b})", 0) 
             coeff = A_i_valor
             objCoeffs.append(coeff)
             
@@ -144,19 +157,11 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, ancho
             
             addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consItemRotado_{a}_{b}")
 
-            # Restricción 2: No exceder limite a lo ancho de la rebanada
-            # a + w(1-s_{a,b}) + h s_{a,b} ≤ W + M(1 - z_{a,b})
-            indexes = [sVar,zVar]
-            coeffs = [-w+h,M]
-            consRhs=W+M-a-w
-            consSense="L"
-            addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consLimiteAncho_{a}_{b}")
-
             # Restricción 3: No exceder limite a lo alto de la rebanada
-            # b + h(1-s_{a,b}) + w s_{a,b} ≤ H_r + M(1 - z_{a,b})
-            indexes = [sVar,zVar]
-            coeffs = [-h+w,M]
-            consRhs=H_r+M-b-h
+            # b ≤ H_r + M(1 - z_{a,b})
+            indexes = [zVar]
+            coeffs = [M]
+            consRhs=H_r+M-b
             consSense="L"
             addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consLimiteAlto_{a}_{b}")
         
@@ -246,17 +251,31 @@ def solveSlaveModel(model, queue, manualInterruption, anchoBin, altoItem, anchoI
         items=construirItems(variableNames, variableValues, altoItem, anchoItem)
         
         posicionesOcupadas=construirPosicionesOcupadas(variableNames, variableValues)
-        alto= obtenerYMaximo(posicionesOcupadas,altoItem,anchoItem)
+        alto= obtenerYMaximo(posicionesOcupadas,altoItem,anchoItem,items)
         
         print("Valor objetivo del esclavo", objectiveValue)
         # if objectiveValue <= 0:
-        EPSILON = 1e-5
+        
+        # # Obtenés la holgura (slack) de cada restricción
+        # slacks = model.solution.get_linear_slacks()
+
+        # # Obtenés los nombres de las restricciones en el mismo orden
+        # nombresRestricciones = model.linear_constraints.get_names()
+
+        # # Recorremos y mostramos cuáles están activas
+        # for i, (nombre, slack) in enumerate(zip(nombresRestricciones, slacks)):
+        #     if abs(slack) < 1e-6:  # Tolerancia numérica
+        #         print(f"Restricción '{nombre}' está ACTIVA (ligada).")
+        #     else:
+        #         print(f"Restricción '{nombre}' NO está activa. Holgura: {slack}")
+        
         if objectiveValue  <= EPSILON:
             print("El valor objetivo del esclavo es insignificante. Fin del proceso.")
             return None
         print("OUT - Solve Slave Model")
         
         rebanadaEncontrada=Rebanada(alto, anchoBin, items , posicionesOcupadas)
+        print(f"Rebanada encontrada!!: {rebanadaEncontrada}")
         return rebanadaEncontrada
     except CplexSolverError as e:
         print("Error al resolver el modelo esclavo:", e)
