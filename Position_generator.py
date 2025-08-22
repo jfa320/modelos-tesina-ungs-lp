@@ -84,7 +84,25 @@ def createCMatrix(W, H, positions, w, h, points): #usado en los modelos
 #-------------------------------------------------------------------
 #Generador de posiciones para modelo 5 (nuevo)
 
-def generatePositionsXY(anchoBin, altoBin, anchoItem, altoItem):
+def generatePositionsXY(W, H, w, h):
+    # Qx: posiciones alcanzables en el eje horizontal
+    Qx = {i * w + j * h for i in range(W // w + 1) for j in range(W // h + 1)
+          if i * w + j * h <= W - min(w, h)}
+    Px = sorted(Qx)
+
+    # Qy: posiciones alcanzables en el eje vertical
+    Qy = {i * h + j * w for i in range(H // h + 1) for j in range(H // w + 1)
+          if i * h + j * w <= H - min(w, h)}
+    Py = sorted(Qy)
+
+    # Conjuntos de posiciones válidas
+    XY_x = {(x, y) for x in Px for y in Py if x + w <= W and y + h <= H}  # ítem no rotado
+    XY_y = {(x, y) for x in Px for y in Py if x + h <= W and y + w <= H}  # ítem rotado
+
+    return XY_x, XY_y
+
+
+def generatePositionsXYOriginal(anchoBin, altoBin, anchoItem, altoItem):
     # Constantes
     W, H, w, h = anchoBin,altoBin,anchoItem,altoItem
 
@@ -101,4 +119,16 @@ def generatePositionsXY(anchoBin, altoBin, anchoItem, altoItem):
 
     XY_y = {(x, y) for x in P for y in P if x + h <= W and y + w <= H}
     
+    return XY_x, XY_y
+
+def generatePositionsXY1(anchoBin, altoBin, anchoItem, altoItem): #chat
+    W, H = anchoBin, altoBin
+    w, h = anchoItem, altoItem
+
+    # Ítems NO rotados: ubicarlos de izquierda a derecha, fila por fila
+    XY_x = {(0, y) for y in range(0, H - h + 1)}
+
+    # Ítems ROTADOS: ubicarlos de arriba hacia abajo, columna por columna
+    XY_y = {(x, 0) for x in range(0, W - h + 1)}
+
     return XY_x, XY_y

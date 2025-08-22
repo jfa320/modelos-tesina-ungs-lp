@@ -23,6 +23,7 @@ def createAndSolveModel(queue,manualInterruption,maxTime):
         model.parameters.timelimit.set(maxTime)
 
         initialTime=model.get_time()
+        initialTimeT= time.time()
        
         # Definir variables y objetivos
         varsNames = [f"f_{i}" for i in ITEMS]
@@ -107,9 +108,13 @@ def createAndSolveModel(queue,manualInterruption,maxTime):
         #     print(f"{var_name} = {value}")
        
         status = model.solution.get_status()
-        finalTime = model.get_time()
-        solverTime=finalTime-initialTime
-        solverTime=round(solverTime, 2)
+        # finalTime = model.get_time()
+        # solverTime=finalTime-initialTime
+        # solverTime=round(solverTime, 2)
+        
+        finalTimeT= time.time()
+        solverTimeT=finalTimeT-initialTimeT
+        solverTimeT=round(solverTimeT, 2)
         
         if status == 105:  # CPLEX código 105 = Time limit exceeded
             print("The solver stopped because it reached the time limit.")
@@ -120,7 +125,7 @@ def createAndSolveModel(queue,manualInterruption,maxTime):
             "modelStatus": modelStatus,
             "solverStatus": solverStatus,
             "objectiveValue": objectiveValue,
-            "solverTime": solverTime
+            "solverTime": solverTimeT
         })
         
     except CplexSolverError as e:
@@ -129,6 +134,9 @@ def createAndSolveModel(queue,manualInterruption,maxTime):
 
 def executeWithTimeLimit(maxTime):
     global modelStatus, solverStatus, objectiveValue, solverTime 
+    global excedingLimitTime
+    excedingLimitTime=False
+    
     # Crear una cola para recibir los resultados del subproceso
     queue = multiprocessing.Queue()
 
@@ -150,12 +158,14 @@ def executeWithTimeLimit(maxTime):
                 modelStatus="14" #valor en paver para marcar que el modelo no devolvio respuesta por error
                 solverStatus="4" #el solver finalizo la ejecucion del modelo
                 solverTime=maxTime
+                excedingLimitTime=True
                 process.terminate()
                 process.join()
                 break
         time.sleep(0.1)  # Evitar consumir demasiados recursos
 
     # Imprimo resultados de la ejecucion que se guardan luego en el archivo trc para usar en paver
+    
     while not queue.empty():
         message = queue.get()
         if isinstance(message, dict):
@@ -164,4 +174,10 @@ def executeWithTimeLimit(maxTime):
             solverStatus = message["solverStatus"]
             objectiveValue = message["objectiveValue"]
             solverTime = message["solverTime"]
+            
+    if(excedingLimitTime):
+        print("El modelo excedió el tiempo límite de ejecución.")
+        objectiveValue = "n/a"
+        modelStatus = "14"
+                
     return CASE_NAME, MODEL_NAME, modelStatus, solverStatus, objectiveValue, solverTime

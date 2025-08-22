@@ -11,7 +11,7 @@ from TraceFileGenerator import TraceFileGenerator
 #Setear caso a probar en archivo Config.py
 
 if __name__ == '__main__':
-    EXECUTION_TIME = 2
+    EXECUTION_TIME = 100 # tiempo de ejecución en segundos para cada modelo
     generator = TraceFileGenerator("output.trc")
     
     # models = [

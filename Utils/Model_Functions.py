@@ -19,7 +19,7 @@ def addConstraint(model, coeff, vars, rhs, sense,constraintName=None):
             rhs=[rhs]
         )
     
-def addConstraintSet(model, coeff, vars, rhs, sense, added_constraints,constraintName=None):
+def addConstraintSet(model, coeff, vars, rhs, sense, added_constraints,constraintName=None,desactivarCondicionRestriccionesRepetidas=False):
     # Crear una representación única de la restricción
     #filtro de variables con coeficientes 0 - es lo mismo que hace CPLEX, de esta manera evito que se repitan restricciones
     filtered = [(c, v) for c, v in zip(coeff, vars) if c != 0]
@@ -31,7 +31,7 @@ def addConstraintSet(model, coeff, vars, rhs, sense, added_constraints,constrain
     new_constraint = (tuple(coeff), tuple(vars), rhs, sense)
     
 
-    if new_constraint in added_constraints:
+    if new_constraint in added_constraints and not desactivarCondicionRestriccionesRepetidas:
         print(f"La restricción ya existe: {new_constraint}. No se agrega nuevamente.")
         return
     

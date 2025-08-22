@@ -9,7 +9,6 @@ from Modelo_5_Propio_Maestro import *
 from Modelo_5_Propio_Esclavo_Alternativo import * 
 from Config import *
 
-
 numRebanadas = math.ceil(BIN_HEIGHT/max(ITEM_WIDTH,ITEM_HEIGHT))  # Número de rebanadas a generar # TODO: ver esto, esta muy hardcoded - aca corregir
 posXY_x, posXY_y=generatePositionsXY(BIN_WIDTH,BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT)
 altoRebanada = math.ceil(BIN_HEIGHT / numRebanadas)  # Redondea hacia abajo
@@ -20,11 +19,66 @@ def generarListaItems(ITEMS_QUANTITY, ITEM_HEIGHT, ITEM_WIDTH):
 
 items=generarListaItems(ITEMS_QUANTITY,ITEM_HEIGHT,ITEM_WIDTH)
 
-def generarRebanadasIniciales(binHeight, binWidth, itemWidth, itemHeight, posXY_x, posXY_y):
+def generarRebanadasIniciales(binHeight, binWidth, itemWidth, itemHeight, posXY_x, posXY_y, maxItems):
+    rebanadas = []
+    rebanadaId = 0
+    itemsColocados = 0  # contador global
+
+    # Agrupar posiciones por coordenada X para ítems NO rotados
+    posicionesPorFila_x = {}
+    for (x, y) in posXY_x:
+        posicionesPorFila_x.setdefault(y, []).append((x, y))
+
+    for y in sorted(posicionesPorFila_x.keys()):
+        if itemsColocados >= maxItems:
+            break
+        rebanada = Rebanada(alto=binHeight, ancho=binWidth)
+        ocupadas = set()
+        for (x, _) in sorted(posicionesPorFila_x[y]):
+            if itemsColocados >= maxItems:
+                break
+            if x + itemWidth <= binWidth:
+                region = {(x + dx, y + dy) for dx in range(itemWidth) for dy in range(itemHeight)}
+                if not region & ocupadas:
+                    item = Item(alto=itemHeight, ancho=itemWidth, rotado=False)
+                    rebanada.agregarItem(item, x, y)
+                    ocupadas |= region
+                    itemsColocados += 1
+        if rebanada.getPosicionesOcupadas():
+            rebanadas.append(rebanada)
+            rebanadaId += 1
+
+    # Agrupar posiciones por coordenada Y para ítems ROTADOS
+    posicionesPorFila_y = {}
+    for (x, y) in posXY_y:
+        posicionesPorFila_y.setdefault(y, []).append((x, y))
+
+    for y in sorted(posicionesPorFila_y.keys()):
+        if itemsColocados >= maxItems:
+            break
+        rebanada = Rebanada(alto=binHeight, ancho=binWidth)
+        ocupadas = set()
+        for (x, _) in sorted(posicionesPorFila_y[y]):
+            if itemsColocados >= maxItems:
+                break
+            if x + itemHeight <= binWidth:
+                region = {(x + dx, y + dy) for dx in range(itemHeight) for dy in range(itemWidth)}
+                if not region & ocupadas:
+                    item = Item(alto=itemWidth, ancho=itemHeight, rotado=True)
+                    rebanada.agregarItem(item, x, y)
+                    ocupadas |= region
+                    itemsColocados += 1
+        if rebanada.getPosicionesOcupadas():
+            rebanadas.append(rebanada)
+            rebanadaId += 1
+
+    return rebanadas
+
+def generarRebanadasIniciales08082025(binHeight, binWidth, itemWidth, itemHeight, posXY_x, posXY_y):
     rebanadas = []
     rebanadaId = 0
 
-    # Agrupar posiciones por coordenada Y para ítems NO rotados
+    # Agrupar posiciones por coordenada X para ítems NO rotados
     posicionesPorFila_x = {}
     for (x, y) in posXY_x:
         posicionesPorFila_x.setdefault(y, []).append((x, y))
@@ -186,10 +240,10 @@ def generarRebanadasInicialesA(binHeight, binWidth, nRebanadas, items):
 
 
 # Orquestador principal
-def orquestador(queue,manualInterruption,maxTime):
-    MAX_ITERACIONES = 1
-    # rebanadas = generarRebanadasIniciales(BIN_HEIGHT,BIN_WIDTH,numRebanadas,items)  # Inicialización con rebanadas básicas
-    rebanadas= generarRebanadasIniciales(BIN_HEIGHT,BIN_WIDTH, ITEM_WIDTH, ITEM_HEIGHT,posXY_x,posXY_y)  # Inicialización con rebanadas básicas
+def orquestador(queue,manualInterruption,maxTime,initialTime):
+    MAX_ITERACIONES = 10
+    # rebanadas = generarRebanadasIniciales(BIN_HEIGHT,BIN_WIDTH,ITEM_WIDTH, ITEM_HEIGHT)  # Inicialización con rebanadas básicas
+    rebanadas= generarRebanadasIniciales(BIN_HEIGHT,BIN_WIDTH, ITEM_WIDTH, ITEM_HEIGHT,posXY_x,posXY_y, ITEMS_QUANTITY)  # Inicialización con rebanadas básicas
     # itemAux=Item(alto=ITEM_HEIGHT, ancho=ITEM_WIDTH)
     # rebanadaAux=Rebanada(alto=altoRebanada, ancho=BIN_WIDTH, items=[], posicionesOcupadas=[])
     # rebanadaAux.agregarItem(itemAux, 0, 0)  # Agregar un ítem a la rebanada auxiliar
@@ -199,7 +253,7 @@ def orquestador(queue,manualInterruption,maxTime):
     # rebanadaAux=Rebanada(alto=altoRebanada, ancho=BIN_WIDTH, items=[], posicionesOcupadas=[])
     # rebanadaAux.agregarItem(itemAux, 0, 2)  # Agregar un ítem a la rebanada auxiliar
     # rebanadas.append(rebanadaAux)  
-
+    # rebanadas=[]
     iteracion = 0
     print(f"Rebanadas iniciales: {rebanadas}")
     print(f"posXY_x: {posXY_x}")
@@ -212,7 +266,7 @@ def orquestador(queue,manualInterruption,maxTime):
         masterModel = createMasterModel(maxTime,rebanadas,BIN_HEIGHT,BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH,items, posXY_x, posXY_y)
         posicionesBin = set(posXY_x) | set(posXY_y)
         # Resolver modelo maestro
-        _ , precios_duales = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=True, items=items, posXY_x=posXY_x, posXY_y= posXY_y)
+        optimalValueParcial , precios_duales = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=True, items=items, posXY_x=posXY_x, posXY_y= posXY_y,initialTime=initialTime)
         print(f"Precios duales: {precios_duales}")
         
         # Crear modelo esclavo
@@ -228,33 +282,24 @@ def orquestador(queue,manualInterruption,maxTime):
         print(f"Nueva rebanada encontrada: {nueva_rebanada}")
         rebanadas.append(nueva_rebanada)
         iteracion += 1
-
+        
         if iteracion >= MAX_ITERACIONES:
             print("Se alcanzó el máximo de iteraciones. Corte preventivo.")
             break
     
     print("Resolviendo modelo maestro final...")
+    print(f"posXY_x: {posXY_x}")
+    print(f"posXY_y: {posXY_y}")
     masterModel = createMasterModel(maxTime,rebanadas,BIN_HEIGHT,BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH,items, posXY_x, posXY_y)
+    solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=False, items=items, posXY_x=posXY_x, posXY_y= posXY_y,initialTime=initialTime)
     
-    resultado = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=False, items=items, posXY_x=posXY_x, posXY_y= posXY_y)
-    if resultado is not None:
-        solucion_final, _ = resultado
-        print(f"Solución final: {solucion_final}")
-    else:
-        print("solveMasterModel devolvió None :(")
-    
-
 
 def executeWithTimeLimit(maxTime):
     global modelStatus, solverStatus, objectiveValue, solverTime 
+    global excedingLimitTime
+    excedingLimitTime=False
+    initialTime = time.time()
     
-    print("ESTO ES MODELO 5 ORQUESTADOR")
-    print(f"numRebanadas: {numRebanadas}")
-    print(f"BIN_HEIGHT: {BIN_HEIGHT}")
-    print(f"BIN_WIDTH: {BIN_WIDTH}")
-    print(f"ITEM_WIDTH: {ITEM_WIDTH}")
-    print(f"ITEM_HEIGHT: {ITEM_HEIGHT}")  
-    print(f"altoRebanada: {altoRebanada}")
 
     # Crear una cola para recibir los resultados del subproceso
     queue = multiprocessing.Queue()
@@ -263,31 +308,41 @@ def executeWithTimeLimit(maxTime):
     manualInterruption = multiprocessing.Value('b', True)
 
     # Crear el subproceso que correrá la función
-    process = multiprocessing.Process(target=orquestador, args=(queue,manualInterruption,maxTime))
+    process = multiprocessing.Process(target=orquestador, args=(queue,manualInterruption,maxTime,initialTime))
 
     # Iniciar el subproceso
     process.start()
 
-    initialTime = time.time()
 
     # Monitorear la cola mientras el proceso está en ejecución
+    
     while process.is_alive():
         if manualInterruption.value and time.time() - initialTime > maxTime:
             print("Limit time reached. Aborting process.")
             modelStatus="14" #valor en paver para marcar que el modelo no devolvio respuesta por error
             solverStatus="4" #el solver finalizo la ejecucion del modelo
             solverTime=maxTime
+            excedingLimitTime=True
             process.terminate()
             process.join()
             break
         time.sleep(0.1)  # Evitar consumir demasiados recursos
 
+    
     # Imprimo resultados de la ejecucion que se guardan luego en el archivo trc para usar en paver
     while not queue.empty():
         message = queue.get()
         if isinstance(message, dict):
+            objectiveValue = message["objectiveValue"]
             modelStatus = message["modelStatus"]
             solverStatus = message["solverStatus"]
-            objectiveValue = message["objectiveValue"]
             solverTime = message["solverTime"]
+            print(f"Optimal value: {objectiveValue}")
+            print(message)
+    if(excedingLimitTime):
+        print("El modelo excedió el tiempo límite de ejecución.")
+        objectiveValue = "n/a"
+        modelStatus = "14" 
+    
+        
     return CASE_NAME, MODEL_NAME, modelStatus, solverStatus, objectiveValue, solverTime

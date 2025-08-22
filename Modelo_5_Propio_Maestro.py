@@ -2,9 +2,10 @@ import cplex
 from cplex.exceptions import CplexSolverError
 from Utils.Model_Functions import *
 from Config import *
+import time
 
 MODEL_NAME="Model5Master"
-
+DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS = True
 
 
 def calcularPosicionesOcupadas(posicion, ancho, alto):
@@ -24,6 +25,7 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
     R = rebanadas  # Lista de rebanadas disponibles
     posiciones= set() 
     posiciones =  posXY_x.union(posXY_y) 
+    TI= len(items)  # Total de ítems
     #C_r= se puede modelar usando el metodo rebanada.getTotalItems() - Cantidad de items en rebanadas
    
     try:
@@ -41,14 +43,14 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
         p_r_names = [f"p_{r.getId()}" for r in R]
         coeffs_p_r = [r.getTotalItems() for r in R] 
         addVariables(model, p_r_names,coeffs_p_r, model.variables.type.binary)
-        # Función objetivo
-        coef_obj = [r.getTotalItems() for r in R]  # Coeficientes de p_r en la función objetivo
     
         model.objective.set_sense(model.objective.sense.maximize)
 
         added_constraints = set()
         
         
+        # ----------------------------------------------------
+        # Restricción de posiciones ocupadas por rebanadas
         for (a, b) in posiciones:
             rebanadasQueOcupanPos = []  # Lista de rebanadas que ocupan (a, b)
 
@@ -59,20 +61,25 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
                 for item in rebanada.getItems():
                     if item.getPosicionX() is not None and item.getPosicionY() is not None:
                         posicion = item.getPosicion()
-                        # if item.getRotado():
-                        #     posicionesOcupadas.update(calcularPosicionesOcupadas(posicion, item.getAlto(), item.getAncho()))
-                        # else:
                         posicionesOcupadas.update(calcularPosicionesOcupadas(posicion, item.getAncho(), item.getAlto()))
                 if (a, b) in posicionesOcupadas:
                     rebanadasQueOcupanPos.append(r)
             
             if rebanadasQueOcupanPos:
-                    print(f"Agregando restricción para la posición ({a}, {b})")
+                    # print(f"Agregando restricción para la posición ({a}, {b})")
                     indexes = [p_r_names[r.getId()-1] for r in rebanadasQueOcupanPos]
                     coeffs = [1] * len(rebanadasQueOcupanPos)
                     consRhs=1.0
                     consSense="L"
-                    addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consItem_{a}_{b}")
+                    addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consItem_{a}_{b}",DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS)
+        
+        # ----------------------------------------------------
+        # Restricción de límite de ítems totales
+        indexes = [p_r_names[r.getId()-1] for r in R]
+        coeffs = [r.getTotalItems() for r in R]
+        consRhs=TI
+        consSense="L"
+        addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consLimiteItems",DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS)
         
         print(f"Rebanadas usadas: {R}")
         print("OUT - Create Master Model")
@@ -81,14 +88,13 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
     except CplexSolverError as e:
         handleSolverError(e)
 
-def solveMasterModel(model, queue, manualInterruption, relajarModelo, items, posXY_x, posXY_y):
+def solveMasterModel(model, queue, manualInterruption, relajarModelo, items, posXY_x, posXY_y,initialTime):
     print("IN - Solve Master Model")
     # valores por default para enviar a paver
     modelStatus, solverStatus, objectiveValue, solverTime = "1", "1", 0, 1
     
     try:    
         # Desactivar la interrupción manual aquí
-        initialTime = model.get_time()
         manualInterruption.value = False
         
         
@@ -117,7 +123,7 @@ def solveMasterModel(model, queue, manualInterruption, relajarModelo, items, pos
             print(f"{varName} = {model.solution.get_values(varName)}")
 
         status = model.solution.get_status()
-        finalTime = model.get_time()
+        finalTime = time.time()
         solverTime=finalTime-initialTime
         solverTime=round(solverTime, 2)
         
@@ -126,13 +132,14 @@ def solveMasterModel(model, queue, manualInterruption, relajarModelo, items, pos
             print("The solver stopped because it reached the time limit.")
             modelStatus="2" #valor en paver para marcar un optimo local
 
-        # Enviar resultados a través de la cola
-        queue.put({
-            "modelStatus": modelStatus,
-            "solverStatus": solverStatus,
-            "objectiveValue": objectiveValue,
-            "solverTime": solverTime
-        })
+        if(not relajarModelo):
+            # Enviar resultados a través de la cola solo cuando el modelo no está relajado, es decir, cuando se va a resolver finalmente
+            queue.put({
+                "modelStatus": modelStatus,
+                "solverStatus": solverStatus,
+                "objectiveValue": objectiveValue,
+                "solverTime": solverTime
+            })
         # Obtener la cantidad de restricciones
         
         print("OUT - Solve Master Model")
