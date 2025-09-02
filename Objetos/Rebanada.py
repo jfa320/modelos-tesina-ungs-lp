@@ -104,6 +104,10 @@ class Rebanada:
         # Agregar a la lista de ítems y posiciones ocupadas
         self.appendItem(nuevoItem, (x, y))
         # self.agregarPosicionOcupada((x, y))
+        
+    def esSimilar(self, otra):
+        return set((i.getPosicionX(), i.getPosicionY(), i.getAncho(), i.getAlto(), i.getRotado()) for i in self.getItems()) == \
+           set((i.getPosicionX(), i.getPosicionY(), i.getAncho(), i.getAlto(), i.getRotado()) for i in otra.getItems())
             
     def __repr__(self):
         return (f"Rebanada(id={self.getId()}, alto={self.get_alto()}, ancho={self.get_ancho()}, "

@@ -41,6 +41,8 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
         # Variables
         # Variables p_r (binarias)
         p_r_names = [f"p_{r.getId()}" for r in R]
+        print(f"p_r_names: {p_r_names}")
+        print(f"R: {R}")
         coeffs_p_r = [r.getTotalItems() for r in R] 
         addVariables(model, p_r_names,coeffs_p_r, model.variables.type.binary)
     

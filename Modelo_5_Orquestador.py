@@ -19,9 +19,10 @@ def generarListaItems(ITEMS_QUANTITY, ITEM_HEIGHT, ITEM_WIDTH):
 
 items=generarListaItems(ITEMS_QUANTITY,ITEM_HEIGHT,ITEM_WIDTH)
 
+
+
 def generarRebanadasIniciales(binHeight, binWidth, itemWidth, itemHeight, posXY_x, posXY_y, maxItems):
     rebanadas = []
-    rebanadaId = 0
     itemsColocados = 0  # contador global
 
     # Agrupar posiciones por coordenada X para ítems NO rotados
@@ -46,7 +47,7 @@ def generarRebanadasIniciales(binHeight, binWidth, itemWidth, itemHeight, posXY_
                     itemsColocados += 1
         if rebanada.getPosicionesOcupadas():
             rebanadas.append(rebanada)
-            rebanadaId += 1
+            itemsColocados = 0
 
     # Agrupar posiciones por coordenada Y para ítems ROTADOS
     posicionesPorFila_y = {}
@@ -70,7 +71,7 @@ def generarRebanadasIniciales(binHeight, binWidth, itemWidth, itemHeight, posXY_
                     itemsColocados += 1
         if rebanada.getPosicionesOcupadas():
             rebanadas.append(rebanada)
-            rebanadaId += 1
+            itemsColocados = 0
 
     return rebanadas
 
@@ -241,9 +242,10 @@ def generarRebanadasInicialesA(binHeight, binWidth, nRebanadas, items):
 
 # Orquestador principal
 def orquestador(queue,manualInterruption,maxTime,initialTime):
-    MAX_ITERACIONES = 10
+    MAX_ITERACIONES = 30
     # rebanadas = generarRebanadasIniciales(BIN_HEIGHT,BIN_WIDTH,ITEM_WIDTH, ITEM_HEIGHT)  # Inicialización con rebanadas básicas
     rebanadas= generarRebanadasIniciales(BIN_HEIGHT,BIN_WIDTH, ITEM_WIDTH, ITEM_HEIGHT,posXY_x,posXY_y, ITEMS_QUANTITY)  # Inicialización con rebanadas básicas
+    rebanadasIniciales=rebanadas.copy()
     # itemAux=Item(alto=ITEM_HEIGHT, ancho=ITEM_WIDTH)
     # rebanadaAux=Rebanada(alto=altoRebanada, ancho=BIN_WIDTH, items=[], posicionesOcupadas=[])
     # rebanadaAux.agregarItem(itemAux, 0, 0)  # Agregar un ítem a la rebanada auxiliar
@@ -288,6 +290,7 @@ def orquestador(queue,manualInterruption,maxTime,initialTime):
             break
     
     print("Resolviendo modelo maestro final...")
+    print(f"Rebanadas iniciales: {rebanadasIniciales}")
     print(f"posXY_x: {posXY_x}")
     print(f"posXY_y: {posXY_y}")
     masterModel = createMasterModel(maxTime,rebanadas,BIN_HEIGHT,BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH,items, posXY_x, posXY_y)

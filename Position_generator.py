@@ -85,6 +85,28 @@ def createCMatrix(W, H, positions, w, h, points): #usado en los modelos
 #Generador de posiciones para modelo 5 (nuevo)
 
 def generatePositionsXY(W, H, w, h):
+    # Función auxiliar para generar posiciones válidas de un eje
+    def axisPositions(binSize, itemSize):
+        multiples = list(range(0, binSize, itemSize))
+        limit = binSize - itemSize
+        if limit not in multiples:
+            multiples.append(limit)
+        return multiples
+
+    # Posiciones eje X e Y para ítem no rotado
+    Px = axisPositions(W, w)
+    Py = axisPositions(H, h)
+    XY_x = {(x, y) for x in Px for y in Py if x + w <= W and y + h <= H}
+
+    # Posiciones para ítem rotado 90°
+    Px_r = axisPositions(W, h)
+    Py_r = axisPositions(H, w)
+    XY_y = {(x, y) for x in Px_r for y in Py_r if x + h <= W and y + w <= H}
+
+    return XY_x, XY_y
+
+
+def generatePositionsXY1(W, H, w, h):
     # Qx: posiciones alcanzables en el eje horizontal
     Qx = {i * w + j * h for i in range(W // w + 1) for j in range(W // h + 1)
           if i * w + j * h <= W - min(w, h)}

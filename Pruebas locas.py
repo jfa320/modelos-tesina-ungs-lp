@@ -6,10 +6,10 @@
 # print(rebanadas)
 from Position_generator import *
 
-nRot,rot=generatePositionsXY(10, 7, 3, 4)
+nRot,rot=generatePositionsXY(60, 20, 12, 7)
 print("Posiciones XY (no rotadas):", nRot)
 print("Posiciones XY (rotadas):", rot)
 print("--------------------------------------------")
-nRot,rot=generatePositionsXYOriginal(10, 7, 3, 4)
-print("Posiciones XY (no rotadas):", nRot)
-print("Posiciones XY (rotadas):", rot)
+# nRot,rot=generatePositionsXYOriginal(10, 7, 3, 4)
+# print("Posiciones XY (no rotadas):", nRot)
+# print("Posiciones XY (rotadas):", rot)

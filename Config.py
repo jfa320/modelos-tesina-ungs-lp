@@ -9,13 +9,13 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 # EXECUTION_TIME = 2  # Tiempo de ejecución en segundos para cada modelo
 
 
-ITEMS_QUANTITY = 4  # constante N del modelo
+# ITEMS_QUANTITY = 4  # constante N del modelo
 
 
-BIN_WIDTH = 4       # W en el modelo
-BIN_HEIGHT = 4      # H en el modelo
-ITEM_WIDTH = 2      # w en el modelo
-ITEM_HEIGHT = 2     # h en el modelo
+# BIN_WIDTH = 4       # W en el modelo
+# BIN_HEIGHT = 4      # H en el modelo
+# ITEM_WIDTH = 2      # w en el modelo
+# ITEM_HEIGHT = 2     # h en el modelo
 
 
 # Caso 1:
@@ -71,7 +71,7 @@ ITEM_HEIGHT = 2     # h en el modelo
 # ITEM_HEIGHT = 2  # h en el modelo
 
 
-# Caso 6: 
+#Caso 6: 
 
 # ITEMS_QUANTITY = 10  # constante N del modelo
 
@@ -81,13 +81,46 @@ ITEM_HEIGHT = 2     # h en el modelo
 # ITEM_WIDTH = 12  # w en el modelo
 # ITEM_HEIGHT = 8  # h en el modelo
 
-#Caso 7 
+# Caso 7 
+ITEMS_QUANTITY = 14    # obligará a aprovechar bien el espacio
+BIN_WIDTH = 50         # W
+BIN_HEIGHT = 20        # H
+ITEM_WIDTH = 13        # w
+ITEM_HEIGHT = 8        # h
 
-# ITEMS_QUANTITY = 14    # obligará a aprovechar bien el espacio
-# BIN_WIDTH = 50         # W
-# BIN_HEIGHT = 20        # H
-# ITEM_WIDTH = 13        # w
-# ITEM_HEIGHT = 8        # h
+# Caso 8:
+# ITEMS_QUANTITY = 18    
+# BIN_WIDTH = 40         
+# BIN_HEIGHT = 25        
+# ITEM_WIDTH = 10        
+# ITEM_HEIGHT = 6     
 
+# Caso 9:
+# ITEMS_QUANTITY = 22    
+# BIN_WIDTH = 60         
+# BIN_HEIGHT = 20        
+# ITEM_WIDTH = 12        
+# ITEM_HEIGHT = 7       
+
+# Caso 10:
+# ITEMS_QUANTITY = 15    
+# BIN_WIDTH = 45         
+# BIN_HEIGHT = 30        
+# ITEM_WIDTH = 9         
+# ITEM_HEIGHT = 9  
+
+# Caso 11:
+# ITEMS_QUANTITY = 28    
+# BIN_WIDTH = 70         
+# BIN_HEIGHT = 25        
+# ITEM_WIDTH = 14        
+# ITEM_HEIGHT = 8        
+
+# Caso 12
+# ITEMS_QUANTITY = 20    
+# BIN_WIDTH = 55         
+# BIN_HEIGHT = 22        
+# ITEM_WIDTH = 11        
+# ITEM_HEIGHT = 6    
 
 ITEMS = list(range(1, ITEMS_QUANTITY + 1)) 

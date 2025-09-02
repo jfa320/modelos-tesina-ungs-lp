@@ -467,12 +467,12 @@ def solveSlaveModel(model, queue, manualInterruption, anchoBin, altoItem, anchoI
         
         if objectiveValue  <= EPSILON:
             print("El valor objetivo del esclavo es insignificante. Fin del proceso.")
-            return None
-        print("OUT - Solve Slave Model")
-        
-        rebanadaEncontrada=Rebanada(alto, anchoBin, items , posicionesOcupadas)
-        print(f"Rebanada encontrada!!: {rebanadaEncontrada}")
-        return rebanadaEncontrada
+            # return None
+        else:
+            rebanadaEncontrada=Rebanada(alto, anchoBin, items , posicionesOcupadas)
+            print(f"Rebanada encontrada!!: {rebanadaEncontrada}")
+            print("OUT - Solve Slave Model")
+            return rebanadaEncontrada
     except CplexSolverError as e:
         print("Error al resolver el modelo esclavo:", e)
         handleSolverError(e, queue,solverTime)
