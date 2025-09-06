@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 def generatePositionsCastro(W, H, w, h):
     # Generar el conjunto de posiciones en el eje x (X)
@@ -86,22 +87,34 @@ def createCMatrix(W, H, positions, w, h, points): #usado en los modelos
 
 def generatePositionsXY(W, H, w, h):
     # Función auxiliar para generar posiciones válidas de un eje
-    def axisPositions(binSize, itemSize):
-        multiples = list(range(0, binSize, itemSize))
-        limit = binSize - itemSize
-        if limit not in multiples:
-            multiples.append(limit)
-        return multiples
+    # def axisPositions(binSize, itemSize):
+    #     multiples = list(range(0, binSize, itemSize))
+    #     limit = binSize - itemSize
+    #     if limit not in multiples:
+    #         multiples.append(limit)
+    #     return multiples
+    def axisPositions(binSize, sizes):
+        positions = {0}
+        for s in sizes:
+            positions.update(range(0, binSize, s))
+            positions.add(binSize - s)  # siempre agregar el límite final
+        return sorted(p for p in positions if p >= 0 and p < binSize)
 
     # Posiciones eje X e Y para ítem no rotado
-    Px = axisPositions(W, w)
-    Py = axisPositions(H, h)
-    XY_x = {(x, y) for x in Px for y in Py if x + w <= W and y + h <= H}
+    # Px = axisPositions(W, w)
+    # Py = axisPositions(H, h)
+    # XY_x = {(x, y) for x in Px for y in Py if x + w <= W and y + h <= H}
 
-    # Posiciones para ítem rotado 90°
-    Px_r = axisPositions(W, h)
-    Py_r = axisPositions(H, w)
-    XY_y = {(x, y) for x in Px_r for y in Py_r if x + h <= W and y + w <= H}
+    # # Posiciones para ítem rotado 90°
+    # Px_r = axisPositions(W, h)
+    # Py_r = axisPositions(H, w)
+    # XY_y = {(x, y) for x in Px_r for y in Py_r if x + h <= W and y + w <= H}
+    
+    Px = axisPositions(W, [w, h])
+    Py = axisPositions(H, [h, w])
+
+    XY_x = {(x, y) for x in Px for y in Py if x + w <= W and y + h <= H}
+    XY_y = {(x, y) for x in Px for y in Py if x + h <= W and y + w <= H}
 
     return XY_x, XY_y
 

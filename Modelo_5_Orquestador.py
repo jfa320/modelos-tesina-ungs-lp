@@ -260,6 +260,16 @@ def orquestador(queue,manualInterruption,maxTime,initialTime):
     print(f"Rebanadas iniciales: {rebanadas}")
     print(f"posXY_x: {posXY_x}")
     print(f"posXY_y: {posXY_y}")
+    
+    print("----------------------------------")
+    # candidatos = generarHuecosCandidatos(posXY_x, posXY_y, BIN_WIDTH, BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT)
+
+    # Extender los conjuntos con huecos
+    # posXY_x_ext = posXY_x | candidatos
+    # posXY_y_ext = posXY_y | candidatos
+    # print(f"posXY_x ext: {posXY_x_ext}")
+    # print(f"posXY_y ext: {posXY_y_ext}")
+    
     vueltaNro=1
     while True:
         # Creo modelo
