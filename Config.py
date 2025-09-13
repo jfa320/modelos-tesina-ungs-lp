@@ -171,6 +171,15 @@ BIN_WIDTH = 20          # ancho del bin
 BIN_HEIGHT = 20         # alto del bin
 ITEM_WIDTH = 6          # ancho de cada ítem
 ITEM_HEIGHT = 5         # alto de cada ítem
-# Óptimo: 
+# Óptimo: 12
+
+# OR Library test
+ITEMS_QUANTITY = 100     # muchos ítems
+BIN_WIDTH = 20          # ancho del bin
+BIN_HEIGHT = 20         # alto del bin
+ITEM_WIDTH = 1         # ancho de cada ítem
+ITEM_HEIGHT = 6         # alto de cada ítem
+
+
 
 ITEMS = list(range(1, ITEMS_QUANTITY + 1)) 
