@@ -83,32 +83,14 @@ def createCMatrix(W, H, positions, w, h, points): #usado en los modelos
     return C
 
 #-------------------------------------------------------------------
-#Generador de posiciones para modelo 5 (nuevo)
 
 def generatePositionsXY(W, H, w, h):
-    # Función auxiliar para generar posiciones válidas de un eje
-    # def axisPositions(binSize, itemSize):
-    #     multiples = list(range(0, binSize, itemSize))
-    #     limit = binSize - itemSize
-    #     if limit not in multiples:
-    #         multiples.append(limit)
-    #     return multiples
     def axisPositions(binSize, sizes):
         positions = {0}
         for s in sizes:
             positions.update(range(0, binSize, s))
-            positions.add(binSize - s)  # siempre agregar el límite final
+            positions.add(binSize - s)  
         return sorted(p for p in positions if p >= 0 and p < binSize)
-
-    # Posiciones eje X e Y para ítem no rotado
-    # Px = axisPositions(W, w)
-    # Py = axisPositions(H, h)
-    # XY_x = {(x, y) for x in Px for y in Py if x + w <= W and y + h <= H}
-
-    # # Posiciones para ítem rotado 90°
-    # Px_r = axisPositions(W, h)
-    # Py_r = axisPositions(H, w)
-    # XY_y = {(x, y) for x in Px_r for y in Py_r if x + h <= W and y + w <= H}
     
     Px = axisPositions(W, [w, h])
     Py = axisPositions(H, [h, w])
@@ -119,51 +101,51 @@ def generatePositionsXY(W, H, w, h):
     return XY_x, XY_y
 
 
-def generatePositionsXY1(W, H, w, h):
-    # Qx: posiciones alcanzables en el eje horizontal
-    Qx = {i * w + j * h for i in range(W // w + 1) for j in range(W // h + 1)
-          if i * w + j * h <= W - min(w, h)}
-    Px = sorted(Qx)
+# def generatePositionsXY1(W, H, w, h):
+#     # Qx: posiciones alcanzables en el eje horizontal
+#     Qx = {i * w + j * h for i in range(W // w + 1) for j in range(W // h + 1)
+#           if i * w + j * h <= W - min(w, h)}
+#     Px = sorted(Qx)
 
-    # Qy: posiciones alcanzables en el eje vertical
-    Qy = {i * h + j * w for i in range(H // h + 1) for j in range(H // w + 1)
-          if i * h + j * w <= H - min(w, h)}
-    Py = sorted(Qy)
+#     # Qy: posiciones alcanzables en el eje vertical
+#     Qy = {i * h + j * w for i in range(H // h + 1) for j in range(H // w + 1)
+#           if i * h + j * w <= H - min(w, h)}
+#     Py = sorted(Qy)
 
-    # Conjuntos de posiciones válidas
-    XY_x = {(x, y) for x in Px for y in Py if x + w <= W and y + h <= H}  # ítem no rotado
-    XY_y = {(x, y) for x in Px for y in Py if x + h <= W and y + w <= H}  # ítem rotado
+#     # Conjuntos de posiciones válidas
+#     XY_x = {(x, y) for x in Px for y in Py if x + w <= W and y + h <= H}  # ítem no rotado
+#     XY_y = {(x, y) for x in Px for y in Py if x + h <= W and y + w <= H}  # ítem rotado
 
-    return XY_x, XY_y
-
-
-def generatePositionsXYOriginal(anchoBin, altoBin, anchoItem, altoItem):
-    # Constantes
-    W, H, w, h = anchoBin,altoBin,anchoItem,altoItem
-
-    # Conjunto Q (puntos posibles)
-    Q = {i * w + j * h for i in range(W // w + 1) for j in range(H // h + 1) if i * w + j * h <= W - h}
-    Q = sorted(Q)  # ordeno el conjunto
+#     return XY_x, XY_y
 
 
-    # Conjunto P (pares de posiciones)
-    P = {x for x in range(0, W - h + 1) if x in Q}
+# def generatePositionsXYOriginal(anchoBin, altoBin, anchoItem, altoItem):
+#     # Constantes
+#     W, H, w, h = anchoBin,altoBin,anchoItem,altoItem
 
-    # Conjuntos que filtran P para que cumplan las condiciones de ancho y alto
-    XY_x = {(x, y) for x in P for y in P if x + w <= W and y + h <= H}
+#     # Conjunto Q (puntos posibles)
+#     Q = {i * w + j * h for i in range(W // w + 1) for j in range(H // h + 1) if i * w + j * h <= W - h}
+#     Q = sorted(Q)  # ordeno el conjunto
 
-    XY_y = {(x, y) for x in P for y in P if x + h <= W and y + w <= H}
+
+#     # Conjunto P (pares de posiciones)
+#     P = {x for x in range(0, W - h + 1) if x in Q}
+
+#     # Conjuntos que filtran P para que cumplan las condiciones de ancho y alto
+#     XY_x = {(x, y) for x in P for y in P if x + w <= W and y + h <= H}
+
+#     XY_y = {(x, y) for x in P for y in P if x + h <= W and y + w <= H}
     
-    return XY_x, XY_y
+#     return XY_x, XY_y
 
-def generatePositionsXY1(anchoBin, altoBin, anchoItem, altoItem): #chat
-    W, H = anchoBin, altoBin
-    w, h = anchoItem, altoItem
+# def generatePositionsXY1(anchoBin, altoBin, anchoItem, altoItem): #chat
+#     W, H = anchoBin, altoBin
+#     w, h = anchoItem, altoItem
 
-    # Ítems NO rotados: ubicarlos de izquierda a derecha, fila por fila
-    XY_x = {(0, y) for y in range(0, H - h + 1)}
+#     # Ítems NO rotados: ubicarlos de izquierda a derecha, fila por fila
+#     XY_x = {(0, y) for y in range(0, H - h + 1)}
 
-    # Ítems ROTADOS: ubicarlos de arriba hacia abajo, columna por columna
-    XY_y = {(x, 0) for x in range(0, W - h + 1)}
+#     # Ítems ROTADOS: ubicarlos de arriba hacia abajo, columna por columna
+#     XY_y = {(x, 0) for x in range(0, W - h + 1)}
 
-    return XY_x, XY_y
+#     return XY_x, XY_y

@@ -159,11 +159,18 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 # # entran todos los 18 disponibles)
 
 # # Caso 17
-ITEMS_QUANTITY = 40    
-BIN_WIDTH = 70         
-BIN_HEIGHT = 28        
-ITEM_WIDTH = 14        
-ITEM_HEIGHT = 7     
+# ITEMS_QUANTITY = 40    
+# BIN_WIDTH = 70         
+# BIN_HEIGHT = 28        
+# ITEM_WIDTH = 14        
+# ITEM_HEIGHT = 7     
 # # Óptimo: 20 ítems (5 de ancho x 4 de alto)
+
+ITEMS_QUANTITY = 25     # muchos ítems
+BIN_WIDTH = 20          # ancho del bin
+BIN_HEIGHT = 20         # alto del bin
+ITEM_WIDTH = 6          # ancho de cada ítem
+ITEM_HEIGHT = 5         # alto de cada ítem
+# Óptimo: 
 
 ITEMS = list(range(1, ITEMS_QUANTITY + 1)) 
