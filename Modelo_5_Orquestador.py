@@ -19,9 +19,47 @@ def generarListaItems(ITEMS_QUANTITY, ITEM_HEIGHT, ITEM_WIDTH):
 
 items=generarListaItems(ITEMS_QUANTITY,ITEM_HEIGHT,ITEM_WIDTH)
 
-
-
 def generarRebanadasIniciales(binWidth, binHeight, itemWidth, itemHeight, posXY_x, posXY_y, maxItems):
+    def generarPorOrientacion(posiciones, w, h, rotado):
+        rebanadas = []
+        itemsColocados = 0
+
+        # Agrupar posiciones por coordenada Y (o X según orientación)
+        posicionesPorFila = {}
+        for (x, y) in posiciones:
+            posicionesPorFila.setdefault(y, []).append((x, y))
+
+        for y in sorted(posicionesPorFila.keys()):
+            if itemsColocados >= maxItems:
+                break
+            rebanada = Rebanada(alto=binHeight, ancho=binWidth)
+            ocupadas = set()
+
+            for (x, _) in sorted(posicionesPorFila[y]):
+                if itemsColocados >= maxItems:
+                    break
+                if x + w <= binWidth:
+                    region = {(x + dx, y + dy) for dx in range(w) for dy in range(h)}
+                    if not region & ocupadas:
+                        item = Item(alto=h, ancho=w, rotado=rotado)
+                        rebanada.agregarItem(item, x, y)
+                        ocupadas |= region
+                        itemsColocados += 1
+
+            if rebanada.getPosicionesOcupadas():
+                rebanadas.append(rebanada)
+                itemsColocados = 0
+
+        return rebanadas
+
+    # Llamar una vez para no rotados y otra para rotados
+    rebanadasNoRotadas = generarPorOrientacion(posXY_x, itemWidth, itemHeight, rotado=False)
+    rebanadasRotadas   = generarPorOrientacion(posXY_y, itemHeight, itemWidth, rotado=True)
+
+    return rebanadasNoRotadas + rebanadasRotadas
+
+
+def generarRebanadasIniciales17092025(binWidth, binHeight, itemWidth, itemHeight, posXY_x, posXY_y, maxItems):
     rebanadas = []
     itemsColocadosPorRebanada = 0  
 
