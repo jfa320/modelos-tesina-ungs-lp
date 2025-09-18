@@ -86,17 +86,19 @@ def createCMatrix(W, H, positions, w, h, points): #usado en los modelos
 
 def generatePositionsXY(W, H, w, h):
     def axisPositions(binSize, sizes):
-        positions = {0}
-        for s in sizes:
-            positions.update(range(0, binSize, s))
-            positions.add(binSize - s)  
-        return sorted(p for p in positions if p >= 0 and p < binSize)
+        positions = {0} # incluyo siempre la posicion 0
+        for s in sizes: # tomo los posibles tamaños que entrarian de los items (en este caso w y h o al reves)
+            positions.update(range(0, binSize, s)) # guardo las posiciones en base a los multiplos de cada valor hasta el tamaño del bin
+            positions.add(binSize - s)  # incluyo la posicion limite empezando desde atras
+        return sorted(p for p in positions if p >= 0 and p < binSize) # ordeno de menor a mayor con p >= 0 y p < binSize
     
-    Px = axisPositions(W, [w, h])
-    Py = axisPositions(H, [h, w])
+    Px = axisPositions(W, [w, h]) # armo las posibles posiciones en el eje x
+    Py = axisPositions(H, [h, w]) # armo las posibles posiciones en el eje y 
 
-    XY_x = {(x, y) for x in Px for y in Py if x + w <= W and y + h <= H}
-    XY_y = {(x, y) for x in Px for y in Py if x + h <= W and y + w <= H}
+    XY_x = {(x, y) for x in Px for y in Py if x + w <= W and y + h <= H} # armo los puntos (posiciones finales) para items SIN ROTAR 
+                                                                        # usando los Px y Py siempre y cuando entren en el bin
+    XY_y = {(x, y) for x in Px for y in Py if x + h <= W and y + w <= H} # armo los puntos (posiciones finales) para items ROTADOS 
+                                                                        # usando los Px y Py siempre y cuando entren en el bin
 
     return XY_x, XY_y
 
