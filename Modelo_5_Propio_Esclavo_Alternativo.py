@@ -450,24 +450,11 @@ def solveSlaveModel(model, queue, manualInterruption, anchoBin, altoItem, anchoI
         alto= obtenerYMaximo(posicionesOcupadas,altoItem,anchoItem,items)
         
         print("Valor objetivo del esclavo", objectiveValue)
-        # if objectiveValue <= 0:
         
-        # # Obtenés la holgura (slack) de cada restricción
-        # slacks = model.solution.get_linear_slacks()
-
-        # # Obtenés los nombres de las restricciones en el mismo orden
-        # nombresRestricciones = model.linear_constraints.get_names()
-
-        # # Recorremos y mostramos cuáles están activas
-        # for i, (nombre, slack) in enumerate(zip(nombresRestricciones, slacks)):
-        #     if abs(slack) < 1e-6:  # Tolerancia numérica
-        #         print(f"Restricción '{nombre}' está ACTIVA (ligada).")
-        #     else:
-        #         print(f"Restricción '{nombre}' NO está activa. Holgura: {slack}")
         
         if objectiveValue  <= EPSILON:
             print("El valor objetivo del esclavo es insignificante. Fin del proceso.")
-            # return None
+            return None
         else:
             rebanadaEncontrada=Rebanada(alto, anchoBin, items , posicionesOcupadas)
             print(f"Rebanada encontrada!!: {rebanadaEncontrada}")

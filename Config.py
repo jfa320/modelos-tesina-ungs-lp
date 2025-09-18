@@ -63,12 +63,12 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 
 # Caso 5: 
 
-# ITEMS_QUANTITY = 6  # constante N del modelo
-# BIN_WIDTH = 6  # W en el modelo
-# BIN_HEIGHT = 3  # H en el modelo
+ITEMS_QUANTITY = 6  # constante N del modelo
+BIN_WIDTH = 6  # W en el modelo
+BIN_HEIGHT = 3  # H en el modelo
 
-# ITEM_WIDTH = 3  # w en el modelo
-# ITEM_HEIGHT = 2  # h en el modelo
+ITEM_WIDTH = 3  # w en el modelo
+ITEM_HEIGHT = 2  # h en el modelo
 
 
 #Caso 6: 
@@ -218,11 +218,11 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 # #optimo: 10
 
 # # Caso 7
-ITEMS_QUANTITY = 100     # ítems
-BIN_WIDTH = 10          # ancho del bin
-BIN_HEIGHT = 30         # alto del bin
-ITEM_WIDTH = 1         # ancho de cada ítem
-ITEM_HEIGHT = 6         # alto de cada ítem
+# ITEMS_QUANTITY = 100     # ítems
+# BIN_WIDTH = 10          # ancho del bin
+# BIN_HEIGHT = 30         # alto del bin
+# ITEM_WIDTH = 1         # ancho de cada ítem
+# ITEM_HEIGHT = 6         # alto de cada ítem
 # # optimo: 50
 
 # # Caso 8

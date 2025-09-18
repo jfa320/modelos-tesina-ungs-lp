@@ -281,32 +281,14 @@ def generarRebanadasInicialesA(binHeight, binWidth, nRebanadas, items):
 # Orquestador principal
 def orquestador(queue,manualInterruption,maxTime,initialTime):
     MAX_ITERACIONES = 30
-    # rebanadas = generarRebanadasIniciales(BIN_HEIGHT,BIN_WIDTH,ITEM_WIDTH, ITEM_HEIGHT)  # Inicialización con rebanadas básicas
     rebanadas= generarRebanadasIniciales(BIN_WIDTH, BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT,posXY_x,posXY_y, ITEMS_QUANTITY)  # Inicialización con rebanadas básicas
     rebanadasIniciales=rebanadas.copy()
-    # itemAux=Item(alto=ITEM_HEIGHT, ancho=ITEM_WIDTH)
-    # rebanadaAux=Rebanada(alto=altoRebanada, ancho=BIN_WIDTH, items=[], posicionesOcupadas=[])
-    # rebanadaAux.agregarItem(itemAux, 0, 0)  # Agregar un ítem a la rebanada auxiliar
-    # rebanadas.append(rebanadaAux)  
     
-    # itemAux=Item(alto=ITEM_WIDTH, ancho=ITEM_HEIGHT,rotado=True)
-    # rebanadaAux=Rebanada(alto=altoRebanada, ancho=BIN_WIDTH, items=[], posicionesOcupadas=[])
-    # rebanadaAux.agregarItem(itemAux, 0, 2)  # Agregar un ítem a la rebanada auxiliar
-    # rebanadas.append(rebanadaAux)  
-    # rebanadas=[]
     iteracion = 0
     print(f"Rebanadas iniciales: {rebanadas}")
     print(f"posXY_x: {posXY_x}")
     print(f"posXY_y: {posXY_y}")
-    
     print("----------------------------------")
-    # candidatos = generarHuecosCandidatos(posXY_x, posXY_y, BIN_WIDTH, BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT)
-
-    # Extender los conjuntos con huecos
-    # posXY_x_ext = posXY_x | candidatos
-    # posXY_y_ext = posXY_y | candidatos
-    # print(f"posXY_x ext: {posXY_x_ext}")
-    # print(f"posXY_y ext: {posXY_y_ext}")
     
     vueltaNro=1
     while True:
@@ -314,7 +296,6 @@ def orquestador(queue,manualInterruption,maxTime,initialTime):
         #TODO: Aca podria mejorar evitando la creacion del modelo en cada vuelta.
         # En su lugar, podria crear uno y luego agregar las columnas (rebanadas) nuevas
         masterModel = createMasterModel(maxTime,rebanadas,BIN_HEIGHT,BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH,items, posXY_x, posXY_y)
-        posicionesBin = set(posXY_x) | set(posXY_y)
         # Resolver modelo maestro
         optimalValueParcial , precios_duales = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=True, items=items, posXY_x=posXY_x, posXY_y= posXY_y,initialTime=initialTime)
         print(f"Precios duales: {precios_duales}")
