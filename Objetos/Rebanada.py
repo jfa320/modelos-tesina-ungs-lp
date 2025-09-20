@@ -3,13 +3,13 @@ from Objetos import Item
 class Rebanada:
     _id_counter = 1
 
-    def __init__(self, alto, ancho, items=None, posicionesOcupadas=None):
+    def __init__(self, alto, ancho, items=None, puntosDeInicioItems=None):
         self.setId(Rebanada._id_counter)
         Rebanada._id_counter += 1
         self.set_alto(alto)
         self.set_ancho(ancho)
         self.setItems(items or [])
-        self.setPosicionesOcupadas(posicionesOcupadas or [])
+        self.setPuntosDeInicioItems(puntosDeInicioItems or [])
 
     def setId(self, id):
         if isinstance(id, int) and id > 0:
@@ -54,61 +54,39 @@ class Rebanada:
             raise TypeError("El parámetro debe ser un objeto de tipo Item.")
         return item in self.__items
 
-    def setPosicionesOcupadas(self, posiciones):
+    def setPuntosDeInicioItems(self, posiciones):
         if not isinstance(posiciones, list):
             raise TypeError("Las posiciones ocupadas deben ser una lista.")
         if not all(isinstance(pos, tuple) and len(pos) == 2 for pos in posiciones):
             raise ValueError("Cada posición debe ser una tupla (x, y).")
-        self.__posicionesOcupadas = posiciones
+        self.__puntosDeInicioItems = posiciones
 
-    def getPosicionesOcupadas(self):
-        return self.__posicionesOcupadas
+    def getPuntosDeInicioItems(self):
+        return self.__puntosDeInicioItems
 
-    # def agregarPosicionOcupada(self, posicion):
-    #     if not isinstance(posicion, tuple) or len(posicion) != 2:
-    #         raise ValueError("La posición debe ser una tupla (x, y).")
-    #     if posicion not in self.__posicionesOcupadas:
-    #         self.__posicionesOcupadas.append(posicion)
-
-    def eliminarPosicionOcupada(self, posicion):
-        if not isinstance(posicion, tuple) or len(posicion) != 2:
-            raise ValueError("La posición debe ser una tupla (x, y).")
-        if posicion in self.__posicionesOcupadas:
-            self.__posicionesOcupadas.remove(posicion)
-
-    def posicionEstaOcupada(self, posicion):
-        if not isinstance(posicion, tuple) or len(posicion) != 2:
-            raise ValueError("La posición debe ser una tupla (x, y).")
-        return posicion in self.__posicionesOcupadas
-    
-    def appendItem(self, item, posicion=None):
+    def _appendItem(self, item, posicion=None):
         if not isinstance(item, Item):
             raise TypeError("El parámetro debe ser un objeto de tipo Item.")
         self.__items.append(item)
-        self.appendPosicionOcupada(posicion)
+        self.appendPosicionInicioDeItem(posicion)
     
-    def appendPosicionOcupada(self, posicion):
+    def appendPosicionInicioDeItem(self, posicion):
         if not isinstance(posicion, tuple) or len(posicion) != 2:
             raise ValueError("La posición debe ser una tupla (x, y).")
-        self.__posicionesOcupadas.append(posicion)
+        self.__puntosDeInicioItems.append(posicion)
         
-    def agregarItem(self, nuevoItem, x, y):
+    def colocarItem(self, nuevoItem, x, y):
         if not isinstance(x, (int, float)) or not isinstance(y, (int, float)):
             raise ValueError("Las coordenadas deben ser números.")
         
-        if (x, y) in self.__posicionesOcupadas:
+        if (x, y) in self.__puntosDeInicioItems:
             raise ValueError("La posición ya está ocupada.")
         
         nuevoItem.setPosicionX(x)
         nuevoItem.setPosicionY(y)
         # Agregar a la lista de ítems y posiciones ocupadas
-        self.appendItem(nuevoItem, (x, y))
-        # self.agregarPosicionOcupada((x, y))
-        
-    def esSimilar(self, otra):
-        return set((i.getPosicionX(), i.getPosicionY(), i.getAncho(), i.getAlto(), i.getRotado()) for i in self.getItems()) == \
-           set((i.getPosicionX(), i.getPosicionY(), i.getAncho(), i.getAlto(), i.getRotado()) for i in otra.getItems())
+        self._appendItem(nuevoItem, (x, y))
             
     def __repr__(self):
         return (f"Rebanada(id={self.getId()}, alto={self.get_alto()}, ancho={self.get_ancho()}, "
-            f"items={self.getItems()}, posicionesOcupadas={self.getPosicionesOcupadas()})")
+            f"items={self.getItems()}, posicionesOcupadas={self.getPuntosDeInicioItems()})")

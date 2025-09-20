@@ -115,16 +115,14 @@ def rectsSolapan(x1, y1, w1, h1, x2, y2, w2, h2):
         y1 + h1 <= y2 or y2 + h2 <= y1
     )
 
-def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, altoRebanada, anchoBin,altoItemSinRotar,anchoItemSinRotar):    
+def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSinRotar,anchoItemSinRotar):    
     print("--------------------------------------------------------------------------------------------------------------------")
     print("IN - Create Slave Model")
     I = items  # Lista de ítems disponibles
     A_i=dualValues
     h = altoItemSinRotar
     w = anchoItemSinRotar
-    H_r= altoRebanada
     W= anchoBin
-    M= max(H_r, W) #maximo entre la altura de la rebanada y el ancho del bin
     P = set(XY_x).union(XY_y)
     P_noRotado=XY_x
     P_rotado=XY_y

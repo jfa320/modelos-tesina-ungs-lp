@@ -9,10 +9,8 @@ from Modelo_5_Propio_Maestro import *
 from Modelo_5_Propio_Esclavo_Alternativo import * 
 from Config import *
 
-numRebanadas = math.ceil(BIN_HEIGHT/max(ITEM_WIDTH,ITEM_HEIGHT))  # Número de rebanadas a generar # TODO: ver esto, esta muy hardcoded - aca corregir
 posXY_x, posXY_y=generatePositionsXY(BIN_WIDTH,BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT)
-altoRebanada = math.ceil(BIN_HEIGHT / numRebanadas)  # Redondea hacia abajo
-altoRebanada = 1 if altoRebanada == 0 else altoRebanada
+
 #TODO: corregir esto. Ubicar items en otro lado
 def generarListaItems(ITEMS_QUANTITY, ITEM_HEIGHT, ITEM_WIDTH):
     return [Item(alto=ITEM_HEIGHT, ancho=ITEM_WIDTH) for _ in range(ITEMS_QUANTITY)]
@@ -42,11 +40,11 @@ def generarRebanadasIniciales(binWidth, binHeight, itemWidth, itemHeight, posXY_
                     region = {(x + dx, y + dy) for dx in range(w) for dy in range(h)}
                     if not region & ocupadas:
                         item = Item(alto=h, ancho=w, rotado=rotado)
-                        rebanada.agregarItem(item, x, y)
+                        rebanada.colocarItem(item, x, y)
                         ocupadas |= region
                         itemsColocados += 1
 
-            if rebanada.getPosicionesOcupadas():
+            if rebanada.getPuntosDeInicioItems():
                 rebanadas.append(rebanada)
                 itemsColocados = 0
 
@@ -59,229 +57,230 @@ def generarRebanadasIniciales(binWidth, binHeight, itemWidth, itemHeight, posXY_
     return rebanadasNoRotadas + rebanadasRotadas
 
 
-def generarRebanadasIniciales17092025(binWidth, binHeight, itemWidth, itemHeight, posXY_x, posXY_y, maxItems):
-    rebanadas = []
-    itemsColocadosPorRebanada = 0  
+# def generarRebanadasIniciales17092025(binWidth, binHeight, itemWidth, itemHeight, posXY_x, posXY_y, maxItems):
+#     rebanadas = []
+#     itemsColocadosPorRebanada = 0  
 
-    # Agrupar posiciones por coordenada X para ítems NO rotados
-    posicionesPorFila_x = {}
-    for (x, y) in posXY_x:
-        posicionesPorFila_x.setdefault(y, []).append((x, y))
+#     # Agrupar posiciones por coordenada X para ítems NO rotados
+#     posicionesPorFila_x = {}
+#     for (x, y) in posXY_x:
+#         posicionesPorFila_x.setdefault(y, []).append((x, y))
 
-    for y in sorted(posicionesPorFila_x.keys()):
-        if itemsColocadosPorRebanada >= maxItems:
-            break
-        rebanada = Rebanada(alto=binHeight, ancho=binWidth)
-        ocupadas = set()
-        for (x, _) in sorted(posicionesPorFila_x[y]):
-            if itemsColocadosPorRebanada >= maxItems:
-                break
-            if x + itemWidth <= binWidth:
-                region = {(x + dx, y + dy) for dx in range(itemWidth) for dy in range(itemHeight)}
-                if not region & ocupadas:
-                    item = Item(alto=itemHeight, ancho=itemWidth, rotado=False)
-                    rebanada.agregarItem(item, x, y)
-                    ocupadas |= region
-                    itemsColocadosPorRebanada += 1
-        if rebanada.getPosicionesOcupadas():
-            rebanadas.append(rebanada)
-            itemsColocadosPorRebanada = 0
+#     for y in sorted(posicionesPorFila_x.keys()):
+#         if itemsColocadosPorRebanada >= maxItems:
+#             break
+#         rebanada = Rebanada(alto=binHeight, ancho=binWidth)
+#         ocupadas = set()
+#         for (x, _) in sorted(posicionesPorFila_x[y]):
+#             if itemsColocadosPorRebanada >= maxItems:
+#                 break
+#             if x + itemWidth <= binWidth:
+#                 region = {(x + dx, y + dy) for dx in range(itemWidth) for dy in range(itemHeight)}
+#                 if not region & ocupadas:
+#                     item = Item(alto=itemHeight, ancho=itemWidth, rotado=False)
+#                     rebanada.agregarItem(item, x, y)
+#                     ocupadas |= region
+#                     itemsColocadosPorRebanada += 1
+#         if rebanada.getPuntosDeInicioItems():
+#             rebanadas.append(rebanada)
+#             itemsColocadosPorRebanada = 0
 
-    # Agrupar posiciones por coordenada Y para ítems ROTADOS
-    posicionesPorFila_y = {}
-    for (x, y) in posXY_y:
-        posicionesPorFila_y.setdefault(y, []).append((x, y))
+#     # Agrupar posiciones por coordenada Y para ítems ROTADOS
+#     posicionesPorFila_y = {}
+#     for (x, y) in posXY_y:
+#         posicionesPorFila_y.setdefault(y, []).append((x, y))
 
-    for y in sorted(posicionesPorFila_y.keys()):
-        if itemsColocadosPorRebanada >= maxItems:
-            break
-        rebanada = Rebanada(alto=binHeight, ancho=binWidth)
-        ocupadas = set()
-        for (x, _) in sorted(posicionesPorFila_y[y]):
-            if itemsColocadosPorRebanada >= maxItems:
-                break
-            if x + itemHeight <= binWidth:
-                region = {(x + dx, y + dy) for dx in range(itemHeight) for dy in range(itemWidth)}
-                if not region & ocupadas:
-                    item = Item(alto=itemWidth, ancho=itemHeight, rotado=True)
-                    rebanada.agregarItem(item, x, y)
-                    ocupadas |= region
-                    itemsColocadosPorRebanada += 1
-        if rebanada.getPosicionesOcupadas():
-            rebanadas.append(rebanada)
-            itemsColocadosPorRebanada = 0
+#     for y in sorted(posicionesPorFila_y.keys()):
+#         if itemsColocadosPorRebanada >= maxItems:
+#             break
+#         rebanada = Rebanada(alto=binHeight, ancho=binWidth)
+#         ocupadas = set()
+#         for (x, _) in sorted(posicionesPorFila_y[y]):
+#             if itemsColocadosPorRebanada >= maxItems:
+#                 break
+#             if x + itemHeight <= binWidth:
+#                 region = {(x + dx, y + dy) for dx in range(itemHeight) for dy in range(itemWidth)}
+#                 if not region & ocupadas:
+#                     item = Item(alto=itemWidth, ancho=itemHeight, rotado=True)
+#                     rebanada.agregarItem(item, x, y)
+#                     ocupadas |= region
+#                     itemsColocadosPorRebanada += 1
+#         if rebanada.getPuntosDeInicioItems():
+#             rebanadas.append(rebanada)
+#             itemsColocadosPorRebanada = 0
 
-    return rebanadas
+#     return rebanadas
 
-def generarRebanadasIniciales08082025(binHeight, binWidth, itemWidth, itemHeight, posXY_x, posXY_y):
-    rebanadas = []
-    rebanadaId = 0
+# def generarRebanadasIniciales08082025(binHeight, binWidth, itemWidth, itemHeight, posXY_x, posXY_y):
+#     rebanadas = []
+#     rebanadaId = 0
 
-    # Agrupar posiciones por coordenada X para ítems NO rotados
-    posicionesPorFila_x = {}
-    for (x, y) in posXY_x:
-        posicionesPorFila_x.setdefault(y, []).append((x, y))
+#     # Agrupar posiciones por coordenada X para ítems NO rotados
+#     posicionesPorFila_x = {}
+#     for (x, y) in posXY_x:
+#         posicionesPorFila_x.setdefault(y, []).append((x, y))
 
-    for y in sorted(posicionesPorFila_x.keys()):
-        rebanada = Rebanada(alto=binHeight, ancho=binWidth)
-        ocupadas = set()
-        for (x, _) in sorted(posicionesPorFila_x[y]):
-            if x + itemWidth <= binWidth:
-                region = {(x + dx, y + dy) for dx in range(itemWidth) for dy in range(itemHeight)}
-                if not region & ocupadas:
-                    item = Item(alto=itemHeight, ancho=itemWidth, rotado=False)
-                    rebanada.agregarItem(item, x, y)
-                    ocupadas |= region
-        if rebanada.getPosicionesOcupadas():
-            rebanadas.append(rebanada)
-            rebanadaId += 1
+#     for y in sorted(posicionesPorFila_x.keys()):
+#         rebanada = Rebanada(alto=binHeight, ancho=binWidth)
+#         ocupadas = set()
+#         for (x, _) in sorted(posicionesPorFila_x[y]):
+#             if x + itemWidth <= binWidth:
+#                 region = {(x + dx, y + dy) for dx in range(itemWidth) for dy in range(itemHeight)}
+#                 if not region & ocupadas:
+#                     item = Item(alto=itemHeight, ancho=itemWidth, rotado=False)
+#                     rebanada.agregarItem(item, x, y)
+#                     ocupadas |= region
+#         if rebanada.getPuntosDeInicioItems():
+#             rebanadas.append(rebanada)
+#             rebanadaId += 1
 
-    # Agrupar posiciones por coordenada Y para ítems ROTADOS
-    posicionesPorFila_y = {}
-    for (x, y) in posXY_y:
-        posicionesPorFila_y.setdefault(y, []).append((x, y))
+#     # Agrupar posiciones por coordenada Y para ítems ROTADOS
+#     posicionesPorFila_y = {}
+#     for (x, y) in posXY_y:
+#         posicionesPorFila_y.setdefault(y, []).append((x, y))
 
-    for y in sorted(posicionesPorFila_y.keys()):
-        rebanada = Rebanada(alto=binHeight, ancho=binWidth)
-        ocupadas = set()
-        for (x, _) in sorted(posicionesPorFila_y[y]):
-            if x + itemHeight <= binWidth:
-                region = {(x + dx, y + dy) for dx in range(itemHeight) for dy in range(itemWidth)}
-                if not region & ocupadas:
-                    item = Item(alto=itemWidth, ancho=itemHeight, rotado=True)
-                    rebanada.agregarItem(item, x, y)
-                    ocupadas |= region
-        if rebanada.getPosicionesOcupadas():
-            rebanadas.append(rebanada)
-            rebanadaId += 1
+#     for y in sorted(posicionesPorFila_y.keys()):
+#         rebanada = Rebanada(alto=binHeight, ancho=binWidth)
+#         ocupadas = set()
+#         for (x, _) in sorted(posicionesPorFila_y[y]):
+#             if x + itemHeight <= binWidth:
+#                 region = {(x + dx, y + dy) for dx in range(itemHeight) for dy in range(itemWidth)}
+#                 if not region & ocupadas:
+#                     item = Item(alto=itemWidth, ancho=itemHeight, rotado=True)
+#                     rebanada.agregarItem(item, x, y)
+#                     ocupadas |= region
+#         if rebanada.getPuntosDeInicioItems():
+#             rebanadas.append(rebanada)
+#             rebanadaId += 1
 
-    return rebanadas
-
-
-
-def generarRebanadasIniciale08062025(binHeight, binWidth, itemWidth, itemHeight):
-    rebanadas = []
-
-    # Rebanadas con ítems NO rotados
-    y = 0
-    while y + itemHeight <= binHeight:
-        x = 0
-        rebanadaNoRotada = Rebanada(alto=altoRebanada, ancho=binWidth)
-
-        while x + itemWidth <= binWidth:
-            item = Item(alto=itemHeight, ancho=itemWidth, rotado=False)
-            rebanadaNoRotada.agregarItem(item, x, y)
-            x += itemWidth
-
-        if rebanadaNoRotada.getPosicionesOcupadas():
-            rebanadas.append(rebanadaNoRotada)
-
-        y += itemHeight  # Avanza según ítems no rotados
-
-    # Rebanadas con ítems ROTADOS
-    y = 0
-    while y + itemWidth <= binHeight:
-        x = 0
-        rebanadaRotada = Rebanada(alto=altoRebanada, ancho=binWidth)
-
-        while x + itemHeight <= binWidth:
-            item = Item(alto=itemWidth, ancho=itemHeight, rotado=True)
-            rebanadaRotada.agregarItem(item, x, y)
-            x += itemHeight
-
-        if rebanadaRotada.getPosicionesOcupadas():
-            rebanadas.append(rebanadaRotada)
-
-        y += itemWidth  # Avanza según ítems rotados
-
-    return rebanadas
+#     return rebanadas
 
 
-def generarRebanadasIniciales07062025(binHeight,binWidth, itemWidth, itemHeight):
-    rebanadas = []
-    y = 0
 
-    while y + itemHeight <= binHeight:
-        x = 0
-        rebanada = Rebanada(alto=altoRebanada, ancho=binWidth)
+# def generarRebanadasIniciale08062025(binHeight, binWidth, itemWidth, itemHeight):
+#     rebanadas = []
 
-        while x + itemWidth <= binWidth:
-            item = Item(alto=itemHeight, ancho=itemWidth)
-            rebanada.agregarItem(item,x, y)
-            x += itemWidth
+#     # Rebanadas con ítems NO rotados
+#     y = 0
+#     while y + itemHeight <= binHeight:
+#         x = 0
+#         rebanadaNoRotada = Rebanada(alto=altoRebanada, ancho=binWidth)
 
-        if rebanada.getPosicionesOcupadas():
-            rebanadas.append(rebanada)
-        y += itemHeight
-    return rebanadas
+#         while x + itemWidth <= binWidth:
+#             item = Item(alto=itemHeight, ancho=itemWidth, rotado=False)
+#             rebanadaNoRotada.agregarItem(item, x, y)
+#             x += itemWidth
 
-def generarRebanadasInicialesB(BIN_HEIGHT, BIN_WIDTH, nRebanadas, items):
-    # Este genera rebanadas ubicando solo un item en ellas pero tiene fallos porque a veces genera rebanadas que no respeta dimensiones del bin
-    # TODO: POSIBLE MEJORA, tener en cuenta que en caso de haber remanente en la division, eso no se aprovecha en el bin ()
+#         if rebanadaNoRotada.getPuntosDeInicioItems():
+#             rebanadas.append(rebanadaNoRotada)
+
+#         y += itemHeight  # Avanza según ítems no rotados
+
+#     # Rebanadas con ítems ROTADOS
+#     y = 0
+#     while y + itemWidth <= binHeight:
+#         x = 0
+#         rebanadaRotada = Rebanada(alto=altoRebanada, ancho=binWidth)
+
+#         while x + itemHeight <= binWidth:
+#             item = Item(alto=itemWidth, ancho=itemHeight, rotado=True)
+#             rebanadaRotada.agregarItem(item, x, y)
+#             x += itemHeight
+
+#         if rebanadaRotada.getPuntosDeInicioItems():
+#             rebanadas.append(rebanadaRotada)
+
+#         y += itemWidth  # Avanza según ítems rotados
+
+#     return rebanadas
+
+
+# def generarRebanadasIniciales07062025(binHeight,binWidth, itemWidth, itemHeight):
+#     rebanadas = []
+#     y = 0
+
+#     while y + itemHeight <= binHeight:
+#         x = 0
+#         rebanada = Rebanada(alto=altoRebanada, ancho=binWidth)
+
+#         while x + itemWidth <= binWidth:
+#             item = Item(alto=itemHeight, ancho=itemWidth)
+#             rebanada.agregarItem(item,x, y)
+#             x += itemWidth
+
+#         if rebanada.getPuntosDeInicioItems():
+#             rebanadas.append(rebanada)
+#         y += itemHeight
+#     return rebanadas
+
+# def generarRebanadasInicialesB(BIN_HEIGHT, BIN_WIDTH, nRebanadas, items):
+#     # Este genera rebanadas ubicando solo un item en ellas pero tiene fallos porque a veces genera rebanadas que no respeta dimensiones del bin
+#     # TODO: POSIBLE MEJORA, tener en cuenta que en caso de haber remanente en la division, eso no se aprovecha en el bin ()
     
     
     
-    print(f"altoRebanada: {altoRebanada}")
-    rebanadas = []
-    for i in range(nRebanadas):
-        rebanada = Rebanada(
-            alto=altoRebanada,
-            ancho=BIN_WIDTH,  # Ancho constante para cada rebanada
-            items=[],  # Inicialmente vacía
-            posicionesOcupadas=[]
-        )
+#     print(f"altoRebanada: {altoRebanada}")
+#     rebanadas = []
+#     for i in range(nRebanadas):
+#         rebanada = Rebanada(
+#             alto=altoRebanada,
+#             ancho=BIN_WIDTH,  # Ancho constante para cada rebanada
+#             items=[],  # Inicialmente vacía
+#             puntosDeInicioItems=[]
+#         )
         
-        # Agregar un ítem si está disponible
-        if i < len(items):  # Verificar si hay ítems restantes
-            item = items[i]
-            rebanada.appendItem(item, (0, 0))  
+#         # Agregar un ítem si está disponible
+#         if i < len(items):  # Verificar si hay ítems restantes
+#             item = items[i]
+#             rebanada._appendItem(item, (0, 0))  
         
-        rebanadas.append(rebanada)
+#         rebanadas.append(rebanada)
 
-    return rebanadas
+#     return rebanadas
 
 
-def generarRebanadasInicialesA(binHeight, binWidth, nRebanadas, items):
-    import math
+# def generarRebanadasInicialesA(binHeight, binWidth, nRebanadas, items):
+#     import math
 
-    altoRebanada = max(1, math.floor(binHeight / nRebanadas))
-    itemIndex = 0
-    rebanadas = []
+#     altoRebanada = max(1, math.floor(binHeight / nRebanadas))
+#     itemIndex = 0
+#     rebanadas = []
 
-    for r in range(nRebanadas):
-        nuevaRebanada = Rebanada(
-            alto=altoRebanada,
-            ancho=binWidth,
-            items=[],
-            posicionesOcupadas=[]
-        )
+#     for r in range(nRebanadas):
+#         nuevaRebanada = Rebanada(
+#             alto=altoRebanada,
+#             ancho=binWidth,
+#             items=[],
+#             puntosDeInicioItems=[]
+#         )
 
-        xActual = 0
+#         xActual = 0
 
-        while (
-            itemIndex < len(items)
-            and xActual + items[itemIndex].get_ancho() <= binWidth
-            and items[itemIndex].get_alto() <= altoRebanada
-        ):
-            item = items[itemIndex]
-            posicion = (xActual, 0)
-            nuevaRebanada.appendItem(item, posicion)
-            print(f"Rebanada {r + 1}: colocando Item {item.getId()} en {posicion}")
-            xActual += item.get_ancho()
-            itemIndex += 1
+#         while (
+#             itemIndex < len(items)
+#             and xActual + items[itemIndex].get_ancho() <= binWidth
+#             and items[itemIndex].get_alto() <= altoRebanada
+#         ):
+#             item = items[itemIndex]
+#             posicion = (xActual, 0)
+#             nuevaRebanada._appendItem(item, posicion)
+#             print(f"Rebanada {r + 1}: colocando Item {item.getId()} en {posicion}")
+#             xActual += item.get_ancho()
+#             itemIndex += 1
 
-        if nuevaRebanada.getTotalItems() > 0:
-            rebanadas.append(nuevaRebanada)
-        else:
-            break
+#         if nuevaRebanada.getTotalItems() > 0:
+#             rebanadas.append(nuevaRebanada)
+#         else:
+#             break
 
-    return rebanadas
+#     return rebanadas
 
 
 # Orquestador principal
 def orquestador(queue,manualInterruption,maxTime,initialTime):
     MAX_ITERACIONES = 30
-    rebanadas= generarRebanadasIniciales(BIN_WIDTH, BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT,posXY_x,posXY_y, ITEMS_QUANTITY)  # Inicialización con rebanadas básicas
+    MAX_REPETIDAS = 3  # Número de repeticiones permitidas antes de cortar
+    rebanadas= generarRebanadasIniciales(BIN_WIDTH, BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT,posXY_x,posXY_y, ITEMS_QUANTITY)  
     rebanadasIniciales=rebanadas.copy()
     
     iteracion = 0
@@ -289,6 +288,9 @@ def orquestador(queue,manualInterruption,maxTime,initialTime):
     print(f"posXY_x: {posXY_x}")
     print(f"posXY_y: {posXY_y}")
     print("----------------------------------")
+    
+    rebanadasVistas = set()
+    repeticionesConsecutivas = 0
     
     vueltaNro=1
     while True:
@@ -301,19 +303,36 @@ def orquestador(queue,manualInterruption,maxTime,initialTime):
         print(f"Precios duales: {precios_duales}")
         
         # Crear modelo esclavo
-        slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,items,precios_duales,altoRebanada, BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH)
+        slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,items,precios_duales, BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH)
         # Resolver modelo esclavo
         nueva_rebanada = solveSlaveModel(slaveModel,queue,manualInterruption,BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH)
         
         if nueva_rebanada is None:
             print("No se encontraron nuevas rebanadas. Fin de la generación de columnas.")
             break
-        vueltaNro+=1
-        # Agregar nueva rebanada al maestro
-        print(f"Nueva rebanada encontrada: {nueva_rebanada}")
-        rebanadas.append(nueva_rebanada)
-        iteracion += 1
         
+        
+        # Crear firma única de la rebanada (posición + tamaño de ítems) para identificar rebanadas repetidas
+        firmaRebanada = tuple(sorted(
+            (it.getPosicionX(), it.getPosicionY(), it.getAncho(), it.getAlto(), it.getRotado())
+            for it in nueva_rebanada.getItems()
+        ))
+        
+        if firmaRebanada in rebanadasVistas:
+            repeticionesConsecutivas += 1
+            print(f"Rebanada repetida {repeticionesConsecutivas} veces: {firmaRebanada}")
+            if repeticionesConsecutivas >= MAX_REPETIDAS:
+                print("Se repitió demasiadas veces la misma rebanada. Corte heurístico.")
+                break
+        else:
+            rebanadasVistas.add(firmaRebanada)
+            repeticionesConsecutivas = 0  # reset al encontrar algo nuevo
+            # agregar nueva rebanada al modelo maestro
+            print(f"Nueva rebanada encontrada: {nueva_rebanada}")
+            rebanadas.append(nueva_rebanada)
+            
+        iteracion += 1
+        vueltaNro+=1
         if iteracion >= MAX_ITERACIONES:
             print("Se alcanzó el máximo de iteraciones. Corte preventivo.")
             break

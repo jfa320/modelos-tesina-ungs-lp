@@ -81,8 +81,10 @@ ITEM_HEIGHT = 2  # h en el modelo
 # ITEM_WIDTH = 12  # w en el modelo
 # ITEM_HEIGHT = 8  # h en el modelo
 
+# Desde acá empiezan los casos de la OR Library (grandes)
+
 # # Caso 7 
-# ITEMS_QUANTITY = 14    # obligará a aprovechar bien el espacio
+# ITEMS_QUANTITY = 14    # obliga a aprovechar bien el espacio
 # BIN_WIDTH = 50         # W
 # BIN_HEIGHT = 20        # H
 # ITEM_WIDTH = 13        # w
