@@ -63,12 +63,12 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 
 # Caso 5: 
 
-ITEMS_QUANTITY = 6  # constante N del modelo
-BIN_WIDTH = 6  # W en el modelo
-BIN_HEIGHT = 3  # H en el modelo
+# ITEMS_QUANTITY = 6  # constante N del modelo
+# BIN_WIDTH = 6  # W en el modelo
+# BIN_HEIGHT = 3  # H en el modelo
 
-ITEM_WIDTH = 3  # w en el modelo
-ITEM_HEIGHT = 2  # h en el modelo
+# ITEM_WIDTH = 3  # w en el modelo
+# ITEM_HEIGHT = 2  # h en el modelo
 
 
 #Caso 6: 
@@ -96,6 +96,7 @@ ITEM_HEIGHT = 2  # h en el modelo
 # BIN_HEIGHT = 25        
 # ITEM_WIDTH = 10        
 # ITEM_HEIGHT = 6     
+# Optimo 16
 
 # Caso 9:
 # ITEMS_QUANTITY = 22    
@@ -104,12 +105,14 @@ ITEM_HEIGHT = 2  # h en el modelo
 # ITEM_WIDTH = 12        
 # ITEM_HEIGHT = 7       
 
-# Caso 10:
+# Caso 10: -> este se resuelve rapido. TODO: Analizar por qué
 # ITEMS_QUANTITY = 15    
 # BIN_WIDTH = 45         
 # BIN_HEIGHT = 30        
 # ITEM_WIDTH = 9         
 # ITEM_HEIGHT = 9  
+# optimo 15
+
 
 # Caso 11:
 # ITEMS_QUANTITY = 28    
@@ -117,13 +120,14 @@ ITEM_HEIGHT = 2  # h en el modelo
 # BIN_HEIGHT = 25        
 # ITEM_WIDTH = 14        
 # ITEM_HEIGHT = 8        
+# optimo 15
 
 # Caso 12
-# ITEMS_QUANTITY = 20    
-# BIN_WIDTH = 55         
-# BIN_HEIGHT = 22        
-# ITEM_WIDTH = 11        
-# ITEM_HEIGHT = 6    
+ITEMS_QUANTITY = 20    
+BIN_WIDTH = 55         
+BIN_HEIGHT = 22        
+ITEM_WIDTH = 11        
+ITEM_HEIGHT = 6    
 
 # Caso 13
 # ITEMS_QUANTITY = 20    
