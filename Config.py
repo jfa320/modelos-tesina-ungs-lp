@@ -123,18 +123,21 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 # optimo 15
 
 # Caso 12
-ITEMS_QUANTITY = 20    
-BIN_WIDTH = 55         
-BIN_HEIGHT = 22        
-ITEM_WIDTH = 11        
-ITEM_HEIGHT = 6    
-
-# Caso 13
 # ITEMS_QUANTITY = 20    
 # BIN_WIDTH = 55         
 # BIN_HEIGHT = 22        
 # ITEM_WIDTH = 11        
-# ITEM_HEIGHT = 6     
+# ITEM_HEIGHT = 6    
+#optimo 18
+
+# Caso 13
+
+ITEMS_QUANTITY = 20    
+BIN_WIDTH = 55         
+BIN_HEIGHT = 22        
+ITEM_WIDTH = 11        
+ITEM_HEIGHT = 6     
+
 # Óptimo: 18 ítems (5 de ancho x 3 de alto = 15 sin rotar, 
 # más 3 rotados en el espacio sobrante)
 
