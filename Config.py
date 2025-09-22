@@ -73,13 +73,13 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 
 #Caso 6: 
 
-# ITEMS_QUANTITY = 10  # constante N del modelo
+ITEMS_QUANTITY = 10  # constante N del modelo
 
-# BIN_WIDTH = 120  # W en el modelo
-# BIN_HEIGHT = 20  # H en el modelo
+BIN_WIDTH = 120  # W en el modelo
+BIN_HEIGHT = 20  # H en el modelo
 
-# ITEM_WIDTH = 12  # w en el modelo
-# ITEM_HEIGHT = 8  # h en el modelo
+ITEM_WIDTH = 12  # w en el modelo
+ITEM_HEIGHT = 8  # h en el modelo
 
 # Desde acá empiezan los casos de la OR Library (grandes)
 
@@ -132,11 +132,11 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 
 # Caso 13
 
-ITEMS_QUANTITY = 20    
-BIN_WIDTH = 55         
-BIN_HEIGHT = 22        
-ITEM_WIDTH = 11        
-ITEM_HEIGHT = 6     
+# ITEMS_QUANTITY = 20    
+# BIN_WIDTH = 55         
+# BIN_HEIGHT = 22        
+# ITEM_WIDTH = 11        
+# ITEM_HEIGHT = 6     
 
 # Óptimo: 18 ítems (5 de ancho x 3 de alto = 15 sin rotar, 
 # más 3 rotados en el espacio sobrante)

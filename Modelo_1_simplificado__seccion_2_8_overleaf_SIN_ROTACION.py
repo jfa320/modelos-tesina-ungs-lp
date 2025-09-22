@@ -22,7 +22,7 @@ def createAndSolveModel(queue,manualInterruption,maxTime):
         # Definir el limite tiempo de la ejecución en un minuto
         model.parameters.timelimit.set(maxTime)
 
-        initialTime=model.get_time()
+        # initialTime=model.get_time()
         initialTimeT= time.time()
        
         # Definir variables y objetivos

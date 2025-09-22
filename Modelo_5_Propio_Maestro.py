@@ -123,9 +123,7 @@ def solveMasterModel(model, queue, manualInterruption, relajarModelo, items, pos
             print(f"{varName} = {model.solution.get_values(varName)}")
 
         status = model.solution.get_status()
-        finalTime = time.time()
-        solverTime=finalTime-initialTime
-        solverTime=round(solverTime, 2)
+        
         
         
         if status == 105:  # CPLEX código 105 = Time limit exceeded
@@ -133,6 +131,9 @@ def solveMasterModel(model, queue, manualInterruption, relajarModelo, items, pos
             modelStatus="2" #valor en paver para marcar un optimo local
 
         if(not relajarModelo):
+            finalTime = time.time()
+            solverTime=finalTime-initialTime
+            solverTime=round(solverTime, 2)
             # Enviar resultados a través de la cola solo cuando el modelo no está relajado, es decir, cuando se va a resolver finalmente
             queue.put({
                 "modelStatus": modelStatus,

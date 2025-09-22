@@ -18,7 +18,7 @@ def createAndSolveModel(queue,manualInterruption,maxTime):
         model.objective.set_sense(model.objective.sense.maximize)
         model.parameters.timelimit.set(maxTime)
         
-        initialTime=model.get_time()
+        # initialTime=model.get_time()
         initialTimeT = time.time()
 
         # Definir variables y objetivos
