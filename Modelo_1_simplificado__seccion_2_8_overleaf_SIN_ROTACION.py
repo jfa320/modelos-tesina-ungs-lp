@@ -225,8 +225,6 @@ def solveModel(model, queue, manualInterruption):
     print("Modelo 1 - Sin Rotacion")
     print(f"Optimal value: {objectiveValue}")
        
-    status = model.solution.get_status()
-       
     modelStatus, solverStatus = "1", "1"
     status = model.solution.get_status()
     if status == 105:

@@ -36,12 +36,12 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 # ITEM_HEIGHT= 2 # h en el modelo
 
 # nuevo
-ITEMS_QUANTITY=6 # constante N del modelo
+# ITEMS_QUANTITY=6 # constante N del modelo
 
-BIN_WIDTH = 6 # W en el modelo
-BIN_HEIGHT = 6 # H en el modelo
-ITEM_WIDTH= 3 # w en el modelo
-ITEM_HEIGHT= 2 # h en el modelo
+# BIN_WIDTH = 6 # W en el modelo
+# BIN_HEIGHT = 6 # H en el modelo
+# ITEM_WIDTH= 3 # w en el modelo
+# ITEM_HEIGHT= 2 # h en el modelo
 
 #Caso 3: 
 
@@ -63,12 +63,12 @@ ITEM_HEIGHT= 2 # h en el modelo
 
 # Caso 5: 
 
-# ITEMS_QUANTITY = 6  # constante N del modelo
-# BIN_WIDTH = 6  # W en el modelo
-# BIN_HEIGHT = 3  # H en el modelo
+ITEMS_QUANTITY = 6  # constante N del modelo
+BIN_WIDTH = 6  # W en el modelo
+BIN_HEIGHT = 3  # H en el modelo
 
-# ITEM_WIDTH = 3  # w en el modelo
-# ITEM_HEIGHT = 2  # h en el modelo
+ITEM_WIDTH = 3  # w en el modelo
+ITEM_HEIGHT = 2  # h en el modelo
 
 
 #Caso 6: 
