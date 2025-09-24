@@ -231,31 +231,7 @@ def solveModel(model,queue,manualInterruption):
 
         return modelStatus, solverStatus, objectiveValue
 
-def runModel(queue, manualInterruption, maxTime):
-    # Valores por defecto para Paver
-    modelStatus, solverStatus, objectiveValue, solverTime = "1", "1", 0, 1
-    start = time.time()
 
-    try:
-        model = createModel(maxTime)
-        modelStatus, solverStatus, objectiveValue = solveModel(model, queue, manualInterruption)
-        solverTime = round(time.time() - start, 2)
-
-    except CplexSolverError as e:
-        solverTime = round(time.time() - start, 2)
-        handleSolverError(e, queue, solverTime)
-        return
-
-    except Exception as e:
-        solverTime = round(time.time() - start, 2)
-        print(f"Error inesperado durante creación/resolución: {e}")
-
-    queue.put({
-        "modelStatus": modelStatus,
-        "solverStatus": solverStatus,
-        "objectiveValue": objectiveValue,
-        "solverTime": solverTime
-    })
 
 def executeWithTimeLimit(maxTime):
     global modelStatus, solverStatus, objectiveValue, solverTime 
@@ -269,7 +245,7 @@ def executeWithTimeLimit(maxTime):
     manualInterruption = multiprocessing.Value('b', True)
 
     # Crear el subproceso que correrá la función
-    process = multiprocessing.Process(target=runModel, args=(queue,manualInterruption,maxTime))
+    process = multiprocessing.Process(target=runModel, args=(createModel,solveModel,queue,manualInterruption,maxTime))
 
     # Iniciar el subproceso
     process.start()
