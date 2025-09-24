@@ -424,11 +424,9 @@ def solveSlaveModel(model, queue, manualInterruption, anchoBin, altoItem, anchoI
         obj_coefs = model.objective.get_linear()  # Obtiene los coeficientes
         var_names = model.variables.get_names()   # Obtiene los nombres de las variables
 
-        # Imprimir la función objetivo en formato legible
-        objetivo_str = " + ".join([f"{coef}*{var}" for coef, var in zip(obj_coefs, var_names)])
-        print(f"Función Objetivo: {objetivo_str}")
-        
-        
+        # Imprimir la función objetivo en formato legible -- ENTIENDO QUE LO AGREGUE PARA DEBUGEAR, LO DEJO COMENTADO
+        # objetivo_str = " + ".join([f"{coef}*{var}" for coef, var in zip(obj_coefs, var_names)])
+        # print(f"Función Objetivo: {objetivo_str}")
 
         status = model.solution.get_status()
         finalTime = model.get_time()

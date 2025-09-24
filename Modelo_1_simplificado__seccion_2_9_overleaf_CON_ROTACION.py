@@ -125,7 +125,7 @@ def createAndSolveModel(queue,manualInterruption,maxTime):
         })
 
     except CplexSolverError as e:
-        handleSolverError(e, queue,solverTime)
+        handleSolverError(e, queue,solverTimeT)
 
 
 def executeWithTimeLimit(maxTime):
