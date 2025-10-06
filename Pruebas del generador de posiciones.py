@@ -13,10 +13,10 @@ print("--------------------------------------------------------")
 
 
 # Constantes
-L, A, l, a = 4,4,2,2
+L, A, l, a = 6,3,3,2
 
 # Conjunto Q
-Q = {i * l + j * a for i in range(L // l + 1) for j in range(A // a + 1) if i * l + j * a <= L - a}
+Q = {i * l + j * a for i in range(L // l + 1) for j in range(L // l + 1) if i * l + j * a <= L - a}
 Q = sorted(Q)  # ordeno el conjunto
 
 

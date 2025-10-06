@@ -61,25 +61,25 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 # ITEM_WIDTH= 3 # w en el modelo
 # ITEM_HEIGHT= 2 # h en el modelo
 
-# Caso 5: 
+# Caso 5:  este caso es el que rompe el generador de posiciones viejas (da un item menos de los que entran, no considera todas las posiciones)
 
-ITEMS_QUANTITY = 6  # constante N del modelo
-BIN_WIDTH = 6  # W en el modelo
-BIN_HEIGHT = 3  # H en el modelo
+# ITEMS_QUANTITY = 6  # constante N del modelo
+# BIN_WIDTH = 6  # W en el modelo
+# BIN_HEIGHT = 3  # H en el modelo
 
-ITEM_WIDTH = 3  # w en el modelo
-ITEM_HEIGHT = 2  # h en el modelo
+# ITEM_WIDTH = 3  # w en el modelo
+# ITEM_HEIGHT = 2  # h en el modelo
 
 
 #Caso 6: 
 
-# ITEMS_QUANTITY = 10  # constante N del modelo
+ITEMS_QUANTITY = 10  # constante N del modelo
 
-# BIN_WIDTH = 120  # W en el modelo
-# BIN_HEIGHT = 20  # H en el modelo
+BIN_WIDTH = 120  # W en el modelo
+BIN_HEIGHT = 20  # H en el modelo
 
-# ITEM_WIDTH = 12  # w en el modelo
-# ITEM_HEIGHT = 8  # h en el modelo
+ITEM_WIDTH = 12  # w en el modelo
+ITEM_HEIGHT = 8  # h en el modelo
 
 # Desde acá empiezan los casos de la OR Library (grandes)
 

@@ -102,6 +102,21 @@ def generatePositionsXY(W, H, w, h):
 
     return XY_x, XY_y
 
+def generatePositionsXYM(W, H, w, h): #metodo Marcelo - parece que anda bien
+    # Conjunto Q
+    Q = {i * w + j * h for i in range(W // w + 1) for j in range(W // w + 1) if i * w + j * h <= W - h}
+    Q = sorted(Q)  # ordeno el conjunto
+
+    # Conjunto P
+    P = {x for x in range(0, W - h + 1) if x in Q}
+
+    # Puntos XY para ítems sin rotar (lado largo)
+    XY_x = {(x, y) for x in P for y in P if x + w <= W and y + h <= H}
+
+    # Puntos XY para ítems rotados (lado corto)
+    XY_y = {(x, y) for x in P for y in P if x + h <= W and y + w <= H}
+
+    return XY_x, XY_y
 
 # def generatePositionsXY1(W, H, w, h):
 #     # Qx: posiciones alcanzables en el eje horizontal
