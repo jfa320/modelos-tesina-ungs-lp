@@ -4,12 +4,12 @@ import time
 from Objetos import Rebanada
 from Objetos import Item
 
-from Position_generator import generatePositionsXYM
+from Position_generator import generatePositionsXY
 from Modelo_5_Propio_Maestro import * 
 from Modelo_5_Propio_Esclavo_Alternativo import * 
 from Config import *
 
-posXY_x, posXY_y=generatePositionsXYM(BIN_WIDTH,BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT)
+posXY_x, posXY_y=generatePositionsXY(BIN_WIDTH,BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT)
 
 #TODO: corregir esto. Ubicar items en otro lado
 def generarListaItems(ITEMS_QUANTITY, ITEM_HEIGHT, ITEM_WIDTH):
