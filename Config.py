@@ -73,7 +73,7 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 
 #Caso 6: 
 
-ITEMS_QUANTITY = 10  # constante N del modelo
+ITEMS_QUANTITY = 30  # constante N del modelo
 
 BIN_WIDTH = 120  # W en el modelo
 BIN_HEIGHT = 20  # H en el modelo
