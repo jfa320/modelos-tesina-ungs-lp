@@ -290,47 +290,28 @@ def orquestador(queue,manualInterruption,maxTime,initialTime):
     print("----------------------------------")
     
     rebanadasVistas = set()
-    repeticionesConsecutivas = 0
     
     vueltaNro=1
     while True:
         # Creo modelo
         #TODO: Aca podria mejorar evitando la creacion del modelo en cada vuelta.
         # En su lugar, podria crear uno y luego agregar las columnas (rebanadas) nuevas
+        # for i, reb in enumerate(rebanadas, start=1):
+        #     reb.setId(i)
         masterModel = createMasterModel(maxTime,rebanadas,BIN_HEIGHT,BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH,items, posXY_x, posXY_y)
         # Resolver modelo maestro
-        optimalValueParcial , precios_duales = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=True, items=items, posXY_x=posXY_x, posXY_y= posXY_y,initialTime=initialTime)
+        _ , precios_duales = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=True, items=items, posXY_x=posXY_x, posXY_y= posXY_y,initialTime=initialTime)
         print(f"Precios duales: {precios_duales}")
         
         # Crear modelo esclavo
         slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,items,precios_duales, BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH)
-        # Resolver modelo esclavo
-        nueva_rebanada = solveSlaveModel(slaveModel,queue,manualInterruption,BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH)
+        # # Resolver modelo esclavo
+        nueva_rebanada,reducedCost = solveSlaveModel(slaveModel,queue,manualInterruption,BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH)
         
-        if nueva_rebanada is None:
-            print("No se encontraron nuevas rebanadas. Fin de la generación de columnas.")
+        if reducedCost <= 1e-9 or nueva_rebanada is None:
+            print(f"Fin del proceso: costo reducido = {reducedCost:.6f} (no hay columnas mejorantes).")
             break
-        
-        
-        # Crear firma única de la rebanada (posición + tamaño de ítems) para identificar rebanadas repetidas
-        firmaRebanada = tuple(sorted(
-            (it.getPosicionX(), it.getPosicionY(), it.getAncho(), it.getAlto(), it.getRotado())
-            for it in nueva_rebanada.getItems()
-        ))
-        
-        if firmaRebanada in rebanadasVistas:
-            repeticionesConsecutivas += 1
-            print(f"Rebanada repetida {repeticionesConsecutivas} veces: {firmaRebanada}")
-            if repeticionesConsecutivas >= MAX_REPETIDAS:
-                print("Se repitió demasiadas veces la misma rebanada. Corte heurístico.")
-                break
-        else:
-            rebanadasVistas.add(firmaRebanada)
-            repeticionesConsecutivas = 0  # reset al encontrar algo nuevo
-            # agregar nueva rebanada al modelo maestro
-            print(f"Nueva rebanada encontrada: {nueva_rebanada}")
-            rebanadas.append(nueva_rebanada)
-            
+
         iteracion += 1
         vueltaNro+=1
         if iteracion >= MAX_ITERACIONES:

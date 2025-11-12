@@ -26,7 +26,7 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 # ITEM_WIDTH= 2 # w en el modelo
 # ITEM_HEIGHT= 3 # h en el modelo
 
-#Caso 2: este vengo probando hace meses
+#Caso 2: este vengo probando hace meses REVISAR - el de la forma irregular
 
 # ITEMS_QUANTITY=6 # constante N del modelo
 
@@ -52,7 +52,7 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 # ITEM_WIDTH= 4 # w en el modelo
 # ITEM_HEIGHT= 2 # h en el modelo
 
-#Caso 4: 
+#Caso 4:  
 
 # ITEMS_QUANTITY=5 # constante N del modelo
 
@@ -73,7 +73,7 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 
 #Caso 6: 
 
-ITEMS_QUANTITY = 30  # constante N del modelo
+ITEMS_QUANTITY = 10  # constante N del modelo
 
 BIN_WIDTH = 120  # W en el modelo
 BIN_HEIGHT = 20  # H en el modelo

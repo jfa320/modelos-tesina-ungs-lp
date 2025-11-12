@@ -6,7 +6,7 @@ from Objetos import Rebanada
 from Objetos import Item
 
 MODEL_NAME="Model5SlaveAlternative"
-EPSILON = 1e-5
+EPSILON = 1e-9
 DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS = True  # Cambiar a True para desactivar el control de restricciones repetidas
 ALPHA = 0.01
 
@@ -90,7 +90,6 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
 
     # R[(a,b,t)] = lista de posiciones (x,y) cubiertas por el ítem que inicia en (a,b,t)
     R = {}
-    todasLasPosiciones = [((a, b), 'x') for (a, b) in P_noRotado] + [((a, b), 'y') for (a, b) in P_rotado]
     for (pos, t) in todasLasPosiciones:
         a, b = pos
         ancho, alto = (w, h) if t == 'x' else (h, w)
@@ -117,25 +116,56 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
         objCoeffs = []
 
         
-        # Variables z^x_(a,b) para posiciones no rotadas
+        # # Variables z^x_(a,b) para posiciones no rotadas
+        # for (a, b) in P_noRotado:
+        #     varName = f"z_x_{a}_{b}"
+        #     zVarsNoRotadas.append(varName)
+        #     A_i_valor = A_i["pi"].get(f"({a},{b})", 0) 
+        #     coeff = ALPHA if A_i_valor == 0 else A_i_valor
+        #     objCoeffs.append(coeff)
+            
+        # addVariables(model,zVarsNoRotadas,objCoeffs,"B")
+        
+        # objCoeffs.clear()
+        
+        # # Variables z^y_(a,b) para posiciones rotadas
+        # for (a, b) in P_rotado:
+        #     varName = f"z_y_{a}_{b}"
+        #     zVarsRotadas.append(varName)
+        #     A_i_valor = A_i["pi"].get(f"({a},{b})", 0) 
+        #     coeff = ALPHA if A_i_valor == 0 else A_i_valor
+        #     objCoeffs.append(coeff)
+
+        # Helper para sumar los duales de las celdas cubiertas por (a,b,t)
+        def calcularSumaDual(a, b, t):
+            celdasCubiertas = R[(a, b, t)]
+            return sum(A_i["pi"].get(f"({x},{y})", 0.0) for (x, y) in celdasCubiertas)
+
+        # Variables z^x_(a,b) → ítems no rotados
         for (a, b) in P_noRotado:
             varName = f"z_x_{a}_{b}"
             zVarsNoRotadas.append(varName)
-            A_i_valor = A_i["pi"].get(f"({a},{b})", 0) 
-            coeff = ALPHA if A_i_valor == 0 else A_i_valor
-            objCoeffs.append(coeff)
             
-        addVariables(model,zVarsNoRotadas,objCoeffs,"B")
-        
+            sumaDual = calcularSumaDual(a, b, 'x')
+            coeff = 1.0 - sumaDual      # costo reducido: 1 - ∑π
+            objCoeffs.append(coeff)
+
+        addVariables(model, zVarsNoRotadas, objCoeffs, "B")
+
         objCoeffs.clear()
-        
-        # Variables z^y_(a,b) para posiciones rotadas
+
+        # Variables z^y_(a,b) → ítems rotados
         for (a, b) in P_rotado:
             varName = f"z_y_{a}_{b}"
             zVarsRotadas.append(varName)
-            A_i_valor = A_i["pi"].get(f"({a},{b})", 0) 
-            coeff = ALPHA if A_i_valor == 0 else A_i_valor
+            
+            sumaDual = calcularSumaDual(a, b, 'y')
+            coeff = 1.0 - sumaDual      # costo reducido: 1 - ∑π
             objCoeffs.append(coeff)
+
+        addVariables(model, zVarsRotadas, objCoeffs, "B")
+
+        objCoeffs.clear()
          
         
         print("Coeficientes de la función objetivo: ", objCoeffs)    
@@ -151,7 +181,8 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
         for (a, b, t), celdas in R.items():
             varName = f"z_{t}_{a}_{b}"
             for (x, y) in celdas:
-                coverMap.setdefault((x, y), []).append(varName)
+                coverMap.setdefault((x, y), set()).add(varName)
+                
 
         for (x, y), varsQueCubren in coverMap.items():
             coeffs = [1.0] * len(varsQueCubren)
@@ -214,18 +245,18 @@ def solveSlaveModel(model, queue, manualInterruption, anchoBin, altoItem, anchoI
         
         posicionesOcupadas=construirPosicionesOcupadas(variableNames, variableValues)
         alto= obtenerYMaximo(posicionesOcupadas,altoItem,anchoItem,items)
-        
+        print("Items de la rebanada encontrada:", items)
         print("Valor objetivo del esclavo", objectiveValue)
         
         
         if objectiveValue  <= EPSILON:
             print("El valor objetivo del esclavo es insignificante. Fin del proceso.")
-            return None
+            return None, objectiveValue
         else:
             rebanadaEncontrada=Rebanada(alto, anchoBin, items , posicionesOcupadas)
             print(f"Rebanada encontrada!!: {rebanadaEncontrada}")
             print("OUT - Solve Slave Model")
-            return rebanadaEncontrada
+            return rebanadaEncontrada, objectiveValue
     except CplexSolverError as e:
         print("Error al resolver el modelo esclavo:", e)
         handleSolverError(e, queue,solverTime)
