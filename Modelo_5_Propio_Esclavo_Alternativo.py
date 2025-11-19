@@ -8,7 +8,6 @@ from Objetos import Item
 MODEL_NAME="Model5SlaveAlternative"
 EPSILON = 1e-9
 DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS = True  # Cambiar a True para desactivar el control de restricciones repetidas
-ALPHA = 0.01
 
 def construirItems(variableNames, variableValues, altoItem, anchoItem):
     items = []
@@ -147,7 +146,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
             zVarsNoRotadas.append(varName)
             
             sumaDual = calcularSumaDual(a, b, 'x')
-            coeff = 1.0 - sumaDual      # costo reducido: 1 - ∑π
+            coeff = 1.0 - sumaDual     # costo reducido: 1 - ∑π
             objCoeffs.append(coeff)
 
         addVariables(model, zVarsNoRotadas, objCoeffs, "B")
@@ -160,7 +159,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
             zVarsRotadas.append(varName)
             
             sumaDual = calcularSumaDual(a, b, 'y')
-            coeff = 1.0 - sumaDual      # costo reducido: 1 - ∑π
+            coeff = 1.0 - sumaDual    # costo reducido: 1 - ∑π
             objCoeffs.append(coeff)
 
         addVariables(model, zVarsRotadas, objCoeffs, "B")
@@ -170,9 +169,6 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
         
         print("Coeficientes de la función objetivo: ", objCoeffs)    
             
-        addVariables(model,zVarsRotadas,objCoeffs,"B")
-        objCoeffs.clear()
-               
         # Restricciones
         # Restricciones de no solapamiento
         coverMap = {}
@@ -209,7 +205,8 @@ def solveSlaveModel(model, queue, manualInterruption, anchoBin, altoItem, anchoI
     try:
         # Desactivar la interrupción manual aquí
         initialTime = model.get_time()
-        manualInterruption.value = False
+        if(manualInterruption is not None):
+            manualInterruption.value = False
         print("Voy a resolver el esclavo")
         # Resolver el modelo
         model.solve()

@@ -4,12 +4,12 @@ import time
 from Objetos import Rebanada
 from Objetos import Item
 
-from Position_generator import generatePositionsXY
+from Position_generator import generatePositionsXYM
 from Modelo_5_Propio_Maestro import * 
 from Modelo_5_Propio_Esclavo_Alternativo import * 
 from Config import *
 
-posXY_x, posXY_y=generatePositionsXY(BIN_WIDTH,BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT)
+posXY_x, posXY_y=generatePositionsXYM(BIN_WIDTH,BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT)
 
 #TODO: corregir esto. Ubicar items en otro lado
 def generarListaItems(ITEMS_QUANTITY, ITEM_HEIGHT, ITEM_WIDTH):
@@ -311,7 +311,7 @@ def orquestador(queue,manualInterruption,maxTime,initialTime):
         if reducedCost <= 1e-9 or nueva_rebanada is None:
             print(f"Fin del proceso: costo reducido = {reducedCost:.6f} (no se agregan más rebanadas)")
             break
-
+        rebanadas.append(nueva_rebanada)        
         iteracion += 1
         vueltaNro+=1
         if iteracion >= MAX_ITERACIONES:

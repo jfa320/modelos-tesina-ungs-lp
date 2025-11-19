@@ -26,14 +26,14 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 # ITEM_WIDTH= 2 # w en el modelo
 # ITEM_HEIGHT= 3 # h en el modelo
 
-#Caso 2: este vengo probando hace meses REVISAR - el de la forma irregular
+#Caso 2: este vengo probando hace meses - el de la forma irregular
 
-# ITEMS_QUANTITY=6 # constante N del modelo
+ITEMS_QUANTITY=6 # constante N del modelo
 
-# BIN_WIDTH = 5 # W en el modelo
-# BIN_HEIGHT = 5 # H en el modelo
-# ITEM_WIDTH= 3 # w en el modelo
-# ITEM_HEIGHT= 2 # h en el modelo
+BIN_WIDTH = 5 # W en el modelo
+BIN_HEIGHT = 5 # H en el modelo
+ITEM_WIDTH= 3 # w en el modelo
+ITEM_HEIGHT= 2 # h en el modelo
 
 # nuevo
 # ITEMS_QUANTITY=6 # constante N del modelo
@@ -43,7 +43,7 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 # ITEM_WIDTH= 3 # w en el modelo
 # ITEM_HEIGHT= 2 # h en el modelo
 
-#Caso 3: 
+#Caso 3: ROMPE - HAY UNA SOLUCION PERO ES MUY ESPECIFICAM,TERMINAR DE CORREGIR TODO
 
 # ITEMS_QUANTITY=8 # constante N del modelo
 
@@ -73,13 +73,13 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 
 #Caso 6: 
 
-ITEMS_QUANTITY = 10  # constante N del modelo
+# ITEMS_QUANTITY = 10  # constante N del modelo
 
-BIN_WIDTH = 120  # W en el modelo
-BIN_HEIGHT = 20  # H en el modelo
+# BIN_WIDTH = 120  # W en el modelo
+# BIN_HEIGHT = 20  # H en el modelo
 
-ITEM_WIDTH = 12  # w en el modelo
-ITEM_HEIGHT = 8  # h en el modelo
+# ITEM_WIDTH = 12  # w en el modelo
+# ITEM_HEIGHT = 8  # h en el modelo
 
 # Desde acá empiezan los casos de la OR Library (grandes)
 
