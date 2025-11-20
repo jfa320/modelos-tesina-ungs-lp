@@ -309,7 +309,7 @@ def orquestador(queue,manualInterruption,maxTime,initialTime):
         nueva_rebanada,reducedCost = solveSlaveModel(slaveModel,queue,manualInterruption,BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH)
         
         if reducedCost <= 1e-9 or nueva_rebanada is None:
-            print(f"Fin del proceso: costo reducido = {reducedCost:.6f} (no se agregan más rebanadas)")
+            print(f"Costo reducido máximo = {reducedCost}. No hay más columnas que mejoren el maestro.")
             break
         rebanadas.append(nueva_rebanada)        
         iteracion += 1

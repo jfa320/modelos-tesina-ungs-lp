@@ -1483,3 +1483,6 @@ inst2,Model1,1,1,3.0,0.04
 inst2,Model5SlaveAlternative,1,1,10.0,6.39
 inst2,Model1,1,1,10.0,0.05
 inst2,Model1,1,1,10.0,0.03
+inst2,Model5SlaveAlternative,1,1,4.0,1.89
+inst2,Model1,1,1,2.0,0.06
+inst2,Model1,1,1,4.0,0.11
