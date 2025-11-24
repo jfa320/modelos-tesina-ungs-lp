@@ -315,7 +315,7 @@ def getDualValues(model):
     print("constraintNames: ",constraintNames)
     print("dualValues: ",dualValues)
     for _, (name, dualValue) in enumerate(zip(constraintNames, dualValues)):
-        if name.startswith("consItem_"):
+        if name.startswith("consNoSolape_"):
             # Restricciones relacionadas a ítems
             xPos = str(name.split("_")[1])  # Extraer el ID del ítem
             yPos = str(name.split("_")[2])  # Extraer el ID del ítem
