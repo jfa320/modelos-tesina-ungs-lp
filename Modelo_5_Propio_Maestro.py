@@ -61,31 +61,6 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
 
         added_constraints = set()
         
-        
-        # # ----------------------------------------------------
-        # # Restricción de posiciones ocupadas por rebanadas
-        # for (a, b) in posiciones:
-        #     rebanadasQueOcupanPos = []  # Lista de rebanadas que ocupan (a, b)
-
-        #     for r in R:
-        #         posicionesOcupadas = set()
-        #         rebanada = r 
-
-        #         for item in rebanada.getItems():
-        #             if item.getPosicionX() is not None and item.getPosicionY() is not None:
-        #                 posicion = item.getPosicion()
-        #                 posicionesOcupadas.update(calcularPosicionesOcupadas(posicion, item.getAncho(), item.getAlto()))
-        #         if (a, b) in posicionesOcupadas:
-        #             rebanadasQueOcupanPos.append(r)
-            
-        #     if rebanadasQueOcupanPos:
-        #             # print(f"Agregando restricción para la posición ({a}, {b})")
-        #             indexes = [p_r_names[r.getId()-1] for r in rebanadasQueOcupanPos]
-        #             coeffs = [1] * len(rebanadasQueOcupanPos)
-        #             consRhs=1.0
-        #             consSense="L"
-        #             addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consItem_{a}_{b}",DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS)
-        
         # Precomputar ocupación de cada rebanada
         celulasPorReb = {}
         for r in R:

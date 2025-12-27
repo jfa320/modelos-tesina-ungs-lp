@@ -1,4 +1,3 @@
-import math
 import multiprocessing
 import time
 from Objetos import Rebanada
@@ -16,6 +15,9 @@ def generarListaItems(ITEMS_QUANTITY, ITEM_HEIGHT, ITEM_WIDTH):
     return [Item(alto=ITEM_HEIGHT, ancho=ITEM_WIDTH) for _ in range(ITEMS_QUANTITY)]
 
 items=generarListaItems(ITEMS_QUANTITY,ITEM_HEIGHT,ITEM_WIDTH)
+
+EPS = 1e-9  # tolerancia numérica
+
 
 def generarRebanadasIniciales(binWidth, binHeight, itemWidth, itemHeight, posXY_x, posXY_y, maxItems):
     def generarPorOrientacion(posiciones, w, h, rotado):
@@ -276,10 +278,126 @@ def generarRebanadasIniciales(binWidth, binHeight, itemWidth, itemHeight, posXY_
 #     return rebanadas
 
 
+def orquestadorPOOL(queue, manualInterruption, maxTime, initialTime):
+    MAX_ITERACIONES = 30
+    EPS = 1e-9
+
+    rebanadas = generarRebanadasIniciales(
+        BIN_WIDTH, BIN_HEIGHT,
+        ITEM_WIDTH, ITEM_HEIGHT,
+        posXY_x, posXY_y, ITEMS_QUANTITY
+    )
+    rebanadasIniciales = rebanadas.copy()
+
+    iteracion = 0
+    print(f"Rebanadas iniciales: {rebanadas}")
+    print(f"posXY_x: {posXY_x}")
+    print(f"posXY_y: {posXY_y}")
+    print("----------------------------------")
+
+    while True:
+        # 1. Crear y resolver maestro relajado
+        masterModel = createMasterModel(
+            maxTime, rebanadas,
+            BIN_HEIGHT, BIN_WIDTH,
+            ITEM_HEIGHT, ITEM_WIDTH,
+            items, posXY_x, posXY_y
+        )
+
+        _, precios_duales = solveMasterModel(
+            masterModel,
+            queue,
+            manualInterruption,
+            relajarModelo=True,
+            items=items,
+            posXY_x=posXY_x,
+            posXY_y=posXY_y,
+            initialTime=initialTime
+        )
+
+        print(f"Precios duales: {precios_duales}")
+
+        # 2. Crear esclavo
+        slaveModel = createSlaveModel(
+            maxTime,
+            posXY_x,
+            posXY_y,
+            items,
+            precios_duales,
+            BIN_WIDTH,
+            ITEM_HEIGHT,
+            ITEM_WIDTH
+        )
+
+        # 3. Resolver esclavo con POOL
+        soluciones_pool = solveSlaveModelPool(
+            slaveModel,
+            queue,
+            manualInterruption,
+            BIN_WIDTH,
+            ITEM_HEIGHT,
+            ITEM_WIDTH
+        )
+
+        if not soluciones_pool:
+            print("El esclavo no generó soluciones.")
+            break
+
+        agregue_algo = False
+
+        # 4. Evaluar TODAS las soluciones del pool
+        for rebanada, dual_value in soluciones_pool:
+            c_r = len(rebanada.getItems())
+            reducedCost = dual_value - c_r
+
+            print(f"Evaluando rebanada:")
+            print(f"  Π(r) = {dual_value}")
+            print(f"  c_r  = {c_r}")
+            print(f"  rc   = {reducedCost}")
+
+            if reducedCost > EPS and rebanada not in rebanadas:
+                print("  → Rebanada aceptada")
+                rebanadas.append(rebanada)
+                agregue_algo = True
+
+        # 5. Criterio de parada GLOBAL
+        if not agregue_algo:
+            print("No existe ninguna columna con costo reducido positivo.")
+            break
+
+        iteracion += 1
+        if iteracion >= MAX_ITERACIONES:
+            print("Se alcanzó el máximo de iteraciones. Corte preventivo.")
+            break
+
+    # 6. Resolver maestro final entero
+    print("Resolviendo modelo maestro final...")
+    print(f"Rebanadas iniciales: {rebanadasIniciales}")
+    print(f"posXY_x: {posXY_x}")
+    print(f"posXY_y: {posXY_y}")
+
+    masterModel = createMasterModel(
+        maxTime, rebanadas,
+        BIN_HEIGHT, BIN_WIDTH,
+        ITEM_HEIGHT, ITEM_WIDTH,
+        items, posXY_x, posXY_y
+    )
+
+    solveMasterModel(
+        masterModel,
+        queue,
+        manualInterruption,
+        relajarModelo=False,
+        items=items,
+        posXY_x=posXY_x,
+        posXY_y=posXY_y,
+        initialTime=initialTime
+    )
+
+
 # Orquestador principal
 def orquestador(queue,manualInterruption,maxTime,initialTime):
     MAX_ITERACIONES = 30
-    MAX_REPETIDAS = 3  # Número de repeticiones permitidas antes de cortar
     rebanadas= generarRebanadasIniciales(BIN_WIDTH, BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT,posXY_x,posXY_y, ITEMS_QUANTITY)  
     rebanadasIniciales=rebanadas.copy()
     
@@ -289,9 +407,6 @@ def orquestador(queue,manualInterruption,maxTime,initialTime):
     print(f"posXY_y: {posXY_y}")
     print("----------------------------------")
     
-    rebanadasVistas = set()
-    
-    vueltaNro=1
     while True:
         # Creo modelo
         #TODO: Aca podria mejorar evitando la creacion del modelo en cada vuelta.
@@ -306,14 +421,25 @@ def orquestador(queue,manualInterruption,maxTime,initialTime):
         # Crear modelo esclavo
         slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,items,precios_duales, BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH)
         # # Resolver modelo esclavo
-        nueva_rebanada,reducedCost = solveSlaveModel(slaveModel,queue,manualInterruption,BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH)
+        nueva_rebanada,dual_value = solveSlaveModel(slaveModel,queue,manualInterruption,BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH)
         
-        if reducedCost <= 1e-9 or nueva_rebanada is None:
-            print(f"Costo reducido máximo = {reducedCost}. No hay más columnas que mejoren el maestro.")
+        if nueva_rebanada is None:
+            print("El esclavo no generó ninguna rebanada.")
             break
+        
+        # c_r = cantidad de ítems de la rebanada
+        c_r = len(nueva_rebanada.getItems())  
+        reducedCost = dual_value - c_r
+        print(f"Valor dual Π(r) = {dual_value}")
+        print(f"c_r (#items) = {c_r}")
+        print(f"Costo reducido = {reducedCost}")
+
+        if reducedCost <= EPS:
+            print("No existe ninguna columna con costo reducido positivo.")
+            break
+
         rebanadas.append(nueva_rebanada)        
         iteracion += 1
-        vueltaNro+=1
         if iteracion >= MAX_ITERACIONES:
             print("Se alcanzó el máximo de iteraciones. Corte preventivo.")
             break

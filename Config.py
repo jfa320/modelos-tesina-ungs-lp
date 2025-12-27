@@ -29,12 +29,12 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 #Caso 2: este vengo probando hace meses - el de la forma irregular "cruz"
 # optimo 4
 
-# ITEMS_QUANTITY=6 # constante N del modelo
+ITEMS_QUANTITY=6 # constante N del modelo
 
-# BIN_WIDTH = 5 # W en el modelo
-# BIN_HEIGHT = 5 # H en el modelo
-# ITEM_WIDTH= 3 # w en el modelo
-# ITEM_HEIGHT= 2 # h en el modelo
+BIN_WIDTH = 5 # W en el modelo
+BIN_HEIGHT = 5 # H en el modelo
+ITEM_WIDTH= 3 # w en el modelo
+ITEM_HEIGHT= 2 # h en el modelo
 
 # nuevo
 # optimo 6
@@ -53,7 +53,7 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 # BIN_WIDTH = 6 # W en el modelo
 # BIN_HEIGHT = 6 # H en el modelo
 # ITEM_WIDTH= 4 # w en el modelo
-# ITEM_HEIGHT= 2 # h en el modelo
+ITEM_HEIGHT= 2 # h en el modelo
 
 #Caso 4:  
 # optimo 3
@@ -179,11 +179,11 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 # ITEM_HEIGHT = 7     
 
 # # Óptimo: 12
-ITEMS_QUANTITY = 25     # muchos ítems
-BIN_WIDTH = 20          # ancho del bin
-BIN_HEIGHT = 20         # alto del bin
-ITEM_WIDTH = 6          # ancho de cada ítem
-ITEM_HEIGHT = 5         # alto de cada ítem
+# ITEMS_QUANTITY = 25     # muchos ítems
+# BIN_WIDTH = 20          # ancho del bin
+# BIN_HEIGHT = 20         # alto del bin
+# ITEM_WIDTH = 6          # ancho de cada ítem
+# ITEM_HEIGHT = 5         # alto de cada ítem
 
 # # OR Library test
 # # Caso 3

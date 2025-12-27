@@ -101,8 +101,13 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
         # Crear el modelo
         model = cplex.Cplex()
         model.parameters.preprocessing.presolve.set(0)
-        model.set_problem_type(cplex.Cplex.problem_type.LP)
+        # model.set_problem_type(cplex.Cplex.problem_type.LP)
         model.objective.set_sense(model.objective.sense.maximize)
+
+        model.parameters.mip.pool.intensity.set(4)   # buscar soluciones alternativas
+        model.parameters.mip.pool.capacity.set(8)    # hasta 8 soluciones
+        model.parameters.mip.pool.replace.set(2)     # diversidad
+
 
         model.parameters.timelimit.set(maxTime)
         initialTime=model.get_time()
@@ -114,31 +119,12 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
         zVarsNoRotadas = []
         objCoeffs = []
 
-        
-        # # Variables z^x_(a,b) para posiciones no rotadas
-        # for (a, b) in P_noRotado:
-        #     varName = f"z_x_{a}_{b}"
-        #     zVarsNoRotadas.append(varName)
-        #     A_i_valor = A_i["pi"].get(f"({a},{b})", 0) 
-        #     coeff = ALPHA if A_i_valor == 0 else A_i_valor
-        #     objCoeffs.append(coeff)
-            
-        # addVariables(model,zVarsNoRotadas,objCoeffs,"B")
-        
-        # objCoeffs.clear()
-        
-        # # Variables z^y_(a,b) para posiciones rotadas
-        # for (a, b) in P_rotado:
-        #     varName = f"z_y_{a}_{b}"
-        #     zVarsRotadas.append(varName)
-        #     A_i_valor = A_i["pi"].get(f"({a},{b})", 0) 
-        #     coeff = ALPHA if A_i_valor == 0 else A_i_valor
-        #     objCoeffs.append(coeff)
-
         # Helper para sumar los duales de las celdas cubiertas por (a,b,t)
         def calcularSumaDual(a, b, t):
             celdasCubiertas = R[(a, b, t)]
-            return sum(A_i["pi"].get(f"({x},{y})", 0.0) for (x, y) in celdasCubiertas)
+            return sum(A_i["pi"].get(f"({x+1},{y+1})", 0.0) for (x, y) in celdasCubiertas)
+
+        EPS_STAB = 1 # o más chico
 
         # Variables z^x_(a,b) → ítems no rotados
         for (a, b) in P_noRotado:
@@ -146,7 +132,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
             zVarsNoRotadas.append(varName)
             
             sumaDual = calcularSumaDual(a, b, 'x')
-            coeff = 1.0 - sumaDual     # costo reducido: 1 - ∑π
+            coeff = sumaDual + EPS_STAB     
             objCoeffs.append(coeff)
 
         addVariables(model, zVarsNoRotadas, objCoeffs, "B")
@@ -159,16 +145,13 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
             zVarsRotadas.append(varName)
             
             sumaDual = calcularSumaDual(a, b, 'y')
-            coeff = 1.0 - sumaDual    # costo reducido: 1 - ∑π
+            coeff = sumaDual + EPS_STAB    
             objCoeffs.append(coeff)
 
         addVariables(model, zVarsRotadas, objCoeffs, "B")
-
+        print("Coeficientes de la función objetivo: ", objCoeffs)    
         objCoeffs.clear()
          
-        
-        print("Coeficientes de la función objetivo: ", objCoeffs)    
-            
         # Restricciones
         # Restricciones de no solapamiento
         coverMap = {}
@@ -246,14 +229,70 @@ def solveSlaveModel(model, queue, manualInterruption, anchoBin, altoItem, anchoI
         print("Valor objetivo del esclavo", objectiveValue)
         
         
-        if objectiveValue  <= EPSILON:
-            print("El valor objetivo del esclavo es insignificante. Fin del proceso.")
-            return None, objectiveValue
-        else:
-            rebanadaEncontrada=Rebanada(alto, anchoBin, items , posicionesOcupadas)
-            print(f"Rebanada encontrada!!: {rebanadaEncontrada}")
-            print("OUT - Solve Slave Model")
-            return rebanadaEncontrada, objectiveValue
+        rebanadaEncontrada = Rebanada(alto, anchoBin, items, posicionesOcupadas)
+
+        print(f"Rebanada encontrada!!: {rebanadaEncontrada}")
+        print("OUT - Solve Slave Model")
+
+        return rebanadaEncontrada, objectiveValue
+    
     except CplexSolverError as e:
         print("Error al resolver el modelo esclavo:", e)
         handleSolverError(e, queue,solverTime)
+
+
+def solveSlaveModelPool(model, queue, manualInterruption, anchoBin, altoItem, anchoItem):
+    print("IN - Solve Slave Model (POOL)")
+
+    soluciones = []
+
+    try:
+        initialTime = model.get_time()
+        if manualInterruption is not None:
+            manualInterruption.value = False
+
+        model.solve()
+
+        status = model.solution.get_status()
+        if status == 105:
+            print("Time limit reached in slave model.")
+
+        # 🔹 Cantidad de soluciones en el pool
+        poolSize = model.solution.pool.get_num()
+        print(f"Pool size: {poolSize}")
+
+        variableNames = model.variables.get_names()
+
+        for k in range(poolSize):
+            print(f"Procesando solución del pool #{k}")
+
+            # Valor objetivo Π(r)
+            dualValue = model.solution.pool.get_objective_value(k)
+
+            # Valores de variables de ESTA solución
+            variableValues = model.solution.pool.get_values(k)
+
+            # Construcción de la rebanada
+            items = construirItems(variableNames, variableValues, altoItem, anchoItem)
+
+            # Si no hay ítems, no sirve
+            if not items:
+                continue
+
+            posicionesOcupadas = construirPosicionesOcupadas(variableNames, variableValues)
+            alto = obtenerYMaximo(posicionesOcupadas, altoItem, anchoItem, items)
+
+            rebanada = Rebanada(alto, anchoBin, items, posicionesOcupadas)
+
+            print(f"  Rebanada pool #{k}: {rebanada}")
+            print(f"  Π(r) = {dualValue}")
+
+            soluciones.append((rebanada, dualValue))
+
+        print("OUT - Solve Slave Model (POOL)")
+        return soluciones
+
+    except CplexSolverError as e:
+        print("Error al resolver el modelo esclavo:", e)
+        handleSolverError(e, queue, 0)
+        return []
