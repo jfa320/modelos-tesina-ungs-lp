@@ -19,44 +19,115 @@ items=generarListaItems(ITEMS_QUANTITY,ITEM_HEIGHT,ITEM_WIDTH)
 EPS = 1e-9  # tolerancia numérica
 
 
-def generarRebanadasIniciales(binWidth, binHeight, itemWidth, itemHeight, posXY_x, posXY_y, maxItems):
+def generarRebanadasIniciales(binWidth, binHeight,
+                              itemWidth, itemHeight,
+                              posXY_x, posXY_y,
+                              maxItems):
+
     def generarPorOrientacion(posiciones, w, h, rotado):
         rebanadas = []
         itemsColocados = 0
 
-        # Agrupar posiciones por coordenada Y (o X según orientación)
+        posicionesSet = set(posiciones)
+
+        # Agrupar posiciones por fila (y)
         posicionesPorFila = {}
         for (x, y) in posiciones:
-            posicionesPorFila.setdefault(y, []).append((x, y))
+            posicionesPorFila.setdefault(y, []).append(x)
 
         for y in sorted(posicionesPorFila.keys()):
             if itemsColocados >= maxItems:
                 break
+
             rebanada = Rebanada(alto=binHeight, ancho=binWidth)
             ocupadas = set()
+            x = 0
 
-            for (x, _) in sorted(posicionesPorFila[y]):
+            # Recorremos TODO el ancho del bin
+            while x + w <= binWidth:
                 if itemsColocados >= maxItems:
                     break
-                if x + w <= binWidth:
-                    region = {(x + dx, y + dy) for dx in range(w) for dy in range(h)}
-                    if not region & ocupadas:
-                        item = Item(alto=h, ancho=w, rotado=rotado)
-                        rebanada.colocarItem(item, x, y)
-                        ocupadas |= region
-                        itemsColocados += 1
+
+                # Región ocupada por el ítem
+                region = {(x + dx, y + dy)
+                          for dx in range(w)
+                          for dy in range(h)}
+
+                # Evitar solapamiento dentro de la rebanada
+                if region & ocupadas:
+                    x += 1
+                    continue
+
+                # Validar SOLO el punto de inicio
+                if (x, y) in posicionesSet:
+                    item = Item(alto=h, ancho=w, rotado=rotado)
+                    rebanada.colocarItem(item, x, y)
+                    ocupadas |= region
+                    itemsColocados += 1
+
+                    # salto exacto del ancho del ítem
+                    x += w
+                else:
+                    x += 1
 
             if rebanada.getPuntosDeInicioItems():
                 rebanadas.append(rebanada)
-                itemsColocados = 0
+                itemsColocados = 0  # mantenemos tu semántica original
 
         return rebanadas
 
-    # Llamar una vez para no rotados y otra para rotados
-    rebanadasNoRotadas = generarPorOrientacion(posXY_x, itemWidth, itemHeight, rotado=False)
-    rebanadasRotadas   = generarPorOrientacion(posXY_y, itemHeight, itemWidth, rotado=True)
+    # Generar rebanadas no rotadas
+    rebanadasNoRotadas = generarPorOrientacion(
+        posXY_x, itemWidth, itemHeight, rotado=False
+    )
+
+    # Generar rebanadas rotadas
+    rebanadasRotadas = generarPorOrientacion(
+        posXY_y, itemHeight, itemWidth, rotado=True
+    )
 
     return rebanadasNoRotadas + rebanadasRotadas
+
+
+
+# def generarRebanadasIniciales03012026(binWidth, binHeight, itemWidth, itemHeight, posXY_x, posXY_y, maxItems):
+#     def generarPorOrientacion(posiciones, w, h, rotado):
+#         rebanadas = []
+#         itemsColocados = 0
+
+#         # Agrupar posiciones por coordenada Y (o X según orientación)
+#         posicionesPorFila = {}
+#         for (x, y) in posiciones:
+#             posicionesPorFila.setdefault(y, []).append((x, y))
+
+#         for y in sorted(posicionesPorFila.keys()):
+#             if itemsColocados >= maxItems:
+#                 break
+#             rebanada = Rebanada(alto=binHeight, ancho=binWidth)
+#             ocupadas = set()
+
+#             for (x, _) in sorted(posicionesPorFila[y]):
+#                 if itemsColocados >= maxItems:
+#                     break
+#                 if x + w <= binWidth:
+#                     region = {(x + dx, y + dy) for dx in range(w) for dy in range(h)}
+#                     if not region & ocupadas:
+#                         item = Item(alto=h, ancho=w, rotado=rotado)
+#                         rebanada.colocarItem(item, x, y)
+#                         ocupadas |= region
+#                         itemsColocados += 1
+
+#             if rebanada.getPuntosDeInicioItems():
+#                 rebanadas.append(rebanada)
+#                 itemsColocados = 0
+
+#         return rebanadas
+
+#     # Llamar una vez para no rotados y otra para rotados
+#     rebanadasNoRotadas = generarPorOrientacion(posXY_x, itemWidth, itemHeight, rotado=False)
+#     rebanadasRotadas   = generarPorOrientacion(posXY_y, itemHeight, itemWidth, rotado=True)
+
+#     return rebanadasNoRotadas + rebanadasRotadas
 
 
 # def generarRebanadasIniciales17092025(binWidth, binHeight, itemWidth, itemHeight, posXY_x, posXY_y, maxItems):
@@ -277,124 +348,6 @@ def generarRebanadasIniciales(binWidth, binHeight, itemWidth, itemHeight, posXY_
 
 #     return rebanadas
 
-
-def orquestadorPOOL(queue, manualInterruption, maxTime, initialTime):
-    MAX_ITERACIONES = 30
-    EPS = 1e-9
-
-    rebanadas = generarRebanadasIniciales(
-        BIN_WIDTH, BIN_HEIGHT,
-        ITEM_WIDTH, ITEM_HEIGHT,
-        posXY_x, posXY_y, ITEMS_QUANTITY
-    )
-    rebanadasIniciales = rebanadas.copy()
-
-    iteracion = 0
-    print(f"Rebanadas iniciales: {rebanadas}")
-    print(f"posXY_x: {posXY_x}")
-    print(f"posXY_y: {posXY_y}")
-    print("----------------------------------")
-
-    while True:
-        # 1. Crear y resolver maestro relajado
-        masterModel = createMasterModel(
-            maxTime, rebanadas,
-            BIN_HEIGHT, BIN_WIDTH,
-            ITEM_HEIGHT, ITEM_WIDTH,
-            items, posXY_x, posXY_y
-        )
-
-        _, precios_duales = solveMasterModel(
-            masterModel,
-            queue,
-            manualInterruption,
-            relajarModelo=True,
-            items=items,
-            posXY_x=posXY_x,
-            posXY_y=posXY_y,
-            initialTime=initialTime
-        )
-
-        print(f"Precios duales: {precios_duales}")
-
-        # 2. Crear esclavo
-        slaveModel = createSlaveModel(
-            maxTime,
-            posXY_x,
-            posXY_y,
-            items,
-            precios_duales,
-            BIN_WIDTH,
-            ITEM_HEIGHT,
-            ITEM_WIDTH
-        )
-
-        # 3. Resolver esclavo con POOL
-        soluciones_pool = solveSlaveModelPool(
-            slaveModel,
-            queue,
-            manualInterruption,
-            BIN_WIDTH,
-            ITEM_HEIGHT,
-            ITEM_WIDTH
-        )
-
-        if not soluciones_pool:
-            print("El esclavo no generó soluciones.")
-            break
-
-        agregue_algo = False
-
-        # 4. Evaluar TODAS las soluciones del pool
-        for rebanada, dual_value in soluciones_pool:
-            c_r = len(rebanada.getItems())
-            reducedCost = dual_value - c_r
-
-            print(f"Evaluando rebanada:")
-            print(f"  Π(r) = {dual_value}")
-            print(f"  c_r  = {c_r}")
-            print(f"  rc   = {reducedCost}")
-
-            if reducedCost > EPS and rebanada not in rebanadas:
-                print("  → Rebanada aceptada")
-                rebanadas.append(rebanada)
-                agregue_algo = True
-
-        # 5. Criterio de parada GLOBAL
-        if not agregue_algo:
-            print("No existe ninguna columna con costo reducido positivo.")
-            break
-
-        iteracion += 1
-        if iteracion >= MAX_ITERACIONES:
-            print("Se alcanzó el máximo de iteraciones. Corte preventivo.")
-            break
-
-    # 6. Resolver maestro final entero
-    print("Resolviendo modelo maestro final...")
-    print(f"Rebanadas iniciales: {rebanadasIniciales}")
-    print(f"posXY_x: {posXY_x}")
-    print(f"posXY_y: {posXY_y}")
-
-    masterModel = createMasterModel(
-        maxTime, rebanadas,
-        BIN_HEIGHT, BIN_WIDTH,
-        ITEM_HEIGHT, ITEM_WIDTH,
-        items, posXY_x, posXY_y
-    )
-
-    solveMasterModel(
-        masterModel,
-        queue,
-        manualInterruption,
-        relajarModelo=False,
-        items=items,
-        posXY_x=posXY_x,
-        posXY_y=posXY_y,
-        initialTime=initialTime
-    )
-
-
 # Orquestador principal
 def orquestador(queue,manualInterruption,maxTime,initialTime):
     MAX_ITERACIONES = 30
@@ -419,7 +372,7 @@ def orquestador(queue,manualInterruption,maxTime,initialTime):
         print(f"Precios duales: {precios_duales}")
         
         # Crear modelo esclavo
-        slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,items,precios_duales, BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH)
+        slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,items,precios_duales, BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH,BIN_HEIGHT)
         # # Resolver modelo esclavo
         nueva_rebanada,dual_value = solveSlaveModel(slaveModel,queue,manualInterruption,BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH)
         

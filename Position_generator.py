@@ -102,6 +102,24 @@ def generatePositionsXY(W, H, w, h):
 
     return XY_x, XY_y
 
+def generatePositionsXYM1(W, H, w, h):
+    # Ítems no rotados
+    XY_x = {
+        (x, y)
+        for x in range(0, W - w + 1)
+        for y in range(0, H - h + 1)
+    }
+
+    # Ítems rotados
+    XY_y = {
+        (x, y)
+        for x in range(0, W - h + 1)
+        for y in range(0, H - w + 1)
+    }
+
+    return XY_x, XY_y
+
+
 def generatePositionsXYM(W, H, w, h): #metodo Marcelo - parece que anda bien
     # Conjunto Q
     Q = {i * w + j * h for i in range(W // w + 1) for j in range(W // h + 1) if i * w + j * h <= W - h}
