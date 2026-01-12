@@ -8,13 +8,14 @@ from Modelo_5_Propio_Maestro import *
 from Modelo_5_Propio_Esclavo_Alternativo import * 
 from Config import *
 
-posXY_x, posXY_y=generatePositionsXYM(BIN_WIDTH,BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT)
+from Objetos.ConfigData import ConfigData
+
 
 #TODO: corregir esto. Ubicar items en otro lado
 def generarListaItems(ITEMS_QUANTITY, ITEM_HEIGHT, ITEM_WIDTH):
     return [Item(alto=ITEM_HEIGHT, ancho=ITEM_WIDTH) for _ in range(ITEMS_QUANTITY)]
 
-items=generarListaItems(ITEMS_QUANTITY,ITEM_HEIGHT,ITEM_WIDTH)
+
 
 EPS = 1e-9  # tolerancia numérica
 
@@ -349,9 +350,22 @@ def generarRebanadasIniciales(binWidth, binHeight,
 #     return rebanadas
 
 # Orquestador principal
-def orquestador(queue,manualInterruption,maxTime,initialTime):
+def orquestador(queue,manualInterruption,maxTime,initialTime,configData):
     MAX_ITERACIONES = 30
-    rebanadas= generarRebanadasIniciales(BIN_WIDTH, BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT,posXY_x,posXY_y, ITEMS_QUANTITY)  
+    Rebanada.resetIdCounter()
+
+    binWidth = configData.getBinWidth()
+    binHeight = configData.getBinHeight()  
+    itemWidth = configData.getItemWidth()
+    itemHeight = configData.getItemHeight()
+    itemsQuantity = configData.getItemsQuantity()
+
+    posXY_x, posXY_y=generatePositionsXYM(binWidth,binHeight, itemWidth, itemHeight)
+
+    items=generarListaItems(itemsQuantity,itemHeight,itemWidth)
+
+
+    rebanadas= generarRebanadasIniciales(binWidth, binHeight, itemWidth, itemHeight,posXY_x,posXY_y, itemsQuantity)  
     rebanadasIniciales=rebanadas.copy()
     
     iteracion = 0
@@ -366,15 +380,15 @@ def orquestador(queue,manualInterruption,maxTime,initialTime):
         # En su lugar, podria crear uno y luego agregar las columnas (rebanadas) nuevas
         # for i, reb in enumerate(rebanadas, start=1):
         #     reb.setId(i)
-        masterModel = createMasterModel(maxTime,rebanadas,BIN_HEIGHT,BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH,items, posXY_x, posXY_y)
+        masterModel = createMasterModel(maxTime,rebanadas,binHeight,binWidth,itemHeight,itemWidth,items, posXY_x, posXY_y)
         # Resolver modelo maestro
         _ , precios_duales = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=True, items=items, posXY_x=posXY_x, posXY_y= posXY_y,initialTime=initialTime)
         print(f"Precios duales: {precios_duales}")
         
         # Crear modelo esclavo
-        slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,items,precios_duales, BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH,BIN_HEIGHT)
+        slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,items,precios_duales, binWidth,itemHeight,itemWidth,binHeight)
         # # Resolver modelo esclavo
-        nueva_rebanada,dual_value = solveSlaveModel(slaveModel,queue,manualInterruption,BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH)
+        nueva_rebanada,dual_value = solveSlaveModel(slaveModel,queue,manualInterruption,binWidth,itemHeight,itemWidth)
         
         if nueva_rebanada is None:
             print("El esclavo no generó ninguna rebanada.")
@@ -401,9 +415,9 @@ def orquestador(queue,manualInterruption,maxTime,initialTime):
     print(f"Rebanadas iniciales: {rebanadasIniciales}")
     print(f"posXY_x: {posXY_x}")
     print(f"posXY_y: {posXY_y}")
-    masterModel = createMasterModel(maxTime,rebanadas,BIN_HEIGHT,BIN_WIDTH,ITEM_HEIGHT,ITEM_WIDTH,items, posXY_x, posXY_y)
-    solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=False, items=items, posXY_x=posXY_x, posXY_y= posXY_y,initialTime=initialTime)
-    
+    masterModel = createMasterModel(maxTime,rebanadas,binHeight,binWidth,itemHeight,itemWidth,items, posXY_x, posXY_y)
+    objectiveValue, _ = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=False, items=items, posXY_x=posXY_x, posXY_y= posXY_y,initialTime=initialTime)
+    return objectiveValue
 
 def executeWithTimeLimit(maxTime):
     global modelStatus, solverStatus, objectiveValue, solverTime 
@@ -418,8 +432,16 @@ def executeWithTimeLimit(maxTime):
     # Crear una variable compartida para manejar la interrupción manual
     manualInterruption = multiprocessing.Value('b', True)
 
+    configData = ConfigData(
+        itemsQuantity=ITEMS_QUANTITY,
+        binWidth=BIN_WIDTH,
+        binHeight=BIN_HEIGHT,
+        itemWidth=ITEM_WIDTH,
+        itemHeight=ITEM_HEIGHT
+    )
+
     # Crear el subproceso que correrá la función
-    process = multiprocessing.Process(target=orquestador, args=(queue,manualInterruption,maxTime,initialTime))
+    process = multiprocessing.Process(target=orquestador, args=(queue,manualInterruption,maxTime,initialTime,configData))
 
     # Iniciar el subproceso
     process.start()

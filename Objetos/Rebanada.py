@@ -2,6 +2,9 @@ from Objetos import Item
 
 class Rebanada:
     _id_counter = 1
+    @classmethod
+    def resetIdCounter(cls):
+        cls._id_counter = 1
 
     def __init__(self, alto, ancho, items=None, puntosDeInicioItems=None):
         self.setId(Rebanada._id_counter)

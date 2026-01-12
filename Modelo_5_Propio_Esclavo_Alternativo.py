@@ -6,7 +6,6 @@ from Objetos import Rebanada
 from Objetos import Item
 
 MODEL_NAME="Model5SlaveAlternative"
-EPSILON = 1e-9
 DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS = True  # Cambiar a True para desactivar el control de restricciones repetidas
 
 def construirItems1(variableNames, variableValues, altoItem, anchoItem):
@@ -135,6 +134,24 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
     A_i=dualValues
     h = altoItemSinRotar
     w = anchoItemSinRotar
+
+    # -------------------------
+    # EPSILON adaptativo (global)
+    # -------------------------
+    lambdaEps = 0.04     # fijo global
+    epsMin = 1e-4        # fijo global
+
+    piValues = list(A_i["pi"].values()) if "pi" in A_i and A_i["pi"] else []
+    absPiValues = [abs(v) for v in piValues if v is not None]
+
+    avgAbsPi = (sum(absPiValues) / len(absPiValues)) if absPiValues else 0.0
+    itemArea = w * h
+
+    EPSILON = max(epsMin, lambdaEps * avgAbsPi * itemArea)
+
+    print(f"EPSILON adaptativo = {EPSILON} (avgAbsPi={avgAbsPi}, itemArea={itemArea}, lambda={lambdaEps}, epsMin={epsMin})")
+
+
     W= anchoBin
     H = altoBin
     P = set(XY_x).union(XY_y)
@@ -197,7 +214,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
             zVarsNoRotadas.append(varName)
             
             sumaDual = calcularSumaDual(a, b, 'x')
-            coeff = sumaDual + 1e-1 
+            coeff = sumaDual + EPSILON
             objCoeffs.append(coeff)
 
         addVariables(model, zVarsNoRotadas, objCoeffs, "B")
@@ -210,7 +227,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
             zVarsRotadas.append(varName)
             
             sumaDual = calcularSumaDual(a, b, 'y')
-            coeff = sumaDual + 1e-1
+            coeff = sumaDual + EPSILON
             objCoeffs.append(coeff)
 
         addVariables(model, zVarsRotadas, objCoeffs, "B")
