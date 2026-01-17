@@ -30,21 +30,21 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 #Caso 2: este vengo probando hace meses - el de la forma irregular "cruz"
 # optimo 4
 
-ITEMS_QUANTITY=6 # constante N del modelo
+# ITEMS_QUANTITY=6 # constante N del modelo
 
-BIN_WIDTH = 5 # W en el modelo
-BIN_HEIGHT = 5 # H en el modelo
-ITEM_WIDTH= 3 # w en el modelo
-ITEM_HEIGHT= 2 # h en el modelo
+# BIN_WIDTH = 5 # W en el modelo
+# BIN_HEIGHT = 5 # H en el modelo
+# ITEM_WIDTH= 3 # w en el modelo
+# ITEM_HEIGHT= 2 # h en el modelo
 
 # nuevo
 # optimo 6
-ITEMS_QUANTITY=6 # constante N del modelo
+# ITEMS_QUANTITY=6 # constante N del modelo
 
-BIN_WIDTH = 6 # W en el modelo
-BIN_HEIGHT = 6 # H en el modelo
-ITEM_WIDTH= 3 # w en el modelo
-ITEM_HEIGHT= 2 # h en el modelo
+# BIN_WIDTH = 6 # W en el modelo
+# BIN_HEIGHT = 6 # H en el modelo
+# ITEM_WIDTH= 3 # w en el modelo
+# ITEM_HEIGHT= 2 # h en el modelo
 
 #Caso 3:
 #Valor objetivo: 4
@@ -91,11 +91,11 @@ ITEM_HEIGHT= 2 # h en el modelo
 # Desde acá empiezan los casos de la OR Library (grandes)
 
 # # Caso 7 (optimo = 7)
-# ITEMS_QUANTITY = 14    # obliga a aprovechar bien el espacio
-# BIN_WIDTH = 50         # W
-# BIN_HEIGHT = 20        # H
-# ITEM_WIDTH = 13        # w
-# ITEM_HEIGHT = 8        # h
+ITEMS_QUANTITY = 14    # obliga a aprovechar bien el espacio
+BIN_WIDTH = 50         # W
+BIN_HEIGHT = 20        # H
+ITEM_WIDTH = 13        # w
+ITEM_HEIGHT = 8        # h
 
 # Caso 8:
 # Optimo 16
@@ -142,6 +142,14 @@ ITEM_HEIGHT= 2 # h en el modelo
 # ITEM_WIDTH = 11        
 # ITEM_HEIGHT = 6    
 
+# Caso 13
+# # Óptimo: 12
+# ITEMS_QUANTITY = 25     # muchos ítems
+# BIN_WIDTH = 20          # ancho del bin
+# BIN_HEIGHT = 20         # alto del bin
+# ITEM_WIDTH = 6          # ancho de cada ítem
+# ITEM_HEIGHT = 5         # alto de cada ítem
+
 # Caso 14
 # Óptimo: 16 ítems (4 de ancho x 2 de alto = 8 sin rotar,
 # más 8 rotados 7x10 en los espacios libres arriba)
@@ -179,14 +187,16 @@ ITEM_HEIGHT= 2 # h en el modelo
 # ITEM_WIDTH = 14        
 # ITEM_HEIGHT = 7     
 
-# # Óptimo: 12
-# ITEMS_QUANTITY = 25     # muchos ítems
-# BIN_WIDTH = 20          # ancho del bin
-# BIN_HEIGHT = 20         # alto del bin
-# ITEM_WIDTH = 6          # ancho de cada ítem
-# ITEM_HEIGHT = 5         # alto de cada ítem
 
 # # OR Library test
+# # Caso 18
+# ITEMS_QUANTITY = 100     # ítems
+# BIN_WIDTH = 10          # ancho del bin
+# BIN_HEIGHT = 30         # alto del bin
+# ITEM_WIDTH = 1         # ancho de cada ítem
+# ITEM_HEIGHT = 6         # alto de cada ítem
+# # optimo: 50
+
 # # Caso 3
 # ITEMS_QUANTITY = 100     # muchos ítems
 # BIN_WIDTH = 20          # ancho del bin
@@ -230,13 +240,7 @@ ITEM_HEIGHT= 2 # h en el modelo
 # ITEM_HEIGHT = 5         # alto de cada ítem
 # #optimo: 10
 
-# # Caso 7
-# ITEMS_QUANTITY = 100     # ítems
-# BIN_WIDTH = 10          # ancho del bin
-# BIN_HEIGHT = 30         # alto del bin
-# ITEM_WIDTH = 1         # ancho de cada ítem
-# ITEM_HEIGHT = 6         # alto de cada ítem
-# # optimo: 50
+
 
 # # Caso 8
 # ITEMS_QUANTITY = 100     # ítems

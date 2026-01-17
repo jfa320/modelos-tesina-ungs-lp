@@ -1968,3 +1968,6 @@ inst2,Model1,1,1,4.0,0.14
 inst2,Model5SlaveAlternative,1,1,6.0,0.64
 inst2,Model1,1,1,6.0,0.03
 inst2,Model1,1,1,6.0,0.06
+inst2,Model5SlaveAlternative,1,1,13.0,0.55
+inst2,Model5SlaveAlternative,1,1,13.0,0.58
+inst2,Model5SlaveAlternative,1,1,7.0,0.53
