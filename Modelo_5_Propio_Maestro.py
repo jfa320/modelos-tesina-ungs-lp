@@ -24,6 +24,86 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
     H = altoBin  # Alto del bin 
     R = rebanadas  # Lista de rebanadas disponibles
     # SOLO posiciones que están ocupadas por al menos una rebanada existente
+    posiciones = [(x, y) for x in range(anchoBin) for y in range(altoBin)]
+
+
+    TI= len(items)  # Total de ítems
+    #C_r= se puede modelar usando el metodo rebanada.getTotalItems() - Cantidad de items en rebanadas
+   
+    try:
+        # Crear instancia del problema
+        model = cplex.Cplex()
+        model.set_problem_type(cplex.Cplex.problem_type.MILP) 
+        model.parameters.timelimit.set(maxTime)
+        
+        #Desactivo el presolve
+        model.parameters.preprocessing.presolve.set(0)
+        #Seteo el metodo simplex para resolver el modelo
+        model.parameters.lpmethod.set(1)
+        # Variables
+        # Variables p_r (binarias)
+        p_r_names = [f"p_{r.getId()}" for r in R]
+        coeffs_p_r = [r.getTotalItems() for r in R] 
+        addVariables(model, p_r_names,coeffs_p_r, model.variables.type.binary)
+    
+        model.objective.set_sense(model.objective.sense.maximize)
+
+        added_constraints = set()
+        
+        
+        # # ----------------------------------------------------
+        # Precomputar celdas ocupadas por cada rebanada: Φ(r)
+        celulasPorReb = {}
+        for r in R:
+            ocupadas = set()
+            for it in r.getItems():
+                if it.getPosicionX() is None or it.getPosicionY() is None:
+                    continue
+                x, y = it.getPosicion()
+                for dx in range(it.getAncho()):
+                    for dy in range(it.getAlto()):
+                        ocupadas.add((x + dx, y + dy))
+            celulasPorReb[r.getId()] = ocupadas
+
+        # Restricción de posiciones ocupadas por rebanadas
+        for (a, b) in posiciones:
+            rebanadasQueOcupanPos = [r for r in R if (a, b) in celulasPorReb[r.getId()]]
+            if rebanadasQueOcupanPos:
+                indexes = [f"p_{r.getId()}" for r in rebanadasQueOcupanPos]
+                coeffs = [1.0] * len(rebanadasQueOcupanPos)
+                addConstraintSet(
+                    model,
+                    coeffs,
+                    indexes,
+                    1.0,
+                    "L",
+                    added_constraints,
+                    f"consItem_{a}_{b}",
+                    DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS
+                )
+
+
+
+        # # ----------------------------------------------------
+        # Restricción de límite de ítems totales
+        indexes = [p_r_names[r.getId()-1] for r in R]
+        coeffs = [r.getTotalItems() for r in R]
+        consRhs=TI
+        consSense="L"
+        addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consLimiteItems",DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS)
+        
+        # print(f"Rebanadas usadas: {R}")
+        print("OUT - Create Master Model")
+        return model
+    
+    except CplexSolverError as e:
+        handleSolverError(e)
+
+def createMasterModel1(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,items,posXY_x,posXY_y):
+    print("IN - Create Master Model")
+    H = altoBin  # Alto del bin 
+    R = rebanadas  # Lista de rebanadas disponibles
+    # SOLO posiciones que están ocupadas por al menos una rebanada existente
     posiciones = set()
 
     for r in R:
@@ -279,24 +359,19 @@ def solveMasterModel(model, queue, manualInterruption, relajarModelo, items, pos
         
 def getDualValues(model):
     print("Extrayendo valores duales...")
-    # Inicializar diccionarios para cada componente de P_star
+
     P_star = {"pi": {}}
-    
-    # Obtener los valores duales de las restricciones
+
     dualValues = model.solution.get_dual_values()
-    print(f"todos los valores : {dualValues}")
-    constraintNames=model.linear_constraints.get_names()
-    # Recorrer las restricciones y mapear duales
-    print("constraintNames: ",constraintNames)
-    print("dualValues: ",dualValues)
-    for _, (name, dualValue) in enumerate(zip(constraintNames, dualValues)):
-        if name.startswith("consNoSolape_"):
-            # Restricciones relacionadas a ítems
-            xPos = str(name.split("_")[1])  # Extraer el ID del ítem
-            yPos = str(name.split("_")[2])  # Extraer el ID del ítem
-            P_star["pi"][f"({xPos},{yPos})"] = dualValue
-            print(f"Dual para ítem ({xPos},{yPos}): {dualValue}")
-            
-        
+    constraintNames = model.linear_constraints.get_names()
+
+    for name, dualValue in zip(constraintNames, dualValues):
+        if name.startswith("consItem_"):
+            # nombre: consItem_a_b
+            _, a, b = name.split("_")
+            P_star["pi"][f"({a},{b})"] = dualValue
+            print(f"Dual π({a},{b}) = {dualValue}")
+
     return P_star
+
 

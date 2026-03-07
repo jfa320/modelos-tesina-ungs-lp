@@ -134,24 +134,6 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
     A_i=dualValues
     h = altoItemSinRotar
     w = anchoItemSinRotar
-
-    # -------------------------
-    # EPSILON adaptativo (global)
-    # -------------------------
-    lambdaEps = 0.04     # fijo global
-    epsMin = 1e-4        # fijo global
-
-    piValues = list(A_i["pi"].values()) if "pi" in A_i and A_i["pi"] else []
-    absPiValues = [abs(v) for v in piValues if v is not None]
-
-    avgAbsPi = (sum(absPiValues) / len(absPiValues)) if absPiValues else 0.0
-    itemArea = w * h
-
-    EPSILON = max(epsMin, lambdaEps * avgAbsPi * itemArea)
-
-    print(f"EPSILON adaptativo = {EPSILON} (avgAbsPi={avgAbsPi}, itemArea={itemArea}, lambda={lambdaEps}, epsMin={epsMin})")
-
-
     W= anchoBin
     H = altoBin
     P = set(XY_x).union(XY_y)
@@ -160,7 +142,6 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
     P = list(P)  # Convertir a lista para iterar
     P.sort()  # Ordenar los pares (a, b) para consistencia
     
-
     # Listas etiquetadas con tipo de rotación
     # ('x') para no rotado, ('y') para rotado
     posiciones_x = [((x, y), 'x') for (x, y) in P_noRotado]
@@ -187,11 +168,6 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
         # model.set_problem_type(cplex.Cplex.problem_type.LP)
         model.objective.set_sense(model.objective.sense.maximize)
 
-        model.parameters.mip.pool.intensity.set(4)   # buscar soluciones alternativas
-        model.parameters.mip.pool.capacity.set(8)    # hasta 8 soluciones
-        model.parameters.mip.pool.replace.set(2)     # diversidad
-
-
         model.parameters.timelimit.set(maxTime)
         initialTime=model.get_time()
         added_constraints = set()
@@ -207,14 +183,14 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
             celdasCubiertas = R[(a, b, t)]
             return sum(A_i["pi"].get(f"({x+1},{y+1})", 0.0) for (x, y) in celdasCubiertas)
 
-
         # Variables z^x_(a,b) → ítems no rotados
         for (a, b) in P_noRotado:
             varName = f"z_x_{a}_{b}"
             zVarsNoRotadas.append(varName)
             
             sumaDual = calcularSumaDual(a, b, 'x')
-            coeff = sumaDual + EPSILON
+            
+            coeff = 1.0 - sumaDual
             objCoeffs.append(coeff)
 
         addVariables(model, zVarsNoRotadas, objCoeffs, "B")
@@ -227,7 +203,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
             zVarsRotadas.append(varName)
             
             sumaDual = calcularSumaDual(a, b, 'y')
-            coeff = sumaDual + EPSILON
+            coeff = 1.0 - sumaDual
             objCoeffs.append(coeff)
 
         addVariables(model, zVarsRotadas, objCoeffs, "B")
@@ -309,7 +285,13 @@ def solveSlaveModel(model, queue, manualInterruption, anchoBin, altoItem, anchoI
         alto= obtenerYMaximo(posicionesOcupadas,altoItem,anchoItem,items)
         print("Items de la rebanada encontrada:", items)
         print("Valor objetivo del esclavo", objectiveValue)
+
+        # si no hay mejora / no hay columnas
+        if objectiveValue <= 1e-9:
+            return None, objectiveValue
         
+        if not items:
+            return None, objectiveValue
         
         rebanadaEncontrada = Rebanada(alto, anchoBin, items, posicionesOcupadas)
 

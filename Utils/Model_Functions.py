@@ -3,7 +3,24 @@ from cplex.exceptions import CplexSolverError
 import time
 
 def addVariables(model, varNames, objCoeffs, varType):
-    model.variables.add(names=varNames, obj=objCoeffs, types=varType * len(varNames))
+    n = len(varNames)
+    # tipos: lista, no string concatenado
+    types = [varType] * n
+
+    # bounds (recomendado explicitar)
+    lb = [0.0] * n
+    if varType == "B":
+        ub = [1.0] * n
+    else:
+        ub = [cplex.infinity] * n
+
+    model.variables.add(
+        names=varNames,
+        obj=objCoeffs,
+        lb=lb,
+        ub=ub,
+        types=types
+    )
 
 def addConstraint(model, coeff, vars, rhs, sense,constraintName=None):
     if(constraintName):

@@ -369,7 +369,7 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData):
     rebanadasIniciales=rebanadas.copy()
     
     iteracion = 0
-    print(f"Rebanadas iniciales: {rebanadas}")
+    # print(f"Rebanadas iniciales: {rebanadas}")
     print(f"posXY_x: {posXY_x}")
     print(f"posXY_y: {posXY_y}")
     print("----------------------------------")
@@ -384,7 +384,6 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData):
         # Resolver modelo maestro
         _ , precios_duales = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=True, items=items, posXY_x=posXY_x, posXY_y= posXY_y,initialTime=initialTime)
         print(f"Precios duales: {precios_duales}")
-        
         # Crear modelo esclavo
         slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,items,precios_duales, binWidth,itemHeight,itemWidth,binHeight)
         # # Resolver modelo esclavo
@@ -395,9 +394,9 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData):
             break
         
         # c_r = cantidad de ítems de la rebanada
-        c_r = len(nueva_rebanada.getItems())  
-        reducedCost = dual_value - c_r
-        print(f"Valor dual Π(r) = {dual_value}")
+        c_r = len(nueva_rebanada.getItems())
+        reducedCost = dual_value 
+        print(f"Valor objetivo del esclavo (reduced cost) = {dual_value}")
         print(f"c_r (#items) = {c_r}")
         print(f"Costo reducido = {reducedCost}")
 
@@ -412,7 +411,7 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData):
             break
     
     print("Resolviendo modelo maestro final...")
-    print(f"Rebanadas iniciales: {rebanadasIniciales}")
+    # print(f"Rebanadas iniciales: {rebanadasIniciales}")
     print(f"posXY_x: {posXY_x}")
     print(f"posXY_y: {posXY_y}")
     masterModel = createMasterModel(maxTime,rebanadas,binHeight,binWidth,itemHeight,itemWidth,items, posXY_x, posXY_y)
