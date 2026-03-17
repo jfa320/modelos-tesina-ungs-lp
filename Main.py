@@ -2,6 +2,8 @@ import Modelo_1_simplificado__seccion_2_8_overleaf_SIN_ROTACION
 import Modelo_1_simplificado__seccion_2_9_overleaf_CON_ROTACION 
 import Modelo_5_Orquestador
 
+import Modelo_6_Andrade_Birgin_Monoitem
+
 from TraceFileGenerator import TraceFileGenerator
 
 #Setear caso a probar en archivo Config.py
@@ -12,7 +14,8 @@ if __name__ == '__main__':
     models = [
         Modelo_5_Orquestador,
         Modelo_1_simplificado__seccion_2_8_overleaf_SIN_ROTACION,
-        Modelo_1_simplificado__seccion_2_9_overleaf_CON_ROTACION
+        Modelo_1_simplificado__seccion_2_9_overleaf_CON_ROTACION,
+        Modelo_6_Andrade_Birgin_Monoitem
     ]
     
     for model in models:

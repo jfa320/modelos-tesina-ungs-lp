@@ -370,7 +370,7 @@ def getDualValues(model):
             # nombre: consItem_a_b
             _, a, b = name.split("_")
             P_star["pi"][f"({a},{b})"] = dualValue
-            print(f"Dual π({a},{b}) = {dualValue}")
+            # print(f"Dual pi({a},{b}) = {dualValue}")
 
     return P_star
 
