@@ -30,12 +30,12 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 #Caso 2: este vengo probando hace meses - el de la forma irregular "cruz"
 # optimo 4
 
-ITEMS_QUANTITY=6 # constante N del modelo
+# ITEMS_QUANTITY=6 # constante N del modelo
 
-BIN_WIDTH = 5 # W en el modelo
-BIN_HEIGHT = 5 # H en el modelo
-ITEM_WIDTH= 3 # w en el modelo
-ITEM_HEIGHT= 2 # h en el modelo
+# BIN_WIDTH = 5 # W en el modelo
+# BIN_HEIGHT = 5 # H en el modelo
+# ITEM_WIDTH= 3 # w en el modelo
+# ITEM_HEIGHT= 2 # h en el modelo
 
 # nuevo
 # optimo 6
@@ -136,11 +136,11 @@ ITEM_HEIGHT= 2 # h en el modelo
 # Óptimo: 18 ítems (5 de ancho x 3 de alto = 15 sin rotar, 
 # más 3 rotados en el espacio sobrante)
 
-# ITEMS_QUANTITY = 20    
-# BIN_WIDTH = 55         
-# BIN_HEIGHT = 22        
-# ITEM_WIDTH = 11        
-# ITEM_HEIGHT = 6    
+ITEMS_QUANTITY = 20    
+BIN_WIDTH = 55         
+BIN_HEIGHT = 22        
+ITEM_WIDTH = 11        
+ITEM_HEIGHT = 6    
 
 # Caso 13
 # # Óptimo: 12

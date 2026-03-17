@@ -229,7 +229,7 @@ class TestOrquestador:
         )
 
         assert objectiveValue is not None
-        #TODO: Agregar el assert con el valor objetivo
+        assert objectiveValue == 13
 
     def test_caso_10(self, orquestador_context):
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
