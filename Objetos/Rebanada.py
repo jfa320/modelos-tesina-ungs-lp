@@ -13,6 +13,17 @@ class Rebanada:
         self.set_ancho(ancho)
         self.setItems(items or [])
         self.setPuntosDeInicioItems(puntosDeInicioItems or [])
+        print(f"puntosDeInicioItems al crear rebanada: {self.getPuntosDeInicioItems()}")
+        if(self.getPuntosDeInicioItems() is None or self.getPuntosDeInicioItems() == []):
+            print("No se han proporcionado puntos de inicio para los items. Se colocarán automáticamente.")
+            self.colocarPuntosInicioItems()
+
+
+    def colocarPuntosInicioItems(self):
+        for item in self.getItems():
+            x = item.getPosicionX()
+            y = item.getPosicionY()
+            self.__puntosDeInicioItems.append((x, y))
 
     def setId(self, id):
         if isinstance(id, int) and id > 0:
@@ -92,4 +103,4 @@ class Rebanada:
             
     def __repr__(self):
         return (f"Rebanada(id={self.getId()}, alto={self.get_alto()}, ancho={self.get_ancho()}, "
-            f"items={self.getItems()}, posicionesOcupadas={self.getPuntosDeInicioItems()})")
+            f"items={self.getItems()}, puntosDeInicioItems={self.getPuntosDeInicioItems()})")

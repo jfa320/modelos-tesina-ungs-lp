@@ -144,22 +144,50 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
     
     # Listas etiquetadas con tipo de rotación
     # ('x') para no rotado, ('y') para rotado
-    posiciones_x = [((x, y), 'x') for (x, y) in P_noRotado]
-    posiciones_y = [((x, y), 'y') for (x, y) in P_rotado]
+    # posiciones_x = [((x, y), 'x') for (x, y) in P_noRotado]
+    # posiciones_y = [((x, y), 'y') for (x, y) in P_rotado]
 
-    # Unificamos en una sola lista de posiciones posibles con tipo
-    todasLasPosiciones = posiciones_x + posiciones_y
+    # # Unificamos en una sola lista de posiciones posibles con tipo
+    # todasLasPosiciones = posiciones_x + posiciones_y
 
 
     # R[(a,b,t)] = lista de posiciones (x,y) cubiertas por el ítem que inicia en (a,b,t)
+    # R = {}
+    # for (pos, t) in todasLasPosiciones:
+    #     a, b = pos
+    #     ancho, alto = (w, h) if t == 'x' else (h, w)
+    #     R[(a, b, t)] = [(x, y)
+    #                     for x in range(a, a + ancho)
+    #                     for y in range(b, b + alto)
+    #                     if 0 <= x < W and 0 <= y < H]
+        
+    posiciones_x_validas = []
+    for (a, b) in P_noRotado:
+        if a + w <= W and b + h <= H:
+            posiciones_x_validas.append((a, b))
+
+    posiciones_y_validas = []
+    for (a, b) in P_rotado:
+        if a + h <= W and b + w <= H:
+            posiciones_y_validas.append((a, b))
+
+    # R[(a,b,t)] = celdas cubiertas por un item que inicia en (a,b,t)
     R = {}
-    for (pos, t) in todasLasPosiciones:
-        a, b = pos
-        ancho, alto = (w, h) if t == 'x' else (h, w)
-        R[(a, b, t)] = [(x, y)
-                        for x in range(a, a + ancho)
-                        for y in range(b, b + alto)
-                        if 0 <= x < W and 0 <= y < H]
+
+    for (a, b) in posiciones_x_validas:
+        R[(a, b, 'x')] = [
+            (x, y)
+            for x in range(a, a + w)
+            for y in range(b, b + h)
+        ]
+
+    for (a, b) in posiciones_y_validas:
+        R[(a, b, 'y')] = [
+            (x, y)
+            for x in range(a, a + h)
+            for y in range(b, b + w)
+        ]
+    
     
     try:
         # Crear el modelo
@@ -181,35 +209,62 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
         # Helper para sumar los duales de las celdas cubiertas por (a,b,t)
         def calcularSumaDual(a, b, t):
             celdasCubiertas = R[(a, b, t)]
-            return sum(A_i["pi"].get(f"({x+1},{y+1})", 0.0) for (x, y) in celdasCubiertas)
+            return sum(A_i["pi"].get(f"({x},{y})", 0.0) for (x, y) in celdasCubiertas)
 
-        # Variables z^x_(a,b) → ítems no rotados
-        for (a, b) in P_noRotado:
+        # # Variables z^x_(a,b) → ítems no rotados
+        # for (a, b) in P_noRotado:
+        #     varName = f"z_x_{a}_{b}"
+        #     zVarsNoRotadas.append(varName)
+            
+        #     sumaDual = calcularSumaDual(a, b, 'x')
+            
+        #     coeff = 1.0 - sumaDual
+        #     objCoeffs.append(coeff)
+
+        # addVariables(model, zVarsNoRotadas, objCoeffs, "B")
+
+        # objCoeffs.clear()
+
+        # # Variables z^y_(a,b) → ítems rotados
+        # for (a, b) in P_rotado:
+        #     varName = f"z_y_{a}_{b}"
+        #     zVarsRotadas.append(varName)
+            
+        #     sumaDual = calcularSumaDual(a, b, 'y')
+        #     coeff = 1.0 - sumaDual
+        #     objCoeffs.append(coeff)
+
+        # addVariables(model, zVarsRotadas, objCoeffs, "B")
+        # objCoeffs.clear()
+         
+        # Variables no rotadas
+        # ---------------------------------------------------------------------
+        for (a, b) in posiciones_x_validas:
             varName = f"z_x_{a}_{b}"
             zVarsNoRotadas.append(varName)
-            
+
             sumaDual = calcularSumaDual(a, b, 'x')
-            
             coeff = 1.0 - sumaDual
             objCoeffs.append(coeff)
 
         addVariables(model, zVarsNoRotadas, objCoeffs, "B")
-
         objCoeffs.clear()
 
-        # Variables z^y_(a,b) → ítems rotados
-        for (a, b) in P_rotado:
+        # ---------------------------------------------------------------------
+        # Variables rotadas
+        # ---------------------------------------------------------------------
+        for (a, b) in posiciones_y_validas:
             varName = f"z_y_{a}_{b}"
             zVarsRotadas.append(varName)
-            
+
             sumaDual = calcularSumaDual(a, b, 'y')
             coeff = 1.0 - sumaDual
             objCoeffs.append(coeff)
 
         addVariables(model, zVarsRotadas, objCoeffs, "B")
-        print("Coeficientes de la función objetivo: ", objCoeffs)    
         objCoeffs.clear()
-         
+
+
         # Restricciones
         # Restricciones de no solapamiento
         coverMap = {}
@@ -239,7 +294,86 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
         handleSolverError(e)
         
 
-def solveSlaveModel(model, queue, manualInterruption, anchoBin, altoItem, anchoItem):
+from Objetos import Item, Rebanada
+
+def solveSlaveModel(model, queue, manualInterruption, binWidth, itemHeight, itemWidth):
+    print("IN - Solve Slave Model")
+
+    model.solve()
+
+    statusString = model.solution.get_status_string()
+    if "optimal" not in statusString.lower() and "feasible" not in statusString.lower():
+        print("No hay solución factible en el esclavo")
+        print("OUT - Solve Slave Model")
+        return None, None
+
+    objectiveValue = model.solution.get_objective_value()
+    print(f"FO esclavo: {objectiveValue}")
+
+    nombres = model.variables.get_names()
+    valores = model.solution.get_values()
+
+    itemsConstruidos = []
+
+    for nombre, valor in zip(nombres, valores):
+        if valor <= 0.5:
+            continue
+
+        parts = nombre.split("_")
+        if len(parts) != 4:
+            continue
+
+        _, tipo, a, b = parts
+        a = int(a)
+        b = int(b)
+
+        if tipo == "x":
+            item = Item(
+                alto=itemHeight,
+                ancho=itemWidth,
+                rotado=False
+            )
+        else:
+            item = Item(
+                alto=itemWidth,   # rotado
+                ancho=itemHeight,
+                rotado=True
+            )
+
+        item.setPosicionX(a)
+        item.setPosicionY(b)
+    
+
+        itemsConstruidos.append(item)
+
+    print(f"Items reconstruidos: {len(itemsConstruidos)}")
+
+    if not itemsConstruidos:
+        print("No se reconstruyó ningún item")
+        print("OUT - Solve Slave Model")
+        return None, objectiveValue, []
+
+    rebanada = Rebanada(
+        alto=20,
+        ancho=binWidth,
+        items=itemsConstruidos
+    )
+
+    print("OUT - Solve Slave Model")
+
+    variablesActivas = []
+
+    nombres = model.variables.get_names()
+    valores = model.solution.get_values()
+
+    for nombre, valor in zip(nombres, valores):
+        if valor > 0.5 and (nombre.startswith("z_x_") or nombre.startswith("z_y_")):
+            variablesActivas.append(nombre)
+
+
+    return rebanada, objectiveValue, variablesActivas
+
+def solveSlaveModel1(model, queue, manualInterruption, anchoBin, altoItem, anchoItem):
     print("IN - Solve Slave Model")
     #valores por default para enviar a paver
     modelStatus, solverStatus, objectiveValue, solverTime = "1", "1", 0, 1

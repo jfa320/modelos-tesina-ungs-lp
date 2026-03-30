@@ -43,8 +43,20 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
         # Variables
         # Variables p_r (binarias)
         p_r_names = [f"p_{r.getId()}" for r in R]
-        coeffs_p_r = [r.getTotalItems() for r in R] 
-        addVariables(model, p_r_names,coeffs_p_r, model.variables.type.binary)
+        coeffs_p_r = [r.getTotalItems() for r in R]
+        print("======================================")
+        print("COEFICIENTES FO MAESTRO")
+        print("======================================")
+        def resumirRebanada(rebanada):
+            return sorted((item.getPosicionX(), item.getPosicionY(), item.getRotado()) for item in rebanada.getItems())
+
+        for r, nombre, coef in zip(R, p_r_names, coeffs_p_r):
+            print(f"{nombre} | id={r.getId()} | totalItems={r.getTotalItems()} | lenItems={len(r.getItems())} | resumen={resumirRebanada(r)}")
+        
+        addVariables(model, p_r_names, coeffs_p_r, model.variables.type.binary)
+
+
+        p_r_by_id = {r.getId(): f"p_{r.getId()}" for r in R}
     
         model.objective.set_sense(model.objective.sense.maximize)
 
@@ -65,6 +77,25 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
                         ocupadas.add((x + dx, y + dy))
             celulasPorReb[r.getId()] = ocupadas
 
+        # # Restricción de posiciones ocupadas por rebanadas
+        # for (a, b) in posiciones:
+        #     rebanadasQueOcupanPos = [r for r in R if (a, b) in celulasPorReb[r.getId()]]
+        #     if rebanadasQueOcupanPos:
+        #         indexes = [f"p_{r.getId()}" for r in rebanadasQueOcupanPos]
+        #         coeffs = [1.0] * len(rebanadasQueOcupanPos)
+        #         addConstraintSet(
+        #             model,
+        #             coeffs,
+        #             indexes,
+        #             1.0,
+        #             "L",
+        #             added_constraints,
+        #             f"consItem_{a}_{b}",
+        #             DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS
+        #         )
+
+          # ----------------------------------------------------
+
         # Restricción de posiciones ocupadas por rebanadas
         for (a, b) in posiciones:
             rebanadasQueOcupanPos = [r for r in R if (a, b) in celulasPorReb[r.getId()]]
@@ -82,11 +113,10 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
                     DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS
                 )
 
-
-
         # # ----------------------------------------------------
-        # Restricción de límite de ítems totales
-        indexes = [p_r_names[r.getId()-1] for r in R]
+       
+        indexes = [p_r_by_id[r.getId()] for r in R]
+
         coeffs = [r.getTotalItems() for r in R]
         consRhs=TI
         consSense="L"
@@ -296,7 +326,7 @@ def createMasterModel1(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,ite
 #         handleSolverError(e)
 
 
-def solveMasterModel(model, queue, manualInterruption, relajarModelo, items, posXY_x, posXY_y,initialTime):
+def solveMasterModel(model, queue, manualInterruption, relajarModelo, initialTime):
     print("IN - Solve Master Model")
     # valores por default para enviar a paver
     modelStatus, solverStatus, objectiveValue, solverTime = "1", "1", 0, 1
@@ -323,10 +353,10 @@ def solveMasterModel(model, queue, manualInterruption, relajarModelo, items, pos
         if(relajarModelo):
             # Obtener valores duales
             dualValues=getDualValues(model)
-            print("Dual values:", dualValues)    
+            # print("Dual values:", dualValues)    
             
             
-        #imprimo valor que toman las variables
+        # imprimo valor que toman las variables
         for i, varName in enumerate(model.variables.get_names()):
             print(f"{varName} = {model.solution.get_values(varName)}")
 
@@ -370,7 +400,6 @@ def getDualValues(model):
             # nombre: consItem_a_b
             _, a, b = name.split("_")
             P_star["pi"][f"({a},{b})"] = dualValue
-            # print(f"Dual pi({a},{b}) = {dualValue}")
 
     return P_star
 
