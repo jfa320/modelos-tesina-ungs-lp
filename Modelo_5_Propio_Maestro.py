@@ -21,14 +21,12 @@ def calcularPosicionesOcupadas(posicion, ancho, alto):
 
 def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,items,posXY_x,posXY_y):
     print("IN - Create Master Model")
-    H = altoBin  # Alto del bin 
-    R = rebanadas  # Lista de rebanadas disponibles
-    # SOLO posiciones que están ocupadas por al menos una rebanada existente
+    H = altoBin  
+    R = rebanadas 
     posiciones = [(x, y) for x in range(anchoBin) for y in range(altoBin)]
 
 
     TI= len(items)  # Total de ítems
-    #C_r= se puede modelar usando el metodo rebanada.getTotalItems() - Cantidad de items en rebanadas
    
     try:
         # Crear instancia del problema
@@ -77,24 +75,6 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
                         ocupadas.add((x + dx, y + dy))
             celulasPorReb[r.getId()] = ocupadas
 
-        # # Restricción de posiciones ocupadas por rebanadas
-        # for (a, b) in posiciones:
-        #     rebanadasQueOcupanPos = [r for r in R if (a, b) in celulasPorReb[r.getId()]]
-        #     if rebanadasQueOcupanPos:
-        #         indexes = [f"p_{r.getId()}" for r in rebanadasQueOcupanPos]
-        #         coeffs = [1.0] * len(rebanadasQueOcupanPos)
-        #         addConstraintSet(
-        #             model,
-        #             coeffs,
-        #             indexes,
-        #             1.0,
-        #             "L",
-        #             added_constraints,
-        #             f"consItem_{a}_{b}",
-        #             DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS
-        #         )
-
-          # ----------------------------------------------------
 
         # Restricción de posiciones ocupadas por rebanadas
         for (a, b) in posiciones:
@@ -126,204 +106,8 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
         print("OUT - Create Master Model")
         return model
     
-    except CplexSolverError as e:
-        handleSolverError(e)
-
-def createMasterModel1(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,items,posXY_x,posXY_y):
-    print("IN - Create Master Model")
-    H = altoBin  # Alto del bin 
-    R = rebanadas  # Lista de rebanadas disponibles
-    # SOLO posiciones que están ocupadas por al menos una rebanada existente
-    posiciones = set()
-
-    for r in R:
-        for item in r.getItems():
-            if item.getPosicionX() is not None and item.getPosicionY() is not None:
-                pos = item.getPosicion()
-                posiciones.update(
-                    calcularPosicionesOcupadas(
-                        pos,
-                        item.getAncho(),
-                        item.getAlto()
-                    )
-                )
-
-    TI= len(items)  # Total de ítems
-    #C_r= se puede modelar usando el metodo rebanada.getTotalItems() - Cantidad de items en rebanadas
-   
-    try:
-        # Crear instancia del problema
-        model = cplex.Cplex()
-        model.set_problem_type(cplex.Cplex.problem_type.MILP) 
-        model.parameters.timelimit.set(maxTime)
-        
-        #Desactivo el presolve
-        model.parameters.preprocessing.presolve.set(0)
-        #Seteo el metodo simplex para resolver el modelo
-        model.parameters.lpmethod.set(1)
-        # Variables
-        # Variables p_r (binarias)
-        p_r_names = [f"p_{r.getId()}" for r in R]
-        coeffs_p_r = [r.getTotalItems() for r in R] 
-        addVariables(model, p_r_names,coeffs_p_r, model.variables.type.binary)
-    
-        model.objective.set_sense(model.objective.sense.maximize)
-
-        added_constraints = set()
-        
-        # Precomputar ocupación de cada rebanada
-        celulasPorReb = {}
-        for r in R:
-            ocupadas = set()
-            for it in r.getItems():
-                x,y = it.getPosicion()
-                for dx in range(it.getAncho()):
-                    for dy in range(it.getAlto()):
-                        ocupadas.add((x+dx, y+dy))
-            celulasPorReb[r.getId()] = ocupadas
-
-        # Agregar restricción por cada par que se solape (r,s)
-        for i, r1 in enumerate(R):
-            for r2 in R[i+1:]:
-                if celulasPorReb[r1.getId()] & celulasPorReb[r2.getId()]:
-                    addConstraintSet(
-                        model,
-                        [1,1],
-                        [f"p_{r1.getId()}", f"p_{r2.getId()}"],
-                        1, "L",
-                        added_constraints,
-                        f"consNoSolape_{r1.getId()}_{r2.getId()}",
-                        DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS
-                    )
-
-
-        # # ----------------------------------------------------
-        # Restricción de límite de ítems totales
-        indexes = [p_r_names[r.getId()-1] for r in R]
-        coeffs = [r.getTotalItems() for r in R]
-        consRhs=TI
-        consSense="L"
-        addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consLimiteItems",DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS)
-        
-        print(f"Rebanadas usadas: {R}")
-        print("OUT - Create Master Model")
-        return model
-    
-    except CplexSolverError as e:
-        handleSolverError(e)
-
-# def createMasterModel(maxTime, rebanadas, altoBin, anchoBin, altoItem, anchoItem, items, posXY_x, posXY_y):
-#     print("IN - Create Master Model")
-#     H = altoBin                  # Alto del bin
-#     W = anchoBin                 # Ancho del bin
-#     R = rebanadas                # Lista de rebanadas disponibles
-#     TI = len(items)              # Total de ítems
-
-#     try:
-#         # Crear instancia del problema
-#         model = cplex.Cplex()
-#         model.set_problem_type(cplex.Cplex.problem_type.MILP)
-#         model.parameters.timelimit.set(maxTime)
-
-#         # Desactivo el presolve
-#         model.parameters.preprocessing.presolve.set(0)
-#         # Seteo el método simplex para resolver el modelo
-#         model.parameters.lpmethod.set(1)
-
-#         # ----------------------------------------------------
-#         # Variables p_r (binarias), una por rebanada
-#         p_r_names = [f"p_{r.getId()}" for r in R]
-#         coeffs_p_r = [r.getTotalItems() for r in R]   # C_r
-#         addVariables(model, p_r_names, coeffs_p_r, model.variables.type.binary)
-
-#         # Maximizar sum_r C_r * p_r
-#         model.objective.set_sense(model.objective.sense.maximize)
-
-#         added_constraints = set()
-
-#         # ----------------------------------------------------
-#         # Precomputar Φ(r): celdas ocupadas por cada rebanada r
-#         # Φ(r) = { (x,y) : la rebanada r tiene algún ítem que cubre esa celda }
-#         # Precomputar ocupación de cada rebanada
-#         celulasPorReb = {}
-#         for r in R:
-#             ocupadas = set()
-#             for it in r.getItems():
-#                 # Extraer dimensiones y corregir si vienen invertidas
-#                 w = it.getAncho()
-#                 h = it.getAlto()
-                
-#                 if it.getRotado():
-#                     w = it.getAlto()
-#                     h = it.getAncho()
-#                 else:
-#                     w = it.getAncho()
-#                     h = it.getAlto()
-
-#                 x, y = it.getPosicion()
-
-#                 for dx in range(w):
-#                     for dy in range(h):
-#                         ocupadas.add((x + dx, y + dy))
-
-#             celulasPorReb[r.getId()] = ocupadas
-
-
-#         # ----------------------------------------------------
-#         # Restricciones por celda (a,b) ∈ P:
-#         #   sum_{r : (a,b) ∈ Φ(r)} p_r ≤ 1
-#         #
-#         # Construyo P = TODAS las celdas del bin
-#         P = [(x, y) for x in range(W) for y in range(H)]
-
-#         for (a, b) in P:
-#             rebanadasQueOcupanPos = []
-#             for r in R:
-#                 if (a, b) in celulasPorReb[r.getId()]:
-#                     rebanadasQueOcupanPos.append(r)
-
-#             if rebanadasQueOcupanPos:
-#                 indexes = [f"p_{r.getId()}" for r in rebanadasQueOcupanPos]
-#                 coeffs = [1.0] * len(rebanadasQueOcupanPos)
-#                 consRhs = 1.0
-#                 consSense = "L"
-#                 nombreCons = f"consItem_{a}_{b}"
-
-#                 addConstraintSet(
-#                     model,
-#                     coeffs,
-#                     indexes,
-#                     consRhs,
-#                     consSense,
-#                     added_constraints,
-#                     nombreCons,
-#                     DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS
-#                 )
-
-#         # ----------------------------------------------------
-#         # Restricción de límite de ítems totales:
-#         #   sum_r C_r * p_r ≤ TI
-#         indexes = [f"p_{r.getId()}" for r in R]
-#         coeffs = [r.getTotalItems() for r in R]
-#         consRhs = TI
-#         consSense = "L"
-#         addConstraintSet(
-#             model,
-#             coeffs,
-#             indexes,
-#             consRhs,
-#             consSense,
-#             added_constraints,
-#             "consLimiteItems",
-#             DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS
-#         )
-
-#         print(f"Rebanadas usadas: {R}")
-#         print("OUT - Create Master Model")
-#         return model
-
-#     except CplexSolverError as e:
-#         handleSolverError(e)
+    except CplexSolverError:
+        raise
 
 
 def solveMasterModel(model, queue, manualInterruption, relajarModelo, initialTime):

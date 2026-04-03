@@ -13,9 +13,7 @@ class Rebanada:
         self.set_ancho(ancho)
         self.setItems(items or [])
         self.setPuntosDeInicioItems(puntosDeInicioItems or [])
-        print(f"puntosDeInicioItems al crear rebanada: {self.getPuntosDeInicioItems()}")
         if(self.getPuntosDeInicioItems() is None or self.getPuntosDeInicioItems() == []):
-            print("No se han proporcionado puntos de inicio para los items. Se colocarán automáticamente.")
             self.colocarPuntosInicioItems()
 
 

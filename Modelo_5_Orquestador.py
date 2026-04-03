@@ -19,6 +19,7 @@ EPS = 1e-9  # tolerancia numérica
 
 EPS_MASTER = 1e-4
 MAX_ESTANCAMIENTO = 3
+MAX_EXTRA = 5
 
 
 def generarRebanadasIniciales(binWidth, binHeight,
@@ -160,156 +161,151 @@ def agregarRestriccionNoVacia(slaveModel):
 
 # Orquestador principal
 def orquestador(queue,manualInterruption,maxTime,initialTime,configData):
-    Rebanada.resetIdCounter()
-    iteracionesSinMejora = 0
+    try:
+        Rebanada.resetIdCounter()
+        iteracionesSinMejora = 0
 
-    binWidth = configData.getBinWidth()
-    binHeight = configData.getBinHeight()  
-    itemWidth = configData.getItemWidth()
-    itemHeight = configData.getItemHeight()
-    itemsQuantity = configData.getItemsQuantity()
+        binWidth = configData.getBinWidth()
+        binHeight = configData.getBinHeight()  
+        itemWidth = configData.getItemWidth()
+        itemHeight = configData.getItemHeight()
+        itemsQuantity = configData.getItemsQuantity()
 
-    posXY_x, posXY_y=generatePositionsXYM(binWidth,binHeight, itemWidth, itemHeight)
+        posXY_x, posXY_y=generatePositionsXYM(binWidth,binHeight, itemWidth, itemHeight)
 
-    items=generarListaItems(itemsQuantity,itemHeight,itemWidth)
+        items=generarListaItems(itemsQuantity,itemHeight,itemWidth)
 
 
-    rebanadas= generarRebanadasIniciales(binWidth, binHeight, itemWidth, itemHeight,posXY_x,posXY_y, itemsQuantity)  
-    
-    iteracion = 0
-    print(f"posXY_x: {posXY_x}")
-    print(f"posXY_y: {posXY_y}")
+        rebanadas= generarRebanadasIniciales(binWidth, binHeight, itemWidth, itemHeight,posXY_x,posXY_y, itemsQuantity)  
+        
+        iteracion = 0
 
-    firmasGeneradas = {construirFirmaRebanada(r) for r in rebanadas}
-    objectiveMasterAnterior = None
+        firmasGeneradas = {construirFirmaRebanada(r) for r in rebanadas}
+        objectiveMasterAnterior = None
 
-    while True:
-        # Creo modelo
-        #TODO: Aca podria mejorar evitando la creacion del modelo en cada vuelta.
-        # En su lugar, podria crear uno y luego agregar las columnas (rebanadas) nuevas
+        while True:
+            #TODO: Aca podria mejorar evitando la creacion del modelo en cada vuelta.
+            # En su lugar, podria crear uno y luego agregar las columnas (rebanadas) nuevas
+
+            masterModel = createMasterModel(maxTime,rebanadas,binHeight,binWidth,itemHeight,itemWidth,items, posXY_x, posXY_y)
+            # Resolver modelo maestro
+            objectiveMaster , precios_duales = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=True, initialTime=initialTime)
+
+            if objectiveMasterAnterior is None:
+                print("FO maestro relajado anterior: None (primera iteración)")
+            else:
+                mejoraMaster = objectiveMaster - objectiveMasterAnterior
+
+            slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,items,precios_duales, binWidth,itemHeight,itemWidth,binHeight)
+            nueva_rebanada,dual_value, variablesActivas  = solveSlaveModel(slaveModel,queue,manualInterruption,binWidth,itemHeight,itemWidth)
+
+            esDuplicada = False
+            
+            if(nueva_rebanada is not None):
+                firma = construirFirmaRebanada(nueva_rebanada)
+                esDuplicada = firma in firmasGeneradas
+            
+            if dual_value is None:
+                print("El esclavo no devolvió una solución factible. CORTE.")
+                break
+
+            if dual_value <= EPS:
+                solucionesExcluidas = []
+
+                if variablesActivas:
+                    solucionesExcluidas.append(variablesActivas)
+
+
+                for _ in range(MAX_EXTRA):
+                    slaveModel = createSlaveModel(
+                        maxTime,
+                        posXY_x,
+                        posXY_y,
+                        items,
+                        precios_duales,
+                        binWidth,
+                        itemHeight,
+                        itemWidth,
+                        binHeight
+                    )
+
+                    agregarRestriccionNoVacia(slaveModel)
+
+                    for i, activas in enumerate(solucionesExcluidas):
+                        agregarNoGoodCut(slaveModel, activas, i)
+
+                    nuevaRebanadaExtra, dualValueExtra, variablesActivasExtra = solveSlaveModel(
+                        slaveModel,
+                        queue,
+                        manualInterruption,
+                        binWidth,
+                        itemHeight,
+                        itemWidth
+                    )
+
+                    if dualValueExtra is None:
+                        break
+
+                    if dualValueExtra < -EPS:
+                        print("[EXTRA] FO <- EPS. No se agrega.")
+                        break
+
+                    if nuevaRebanadaExtra is None:
+                        print("[EXTRA] No se genero ninguna rebanada. Corte.")
+                        break
+
+                    if not variablesActivasExtra:
+                        print("[EXTRA] No hay variables activas. Corte.")
+                        break
+
+                    
+
+                    firmaExtra = construirFirmaRebanada(nuevaRebanadaExtra)
+
+                    if firmaExtra not in firmasGeneradas:
+                        rebanadas.append(nuevaRebanadaExtra)
+                        firmasGeneradas.add(firmaExtra)
+
+                    solucionesExcluidas.append(variablesActivasExtra)
+
+                break
+
+            if esDuplicada:
+                print("Rebanada duplicada detectada. Corte de generación.")
+                break
+            
+            if nueva_rebanada is None:
+                        print("El esclavo no generó ninguna rebanada. CORTE.")
+                        break
+
+            firmasGeneradas.add(firma)
+            rebanadas.append(nueva_rebanada)
+
+            if objectiveMasterAnterior is not None:
+                mejoraMaster = objectiveMaster - objectiveMasterAnterior
+                if abs(mejoraMaster) <= EPS_MASTER:
+                    iteracionesSinMejora += 1
+                else:
+                    iteracionesSinMejora = 0
+
+            if iteracionesSinMejora >= MAX_ESTANCAMIENTO:
+                print("Corte por estancamiento numerico del maestro.")
+                break
+
+
+            objectiveMasterAnterior = objectiveMaster
+            iteracion += 1
+            
+        
 
         masterModel = createMasterModel(maxTime,rebanadas,binHeight,binWidth,itemHeight,itemWidth,items, posXY_x, posXY_y)
-        # Resolver modelo maestro
-        objectiveMaster , precios_duales = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=True, initialTime=initialTime)
-
-        if objectiveMasterAnterior is None:
-            print("FO maestro relajado anterior: None (primera iteración)")
-        else:
-            mejoraMaster = objectiveMaster - objectiveMasterAnterior
-        dualesNoNulos = extraerDualesNoNulos(precios_duales, EPS)
-        print(f"Duales no nulos ({len(dualesNoNulos)}): {dualesNoNulos}")
-
-        # Crear modelo esclavo
-        slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,items,precios_duales, binWidth,itemHeight,itemWidth,binHeight)
-        # # Resolver modelo esclavo
-        nueva_rebanada,dual_value, variablesActivas  = solveSlaveModel(slaveModel,queue,manualInterruption,binWidth,itemHeight,itemWidth)
-
-        if(nueva_rebanada is not None):
-            print(f"Rebanada generada por el esclavo: {resumirRebanada(nueva_rebanada)}")
-            firma = construirFirmaRebanada(nueva_rebanada)
-            esDuplicada = firma in firmasGeneradas
-        
-        if dual_value <= EPS:
-            print("FO esclavo <= 0. Buscando optimos alternativos...")
-
-            solucionesExcluidas = []
-
-            if variablesActivas:
-                solucionesExcluidas.append(variablesActivas)
-
-            MAX_EXTRA = 5
-
-            for _ in range(MAX_EXTRA):
-                slaveModel = createSlaveModel(
-                    maxTime,
-                    posXY_x,
-                    posXY_y,
-                    items,
-                    precios_duales,
-                    binWidth,
-                    itemHeight,
-                    itemWidth,
-                    binHeight
-                )
-
-                agregarRestriccionNoVacia(slaveModel)
-
-                for i, activas in enumerate(solucionesExcluidas):
-                    agregarNoGoodCut(slaveModel, activas, i)
-
-                nuevaRebanadaExtra, dualValueExtra, variablesActivasExtra = solveSlaveModel(
-                    slaveModel,
-                    queue,
-                    manualInterruption,
-                    binWidth,
-                    itemHeight,
-                    itemWidth
-                )
-
-
-                if dualValueExtra < -EPS:
-                    print("[EXTRA] FO <= EPS. No se agrega.")
-                    break
-
-                if nuevaRebanadaExtra is None:
-                    print("[EXTRA] No se genero ninguna rebanada. Corte.")
-                    break
-
-                if not variablesActivasExtra:
-                    print("[EXTRA] No hay variables activas. Corte.")
-                    break
-
-                
-
-                firmaExtra = construirFirmaRebanada(nuevaRebanadaExtra)
-
-                if firmaExtra not in firmasGeneradas:
-                    rebanadas.append(nuevaRebanadaExtra)
-                    firmasGeneradas.add(firmaExtra)
-
-                solucionesExcluidas.append(variablesActivasExtra)
-
-            break
-
-        if esDuplicada:
-            print("Rebanada duplicada detectada. Corte de generación.")
-            break
-        
-        if nueva_rebanada is None:
-                    print("El esclavo no generó ninguna rebanada. CORTE.")
-                    break
-
-        firmasGeneradas.add(firma)
-        rebanadas.append(nueva_rebanada)
-
-        print(f"Cantidad de rebanadas en maestro despues de agregar: {len(rebanadas)}")
-        print("La columna generada es nueva.")
-
-        if objectiveMasterAnterior is not None:
-            mejoraMaster = objectiveMaster - objectiveMasterAnterior
-            if abs(mejoraMaster) <= EPS_MASTER:
-                iteracionesSinMejora += 1
-                print(f"Estancamiento numerico detectado. Mejora={mejoraMaster}. Contador={iteracionesSinMejora}")
-            else:
-                iteracionesSinMejora = 0
-
-        if iteracionesSinMejora >= MAX_ESTANCAMIENTO:
-            print("Corte por estancamiento numerico del maestro.")
-            break
-
-
-        objectiveMasterAnterior = objectiveMaster
-        iteracion += 1
-        
+        objectiveValue, _ = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=False, initialTime=initialTime)
+        return objectiveValue
     
-
-    masterModel = createMasterModel(maxTime,rebanadas,binHeight,binWidth,itemHeight,itemWidth,items, posXY_x, posXY_y)
-    objectiveValue, _ = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=False, initialTime=initialTime)
-    
-    
-    
-
-    return objectiveValue
+    except CplexSolverError as e:
+        solverTime = round(time.time() - initialTime, 2)
+        handleSolverError(e, queue, solverTime)
+        return None
 
 def executeWithTimeLimit(maxTime):
     global modelStatus, solverStatus, objectiveValue, solverTime 
@@ -340,7 +336,6 @@ def executeWithTimeLimit(maxTime):
 
 
     # Monitorear la cola mientras el proceso está en ejecución
-    
     while process.is_alive():
         if manualInterruption.value and time.time() - initialTime > maxTime:
             print("Limit time reached. Aborting process.")

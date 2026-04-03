@@ -8,33 +8,7 @@ from Objetos import Item
 MODEL_NAME="Model5SlaveAlternative"
 DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS = True  # Cambiar a True para desactivar el control de restricciones repetidas
 
-def construirItems1(variableNames, variableValues, altoItem, anchoItem):
-    items = []
-    varsNameFiltered = [elemento for elemento in variableNames if elemento.startswith('z') or elemento.startswith('s')]
-    valuesFiltered= variableValues[:len(varsNameFiltered)]
-    
-    z_dict = {}
-    s_dict = {}
-
-    for i, elemento in enumerate(varsNameFiltered):
-        z_dict[elemento] = valuesFiltered[i]
-    
-    for name, value in z_dict.items():
-        if value > 0.5:  # Considerar solo las variables activas (a veces toma el 0.999 como un 1)
-            parts = name.split("_")
-            # Obtener coordenadas del item
-            xValue = int(parts[2])  
-            yValue = int(parts[3])  
-            rotado = True if parts[1]=='y' else False
-            itemAgregar=Item(alto=altoItem, ancho=anchoItem, rotado=rotado,posicionX=xValue, posicionY=yValue)
-            if rotado:
-                itemAgregar.setAlto(anchoItem)
-                itemAgregar.setAncho(altoItem)
-            if(not itemAgregar in items):
-                items.append(itemAgregar)
-    print("Items construidos: ", items)
-    return items
-
+EPS = 1e-9  # tolerancia numérica
 
 def construirItems(variableNames, variableValues, altoItem, anchoItem):
     items = []
@@ -65,27 +39,7 @@ def construirItems(variableNames, variableValues, altoItem, anchoItem):
         if item not in items:
             items.append(item)
 
-    print("Items construidos:", items)
     return items
-
-
-def construirPosicionesOcupadas(variableNames, variableValues, items):
-    posicionesOcupadas = set()
-
-    for it in items:
-        x = it.getPosicionX()
-        y = it.getPosicionY()
-        w = it.getAncho()
-        h = it.getAlto()
-
-        for dx in range(w):
-            for dy in range(h):
-                posicionesOcupadas.add((x + dx, y + dy))
-
-    return list(posicionesOcupadas)
-
-
-
 
 def construirPosicionesOcupadas(variableNames, variableValues, altoItem, anchoItem):
     posicionesOcupadas = set()
@@ -108,7 +62,6 @@ def construirPosicionesOcupadas(variableNames, variableValues, altoItem, anchoIt
                 posicionesOcupadas.add((x0 + dx, y0 + dy))
 
     posicionesOcupadas = list(posicionesOcupadas)
-    print("Posiciones ocupadas:", posicionesOcupadas)
     return posicionesOcupadas
 
     
@@ -130,7 +83,7 @@ def rectsSolapan(x1, y1, w1, h1, x2, y2, w2, h2):
 def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSinRotar,anchoItemSinRotar,altoBin):    
     print("--------------------------------------------------------------------------------------------------------------------")
     print("IN - Create Slave Model")
-    I = items  # Lista de ítems disponibles
+    I = items  
     A_i=dualValues
     h = altoItemSinRotar
     w = anchoItemSinRotar
@@ -142,24 +95,6 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
     P = list(P)  # Convertir a lista para iterar
     P.sort()  # Ordenar los pares (a, b) para consistencia
     
-    # Listas etiquetadas con tipo de rotación
-    # ('x') para no rotado, ('y') para rotado
-    # posiciones_x = [((x, y), 'x') for (x, y) in P_noRotado]
-    # posiciones_y = [((x, y), 'y') for (x, y) in P_rotado]
-
-    # # Unificamos en una sola lista de posiciones posibles con tipo
-    # todasLasPosiciones = posiciones_x + posiciones_y
-
-
-    # R[(a,b,t)] = lista de posiciones (x,y) cubiertas por el ítem que inicia en (a,b,t)
-    # R = {}
-    # for (pos, t) in todasLasPosiciones:
-    #     a, b = pos
-    #     ancho, alto = (w, h) if t == 'x' else (h, w)
-    #     R[(a, b, t)] = [(x, y)
-    #                     for x in range(a, a + ancho)
-    #                     for y in range(b, b + alto)
-    #                     if 0 <= x < W and 0 <= y < H]
         
     posiciones_x_validas = []
     for (a, b) in P_noRotado:
@@ -210,32 +145,6 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
         def calcularSumaDual(a, b, t):
             celdasCubiertas = R[(a, b, t)]
             return sum(A_i["pi"].get(f"({x},{y})", 0.0) for (x, y) in celdasCubiertas)
-
-        # # Variables z^x_(a,b) → ítems no rotados
-        # for (a, b) in P_noRotado:
-        #     varName = f"z_x_{a}_{b}"
-        #     zVarsNoRotadas.append(varName)
-            
-        #     sumaDual = calcularSumaDual(a, b, 'x')
-            
-        #     coeff = 1.0 - sumaDual
-        #     objCoeffs.append(coeff)
-
-        # addVariables(model, zVarsNoRotadas, objCoeffs, "B")
-
-        # objCoeffs.clear()
-
-        # # Variables z^y_(a,b) → ítems rotados
-        # for (a, b) in P_rotado:
-        #     varName = f"z_y_{a}_{b}"
-        #     zVarsRotadas.append(varName)
-            
-        #     sumaDual = calcularSumaDual(a, b, 'y')
-        #     coeff = 1.0 - sumaDual
-        #     objCoeffs.append(coeff)
-
-        # addVariables(model, zVarsRotadas, objCoeffs, "B")
-        # objCoeffs.clear()
          
         # Variables no rotadas
         # ---------------------------------------------------------------------
@@ -290,8 +199,8 @@ def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSi
             )
         print("OUT - Create Slave Model")    
         return model
-    except CplexSolverError as e:
-        handleSolverError(e)
+    except CplexSolverError:
+        raise
         
 
 from Objetos import Item, Rebanada
@@ -305,7 +214,7 @@ def solveSlaveModel(model, queue, manualInterruption, binWidth, itemHeight, item
     if "optimal" not in statusString.lower() and "feasible" not in statusString.lower():
         print("No hay solución factible en el esclavo")
         print("OUT - Solve Slave Model")
-        return None, None
+        return None, None, []
 
     objectiveValue = model.solution.get_objective_value()
     print(f"FO esclavo: {objectiveValue}")
@@ -353,8 +262,10 @@ def solveSlaveModel(model, queue, manualInterruption, binWidth, itemHeight, item
         print("OUT - Solve Slave Model")
         return None, objectiveValue, []
 
+    height = obtenerYMaximo(construirPosicionesOcupadas(nombres, valores, itemHeight, itemWidth), itemHeight, itemWidth, itemsConstruidos)
+
     rebanada = Rebanada(
-        alto=20,
+        alto=height,
         ancho=binWidth,
         items=itemsConstruidos
     )
@@ -372,69 +283,4 @@ def solveSlaveModel(model, queue, manualInterruption, binWidth, itemHeight, item
 
 
     return rebanada, objectiveValue, variablesActivas
-
-def solveSlaveModel1(model, queue, manualInterruption, anchoBin, altoItem, anchoItem):
-    print("IN - Solve Slave Model")
-    #valores por default para enviar a paver
-    modelStatus, solverStatus, objectiveValue, solverTime = "1", "1", 0, 1
-    try:
-        # Desactivar la interrupción manual aquí
-        initialTime = model.get_time()
-        if(manualInterruption is not None):
-            manualInterruption.value = False
-        print("Voy a resolver el esclavo")
-        # Resolver el modelo
-        model.solve()
-        objectiveValue = model.solution.get_objective_value()
-
-        # Imprimir resultados
-        print("Optimal value:", objectiveValue)
-        #imprimo valor que toman las variables
-        for _, varName in enumerate(model.variables.get_names()):
-            print(f"{varName} = {model.solution.get_values(varName)}")
-            
-        # Obtener la función objetivo y sus coeficientes
-        obj_coefs = model.objective.get_linear()  # Obtiene los coeficientes
-        var_names = model.variables.get_names()   # Obtiene los nombres de las variables
-
-        # Imprimir la función objetivo en formato legible -- ENTIENDO QUE LO AGREGUE PARA DEBUGEAR, LO DEJO COMENTADO
-        # objetivo_str = " + ".join([f"{coef}*{var}" for coef, var in zip(obj_coefs, var_names)])
-        # print(f"Función Objetivo: {objetivo_str}")
-
-        status = model.solution.get_status()
-        finalTime = model.get_time()
-        solverTime=finalTime-initialTime
-        solverTime=round(solverTime, 2)
-                        
-        if status == 105:  # CPLEX código 105 = Time limit exceeded
-            print("The solver stopped because it reached the time limit.")
-            modelStatus="2" #valor en paver para marcar un optimo local
-
-        
-        variableNames = model.variables.get_names()
-        variableValues = model.solution.get_values()
-        items=construirItems(variableNames, variableValues, altoItem, anchoItem)
-        
-        posicionesOcupadas=construirPosicionesOcupadas(variableNames, variableValues, altoItem, anchoItem)
-        alto= obtenerYMaximo(posicionesOcupadas,altoItem,anchoItem,items)
-        print("Items de la rebanada encontrada:", items)
-        print("Valor objetivo del esclavo", objectiveValue)
-
-        # si no hay mejora / no hay columnas
-        if objectiveValue <= 1e-9:
-            return None, objectiveValue
-        
-        if not items:
-            return None, objectiveValue
-        
-        rebanadaEncontrada = Rebanada(alto, anchoBin, items, posicionesOcupadas)
-
-        print(f"Rebanada encontrada!!: {rebanadaEncontrada}")
-        print("OUT - Solve Slave Model")
-
-        return rebanadaEncontrada, objectiveValue
-    
-    except CplexSolverError as e:
-        print("Error al resolver el modelo esclavo:", e)
-        handleSolverError(e, queue,solverTime)
 

@@ -4,10 +4,8 @@ import time
 
 def addVariables(model, varNames, objCoeffs, varType):
     n = len(varNames)
-    # tipos: lista, no string concatenado
     types = [varType] * n
 
-    # bounds (recomendado explicitar)
     lb = [0.0] * n
     if varType == "B":
         ub = [1.0] * n
@@ -38,8 +36,6 @@ def addConstraint(model, coeff, vars, rhs, sense,constraintName=None):
         )
     
 def addConstraintSet(model, coeff, vars, rhs, sense, added_constraints,constraintName=None,desactivarCondicionRestriccionesRepetidas=False):
-    # Crear una representación única de la restricción
-    #filtro de variables con coeficientes 0 - es lo mismo que hace CPLEX, de esta manera evito que se repitan restricciones
     filtered = [(c, v) for c, v in zip(coeff, vars) if c != 0]
     if filtered:
         coeff, vars = zip(*filtered)
@@ -50,14 +46,10 @@ def addConstraintSet(model, coeff, vars, rhs, sense, added_constraints,constrain
     
 
     if new_constraint in added_constraints and not desactivarCondicionRestriccionesRepetidas:
-        print(f"La restricción ya existe: {new_constraint}. No se agrega nuevamente.")
         return
     
-    # Agregar la restricción al modelo
     if vars:
         addConstraint(model, coeff, vars, rhs, sense, constraintName)
-
-        # Registrar la nueva restricción
         added_constraints.add(new_constraint)
     
     
