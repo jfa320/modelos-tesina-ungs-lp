@@ -132,14 +132,13 @@ def agregarNoGoodCut(slaveModel, variablesActivas, cutId):
     if not variablesActivas:
         return
 
-    slaveModel.linear_constraints.add(
-        lin_expr=[cplex.SparsePair(
-            ind=variablesActivas,
-            val=[1.0] * len(variablesActivas)
-        )],
-        senses=["L"],
-        rhs=[len(variablesActivas) - 1],
-        names=[f"nogood_{cutId}"]
+    addConstraint(
+        slaveModel,
+        [1.0] * len(variablesActivas),
+        variablesActivas,
+        len(variablesActivas) - 1,
+        "L",
+        f"nogood_{cutId}"
     )
 
 def agregarRestriccionNoVacia(slaveModel):
@@ -151,11 +150,16 @@ def agregarRestriccionNoVacia(slaveModel):
             nombres.append(nombre)
             valores.append(1.0)
 
-    slaveModel.linear_constraints.add(
-        lin_expr=[cplex.SparsePair(ind=nombres, val=valores)],
-        senses=["G"],
-        rhs=[1.0],
-        names=[f"non_empty_{slaveModel.linear_constraints.get_num()}"]
+    if not nombres:
+        return
+
+    addConstraint(
+        slaveModel,
+        valores,
+        nombres,
+        1.0,
+        "G",
+        f"non_empty_{slaveModel.linear_constraints.get_num()}"
     )
 
 
