@@ -166,24 +166,29 @@ def agregarRestriccionNoVacia(slaveModel):
 # Orquestador principal
 def orquestador(queue,manualInterruption,maxTime,initialTime,configData):
     try:
+        # Reiniciar el contador de IDs de Rebanada para cada ejecución
         Rebanada.resetIdCounter()
         iteracionesSinMejora = 0
 
+        # Seteo configuraciones en base a los datos recibidos en configData
         binWidth = configData.getBinWidth()
         binHeight = configData.getBinHeight()  
         itemWidth = configData.getItemWidth()
         itemHeight = configData.getItemHeight()
         itemsQuantity = configData.getItemsQuantity()
 
+        # Genero posiciones a usar en el bin 
         posXY_x, posXY_y=generatePositionsXYM(binWidth,binHeight, itemWidth, itemHeight)
-
+        
+        # Creo items a ubicar en los bins (sin posicion ni orientacion definida, eso lo decide el modelo)
         items=generarListaItems(itemsQuantity,itemHeight,itemWidth)
 
-
+        # Genero rebanadas iniciales a partir de las posiciones generadas y la info de los items
         rebanadas= generarRebanadasIniciales(binWidth, binHeight, itemWidth, itemHeight,posXY_x,posXY_y, itemsQuantity)  
         
         iteracion = 0
 
+        # Construyo firma de rebanadas iniciales para evitar que se generen nuevamente en alguna iteracion
         firmasGeneradas = {construirFirmaRebanada(r) for r in rebanadas}
         objectiveMasterAnterior = None
 
@@ -200,32 +205,37 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData):
             else:
                 mejoraMaster = objectiveMaster - objectiveMasterAnterior
 
-            slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,items,precios_duales, binWidth,itemHeight,itemWidth,binHeight)
-            nueva_rebanada,dual_value, variablesActivas  = solveSlaveModel(slaveModel,queue,manualInterruption,binWidth,itemHeight,itemWidth)
+            slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,precios_duales, binWidth,itemHeight,itemWidth,binHeight)
+            nueva_rebanada, objectiveValue, variablesActivas  = solveSlaveModel(slaveModel,queue,manualInterruption,binWidth,itemHeight,itemWidth)
 
             esDuplicada = False
             
+            # validacion de duplicados solo si se genero una nueva rebanada
             if(nueva_rebanada is not None):
                 firma = construirFirmaRebanada(nueva_rebanada)
                 esDuplicada = firma in firmasGeneradas
-            
-            if dual_value is None:
+
+            # Si el esclavo no devolvió una solución factible, corto el proceso
+            if objectiveValue is None:
                 print("El esclavo no devolvió una solución factible. CORTE.")
                 break
-
-            if dual_value <= EPS:
+            
+            # Si la FO del esclavo es menor o igual a EPS, se considera que no hay mejora significativa pero aun no se cierra el proceso, 
+            # sino que se generan algunas adicionales  
+            if objectiveValue <= EPS:
                 solucionesExcluidas = []
-
+                
+                # excluyo la solución actual del esclavo para forzar la generación de una nueva rebanada en la próxima iteración
                 if variablesActivas:
                     solucionesExcluidas.append(variablesActivas)
 
-
+                # inicio el proceso de generacion de nuevas rebanadas, realizado MAX_EXTRA iteraciones 
+                # o hasta que ocurra algun corte 
                 for _ in range(MAX_EXTRA):
                     slaveModel = createSlaveModel(
                         maxTime,
                         posXY_x,
                         posXY_y,
-                        items,
                         precios_duales,
                         binWidth,
                         itemHeight,
@@ -233,12 +243,16 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData):
                         binHeight
                     )
 
+                    # obligo al modelo a generar rebanadas con al menos 1 item (no quiero triviales)
                     agregarRestriccionNoVacia(slaveModel)
 
+                    # obligo al modelo a que no me devuelva la misma rebanada anterior
+                    # evitando que se activen las mismas variables que en la solución anterior del esclavo
                     for i, activas in enumerate(solucionesExcluidas):
                         agregarNoGoodCut(slaveModel, activas, i)
 
-                    nuevaRebanadaExtra, dualValueExtra, variablesActivasExtra = solveSlaveModel(
+                    # resuelvo el modelo esclavo modificado
+                    nuevaRebanadaExtra, objectiveValueExtra, variablesActivasExtra = solveSlaveModel(
                         slaveModel,
                         queue,
                         manualInterruption,
@@ -246,45 +260,55 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData):
                         itemHeight,
                         itemWidth
                     )
-
-                    if dualValueExtra is None:
+                    
+                    # Si el esclavo no devolvió una solución factible, corto la generación de rebanadas extra
+                    if objectiveValueExtra is None:
                         break
-
-                    if dualValueExtra < -EPS:
-                        print("[EXTRA] FO <- EPS. No se agrega.")
+                    
+                    # Si el valor objetivo es claramente negativo, no conviene agregar la rebanada
+                    if objectiveValueExtra < -EPS:
+                        print("[EXTRA] FO del esclavo < -EPS. No se agrega.")
                         break
-
+                    
+                    # Si no se genero ninguna rebanda extra, corto el proceso
                     if nuevaRebanadaExtra is None:
                         print("[EXTRA] No se genero ninguna rebanada. Corte.")
                         break
-
+                    
+                    # Si no se genero ninguna variable activa en el esclavo, corto el proceso
                     if not variablesActivasExtra:
                         print("[EXTRA] No hay variables activas. Corte.")
                         break
 
                     
-
+                    # Construyo firma de la nueva rebanada extra generada para validar duplicados
                     firmaExtra = construirFirmaRebanada(nuevaRebanadaExtra)
 
+                    # Si la firma de la nueva rebanada extra no se ha generado antes, la agrego a la lista de rebanadas y a las firmas generadas
                     if firmaExtra not in firmasGeneradas:
                         rebanadas.append(nuevaRebanadaExtra)
                         firmasGeneradas.add(firmaExtra)
 
+                    # excluyo la solucion actual del esclavo para forzar la generación de una nueva rebanada en la próxima iteración
                     solucionesExcluidas.append(variablesActivasExtra)
 
                 break
-
+            
+            # Si la nueva rebanada es duplicada, corto el proceso para evitar ciclos
             if esDuplicada:
                 print("Rebanada duplicada detectada. Corte de generación.")
                 break
-            
+
+            # Si el esclavo no generó ninguna rebanada, corto el proceso
             if nueva_rebanada is None:
                         print("El esclavo no generó ninguna rebanada. CORTE.")
                         break
-
+            
+            # Agrego la nueva rebanada generada a la lista de rebanadas y su firma al conjunto de firmas generadas
             firmasGeneradas.add(firma)
             rebanadas.append(nueva_rebanada)
 
+            # Actualizo el contador de iteraciones sin mejora del maestro
             if objectiveMasterAnterior is not None:
                 mejoraMaster = objectiveMaster - objectiveMasterAnterior
                 if abs(mejoraMaster) <= EPS_MASTER:
@@ -292,18 +316,20 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData):
                 else:
                     iteracionesSinMejora = 0
 
+            # Si el maestro no mejora luego de MAX_ESTANCAMIENTO iteraciones, corto el proceso para evitar estancamiento numérico
             if iteracionesSinMejora >= MAX_ESTANCAMIENTO:
                 print("Corte por estancamiento numerico del maestro.")
                 break
 
-
+            # Actualizo el valor de la FO del maestro anterior para la próxima iteración
             objectiveMasterAnterior = objectiveMaster
             iteracion += 1
             
         
-
+        # Resuelvo el modelo maestro final sin relajar para obtener una solución entera factible y su valor objetivo final
         masterModel = createMasterModel(maxTime,rebanadas,binHeight,binWidth,itemHeight,itemWidth,items, posXY_x, posXY_y)
         objectiveValue, _ = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=False, initialTime=initialTime)
+        # Devuelvo resultado
         return objectiveValue
     
     except CplexSolverError as e:

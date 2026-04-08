@@ -80,10 +80,9 @@ def rectsSolapan(x1, y1, w1, h1, x2, y2, w2, h2):
     )
 
 
-def createSlaveModel(maxTime, XY_x, XY_y, items, dualValues, anchoBin,altoItemSinRotar,anchoItemSinRotar,altoBin):    
+def createSlaveModel(maxTime, XY_x, XY_y, dualValues, anchoBin,altoItemSinRotar,anchoItemSinRotar,altoBin):    
     print("--------------------------------------------------------------------------------------------------------------------")
     print("IN - Create Slave Model")
-    I = items  
     A_i=dualValues
     h = altoItemSinRotar
     w = anchoItemSinRotar
