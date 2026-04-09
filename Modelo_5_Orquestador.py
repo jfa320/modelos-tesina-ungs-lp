@@ -206,7 +206,7 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData):
                 mejoraMaster = objectiveMaster - objectiveMasterAnterior
 
             slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,precios_duales, binWidth,itemHeight,itemWidth,binHeight)
-            nueva_rebanada, objectiveValue, variablesActivas  = solveSlaveModel(slaveModel,queue,manualInterruption,binWidth,itemHeight,itemWidth)
+            nueva_rebanada, objectiveValueSlaveModel, variablesActivas  = solveSlaveModel(slaveModel,queue,manualInterruption,binWidth,itemHeight,itemWidth)
 
             esDuplicada = False
             
@@ -216,13 +216,13 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData):
                 esDuplicada = firma in firmasGeneradas
 
             # Si el esclavo no devolvió una solución factible, corto el proceso
-            if objectiveValue is None:
+            if objectiveValueSlaveModel is None:
                 print("El esclavo no devolvió una solución factible. CORTE.")
                 break
             
             # Si la FO del esclavo es menor o igual a EPS, se considera que no hay mejora significativa pero aun no se cierra el proceso, 
             # sino que se generan algunas adicionales  
-            if objectiveValue <= EPS:
+            if objectiveValueSlaveModel <= EPS:
                 solucionesExcluidas = []
                 
                 # excluyo la solución actual del esclavo para forzar la generación de una nueva rebanada en la próxima iteración
@@ -301,8 +301,8 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData):
 
             # Si el esclavo no generó ninguna rebanada, corto el proceso
             if nueva_rebanada is None:
-                        print("El esclavo no generó ninguna rebanada. CORTE.")
-                        break
+                print("El esclavo no generó ninguna rebanada. CORTE.")
+                break
             
             # Agrego la nueva rebanada generada a la lista de rebanadas y su firma al conjunto de firmas generadas
             firmasGeneradas.add(firma)
@@ -328,9 +328,9 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData):
         
         # Resuelvo el modelo maestro final sin relajar para obtener una solución entera factible y su valor objetivo final
         masterModel = createMasterModel(maxTime,rebanadas,binHeight,binWidth,itemHeight,itemWidth,items, posXY_x, posXY_y)
-        objectiveValue, _ = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=False, initialTime=initialTime)
+        objectiveValueSlaveModel, _ = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=False, initialTime=initialTime)
         # Devuelvo resultado
-        return objectiveValue
+        return objectiveValueSlaveModel
     
     except CplexSolverError as e:
         solverTime = round(time.time() - initialTime, 2)
