@@ -18,7 +18,7 @@ def generarListaItems(ITEMS_QUANTITY, ITEM_HEIGHT, ITEM_WIDTH):
 EPS = 1e-9  # tolerancia numérica
 
 EPS_MASTER = 1e-4
-MAX_ESTANCAMIENTO = 3
+MAX_ESTANCAMIENTO = 5
 MAX_EXTRA = 5
 
 

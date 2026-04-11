@@ -2,13 +2,13 @@
 
 El programa en detalle funciona de la siguiente manera:
 
-1. Se define la configuración del caso (ancho y alto del bin, dimensiones de los ítems, cantidad de ítems)
+1. Se define la configuración del caso (ancho y alto del bin, dimensiones del item, cantidad de ítems a empaquetar)
 2. Se generan posiciones válidas (rotadas y no rotadas) dentro del bin en función de la configuración
 3. Se genera un conjunto inicial de rebanadas para inicializar el modelo maestro
 4. Se construye el modelo maestro relajado utilizando las rebanadas actuales, las posiciones y la configuración
 5. Se resuelve el modelo maestro y se obtienen los valores duales asociados a las restricciones de ocupación (evitan colisiones)
 6. Se construye el modelo esclavo utilizando los duales del maestro, las posiciones y la configuración
-7. Se resuelve el modelo esclavo, se obtiene una nueva rebanada y, si es válida, la agrego al maestro. Luego vuelvo al paso 4
+7. Se resuelve el modelo esclavo, se obtiene una nueva rebanada y, si tiene potencial de mejora, la agrego al maestro. Luego vuelvo al paso 4
 
 ## Condiciones de corte:
 
@@ -42,7 +42,7 @@ El programa en detalle funciona de la siguiente manera:
 ### Esclavo
 
 - genera nuevas rebanadas que potencialmente mejoran la solución actual
-- determina la ubicación de los ítems dentro de cada rebanada
+- determina la ubicación de los ítems dentro del bin
 
 ---
 

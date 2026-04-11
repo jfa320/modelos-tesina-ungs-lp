@@ -202,7 +202,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, dualValues, anchoBin,altoItemSinRotar,
         raise
         
 
-from Objetos import Item, Rebanada
+
 
 def solveSlaveModel(model, queue, manualInterruption, binWidth, itemHeight, itemWidth):
     print("IN - Solve Slave Model")
