@@ -1,4 +1,5 @@
 import multiprocessing
+import os
 import time
 from Objetos import Rebanada
 from Objetos import Item
@@ -7,8 +8,11 @@ from Position_generator import generatePositionsXYM
 from Modelo_5_Propio_Maestro import * 
 from Modelo_5_Propio_Esclavo_Alternativo import * 
 from Config import *
+from Utils.visualizacion_bin import exportar_solucion_bin_a_png
 
 from Objetos.ConfigData import ConfigData
+
+MODEL_NAME = "Model5Orchestrator"
 
 
 #TODO: corregir esto. Ubicar items en otro lado
@@ -163,6 +167,23 @@ def agregarRestriccionNoVacia(slaveModel):
     )
 
 
+def obtenerRebanadasActivas(rebanadas, variablesActivasMaestro):
+    idsActivos = set()
+
+    for nombreVariable in variablesActivasMaestro:
+        if not nombreVariable.startswith("p_"):
+            continue
+        idsActivos.add(int(nombreVariable.split("_")[1]))
+
+    return [rebanada for rebanada in rebanadas if rebanada.getId() in idsActivos]
+
+
+def exportarLayoutFinal(binWidth, binHeight, itemWidth, itemHeight, itemsQuantity, rebanadasActivas):
+    outputPath = os.path.join("Resultados", f"{CASE_NAME}_layout.png")
+    exportar_solucion_bin_a_png(binWidth, binHeight, itemWidth, itemHeight, itemsQuantity, rebanadasActivas, outputPath)
+    print(f"Layout final exportado en: {outputPath}")
+
+
 # Orquestador principal
 def orquestador(queue,manualInterruption,maxTime,initialTime,configData):
     try:
@@ -198,7 +219,7 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData):
 
             masterModel = createMasterModel(maxTime,rebanadas,binHeight,binWidth,itemHeight,itemWidth,items, posXY_x, posXY_y)
             # Resolver modelo maestro
-            objectiveMaster , precios_duales = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=True, initialTime=initialTime)
+            objectiveMaster , precios_duales, _ = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=True, initialTime=initialTime)
 
             if objectiveMasterAnterior is None:
                 print("FO maestro relajado anterior: None (primera iteración)")
@@ -328,7 +349,13 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData):
         
         # Resuelvo el modelo maestro final sin relajar para obtener una solución entera factible y su valor objetivo final
         masterModel = createMasterModel(maxTime,rebanadas,binHeight,binWidth,itemHeight,itemWidth,items, posXY_x, posXY_y)
-        objectiveValueSlaveModel, _ = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=False, initialTime=initialTime)
+        objectiveValueSlaveModel, _, variablesActivasMaestro = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=False, initialTime=initialTime)
+        # Genero png con layout final solo con las rebanadas activas en la solución final del maestro
+        rebanadasActivas = obtenerRebanadasActivas(rebanadas, variablesActivasMaestro)
+        if rebanadasActivas:
+            exportarLayoutFinal(binWidth, binHeight, itemWidth, itemHeight, itemsQuantity, rebanadasActivas)
+        else:
+            print("No se generó ninguna rebanada activa en la solución final del maestro. No se exporta layout.")
         # Devuelvo resultado
         return objectiveValueSlaveModel
     

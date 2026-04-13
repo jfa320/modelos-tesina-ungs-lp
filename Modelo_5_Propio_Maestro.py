@@ -134,6 +134,7 @@ def solveMasterModel(model, queue, manualInterruption, relajarModelo, initialTim
         # Imprimir resultados
         print("Optimal value:", objectiveValue)
         dualValues=None
+        variablesActivas = []
         if(relajarModelo):
             # Obtener valores duales
             dualValues=getDualValues(model)
@@ -142,7 +143,9 @@ def solveMasterModel(model, queue, manualInterruption, relajarModelo, initialTim
             
         # imprimo valor que toman las variables
         for i, varName in enumerate(model.variables.get_names()):
-            print(f"{varName} = {model.solution.get_values(varName)}")
+            valorVariable = model.solution.get_values(varName)
+            if valorVariable > 0.5:
+                variablesActivas.append(varName)
 
         status = model.solution.get_status()
         
@@ -166,7 +169,7 @@ def solveMasterModel(model, queue, manualInterruption, relajarModelo, initialTim
         # Obtener la cantidad de restricciones
         
         print("OUT - Solve Master Model")
-        return objectiveValue,dualValues
+        return objectiveValue, dualValues, variablesActivas
     
     except CplexSolverError as e:
         handleSolverError(e, queue,solverTime)
