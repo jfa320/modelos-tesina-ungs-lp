@@ -201,12 +201,98 @@ def createSlaveModel(maxTime, XY_x, XY_y, dualValues, anchoBin,altoItemSinRotar,
     except CplexSolverError:
         raise
         
-
-
-
 def solveSlaveModel(model, queue, manualInterruption, binWidth, itemHeight, itemWidth):
     print("IN - Solve Slave Model")
 
+    EPS_SECOND_PHASE = 1e-8
+
+    def extraerSolucionActual(modelo):
+        nombres = modelo.variables.get_names()
+        valores = modelo.solution.get_values()
+
+        itemsConstruidos = []
+        variablesActivas = []
+
+        for nombre, valor in zip(nombres, valores):
+            if valor <= 0.5:
+                continue
+
+            if nombre.startswith("z_x_") or nombre.startswith("z_y_"):
+                variablesActivas.append(nombre)
+
+            parts = nombre.split("_")
+            if len(parts) != 4:
+                continue
+
+            _, tipo, a, b = parts
+            a = int(a)
+            b = int(b)
+
+            if tipo == "x":
+                item = Item(
+                    alto=itemHeight,
+                    ancho=itemWidth,
+                    rotado=False
+                )
+            else:
+                item = Item(
+                    alto=itemWidth,
+                    ancho=itemHeight,
+                    rotado=True
+                )
+
+            item.setPosicionX(a)
+            item.setPosicionY(b)
+            itemsConstruidos.append(item)
+
+        if not itemsConstruidos:
+            return None, [], [], None
+
+        posicionesOcupadas = construirPosicionesOcupadas(
+            nombres,
+            valores,
+            itemHeight,
+            itemWidth
+        )
+
+        height = obtenerYMaximo(
+            posicionesOcupadas,
+            itemHeight,
+            itemWidth,
+            itemsConstruidos
+        )
+
+        rebanada = Rebanada(
+            alto=height,
+            ancho=binWidth,
+            items=itemsConstruidos
+        )
+
+        return rebanada, itemsConstruidos, variablesActivas, (nombres, valores)
+
+    def calcularFoOriginalDeSolucion(nombres, valores, coeficientesOriginales):
+        fo = 0.0
+        for nombre, valor in zip(nombres, valores):
+            if valor > 0.5:
+                fo += coeficientesOriginales.get(nombre, 0.0)
+        return fo
+
+    def imprimirResumen(etiqueta, foOriginal, itemsConstruidos):
+        rotados = sum(1 for item in itemsConstruidos if item.getRotado())
+        noRotados = len(itemsConstruidos) - rotados
+        resumen = sorted(
+            (item.getPosicionX(), item.getPosicionY(), item.getRotado())
+            for item in itemsConstruidos
+        )
+        print(f"{etiqueta}")
+        print(f"  FO original: {foOriginal}")
+        print(f"  Cantidad items: {len(itemsConstruidos)}")
+        print(f"  Rotados: {rotados} | No rotados: {noRotados}")
+        print(f"  Items: {resumen}")
+
+    # =========================================================
+    # FASE 1: resolver exactamente como hoy
+    # =========================================================
     model.solve()
 
     statusString = model.solution.get_status_string()
@@ -215,71 +301,162 @@ def solveSlaveModel(model, queue, manualInterruption, binWidth, itemHeight, item
         print("OUT - Solve Slave Model")
         return None, None, []
 
-    objectiveValue = model.solution.get_objective_value()
-    print(f"FO esclavo: {objectiveValue}")
+    objectiveValuePhase1 = model.solution.get_objective_value()
+    print(f"FO esclavo fase 1: {objectiveValuePhase1}")
 
-    nombres = model.variables.get_names()
-    valores = model.solution.get_values()
+    nombresVars = model.variables.get_names()
+    objLineal = model.objective.get_linear()
+    coefOriginales = {nombre: coef for nombre, coef in zip(nombresVars, objLineal)}
 
-    itemsConstruidos = []
+    rebanadaFase1, itemsFase1, variablesActivasFase1, solucionRawFase1 = extraerSolucionActual(model)
 
-    for nombre, valor in zip(nombres, valores):
-        if valor <= 0.5:
-            continue
-
-        parts = nombre.split("_")
-        if len(parts) != 4:
-            continue
-
-        _, tipo, a, b = parts
-        a = int(a)
-        b = int(b)
-
-        if tipo == "x":
-            item = Item(
-                alto=itemHeight,
-                ancho=itemWidth,
-                rotado=False
-            )
-        else:
-            item = Item(
-                alto=itemWidth,   # rotado
-                ancho=itemHeight,
-                rotado=True
-            )
-
-        item.setPosicionX(a)
-        item.setPosicionY(b)
-    
-
-        itemsConstruidos.append(item)
-
-    print(f"Items reconstruidos: {len(itemsConstruidos)}")
-
-    if not itemsConstruidos:
-        print("No se reconstruyó ningún item")
+    if rebanadaFase1 is None:
+        print("No se reconstruyó ningún item en fase 1")
         print("OUT - Solve Slave Model")
-        return None, objectiveValue, []
+        return None, objectiveValuePhase1, []
 
-    height = obtenerYMaximo(construirPosicionesOcupadas(nombres, valores, itemHeight, itemWidth), itemHeight, itemWidth, itemsConstruidos)
+    imprimirResumen("Resumen fase 1", objectiveValuePhase1, itemsFase1)
 
-    rebanada = Rebanada(
-        alto=height,
-        ancho=binWidth,
-        items=itemsConstruidos
-    )
+    # =========================================================
+    # FASE 2: intento opcional de mejora estructural
+    # Mantengo FO original casi igual y maximizo cantidad de items
+    # =========================================================
+    try:
+        rhs = objectiveValuePhase1 - EPS_SECOND_PHASE
+
+        model.linear_constraints.add(
+            lin_expr=[cplex.SparsePair(ind=nombresVars, val=objLineal)],
+            senses=["G"],
+            rhs=[rhs],
+            names=["consMaintainOriginalObjective"]
+        )
+
+        # Reseteo FO
+        model.objective.set_linear([(nombre, 0.0) for nombre in nombresVars])
+
+        # Nueva FO: maximizar cantidad de z activas
+        model.objective.set_linear([
+            (nombre, 1.0)
+            for nombre in nombresVars
+            if nombre.startswith("z_x_") or nombre.startswith("z_y_")
+        ])
+        model.objective.set_sense(model.objective.sense.maximize)
+
+        model.solve()
+
+        statusStringFase2 = model.solution.get_status_string()
+        if "optimal" in statusStringFase2.lower() or "feasible" in statusStringFase2.lower():
+            rebanadaFase2, itemsFase2, variablesActivasFase2, solucionRawFase2 = extraerSolucionActual(model)
+
+            if rebanadaFase2 is not None:
+                nombresFase2, valoresFase2 = solucionRawFase2
+                foOriginalFase2 = calcularFoOriginalDeSolucion(
+                    nombresFase2,
+                    valoresFase2,
+                    coefOriginales
+                )
+
+                imprimirResumen("Resumen fase 2", foOriginalFase2, itemsFase2)
+
+                usarFase2 = (
+                    foOriginalFase2 >= objectiveValuePhase1 - EPS_SECOND_PHASE
+                    and len(itemsFase2) > len(itemsFase1)
+                )
+
+                if usarFase2:
+                    print("Se adopta la solución de fase 2")
+                    print("OUT - Solve Slave Model")
+                    return rebanadaFase2, objectiveValuePhase1, variablesActivasFase2
+                else:
+                    print("Se conserva la solución de fase 1")
+            else:
+                print("Fase 2 no reconstruyó items válidos. Se conserva fase 1.")
+        else:
+            print("Fase 2 sin solución factible. Se conserva fase 1.")
+
+    except Exception as e:
+        print(f"Fase 2 falló: {e}. Se conserva fase 1.")
 
     print("OUT - Solve Slave Model")
-
-    variablesActivas = []
-
-    nombres = model.variables.get_names()
-    valores = model.solution.get_values()
-
-    for nombre, valor in zip(nombres, valores):
-        if valor > 0.5 and (nombre.startswith("z_x_") or nombre.startswith("z_y_")):
-            variablesActivas.append(nombre)
+    return rebanadaFase1, objectiveValuePhase1, variablesActivasFase1
 
 
-    return rebanada, objectiveValue, variablesActivas
+# def solveSlaveModel(model, queue, manualInterruption, binWidth, itemHeight, itemWidth):
+#     print("IN - Solve Slave Model")
+
+#     model.solve()
+
+#     statusString = model.solution.get_status_string()
+#     if "optimal" not in statusString.lower() and "feasible" not in statusString.lower():
+#         print("No hay solución factible en el esclavo")
+#         print("OUT - Solve Slave Model")
+#         return None, None, []
+
+#     objectiveValue = model.solution.get_objective_value()
+#     print(f"FO esclavo: {objectiveValue}")
+
+#     nombres = model.variables.get_names()
+#     valores = model.solution.get_values()
+
+#     itemsConstruidos = []
+
+#     for nombre, valor in zip(nombres, valores):
+#         if valor <= 0.5:
+#             continue
+
+#         parts = nombre.split("_")
+#         if len(parts) != 4:
+#             continue
+
+#         _, tipo, a, b = parts
+#         a = int(a)
+#         b = int(b)
+
+#         if tipo == "x":
+#             item = Item(
+#                 alto=itemHeight,
+#                 ancho=itemWidth,
+#                 rotado=False
+#             )
+#         else:
+#             item = Item(
+#                 alto=itemWidth,   # rotado
+#                 ancho=itemHeight,
+#                 rotado=True
+#             )
+
+#         item.setPosicionX(a)
+#         item.setPosicionY(b)
+    
+
+#         itemsConstruidos.append(item)
+
+#     print(f"Items reconstruidos: {len(itemsConstruidos)}")
+
+#     if not itemsConstruidos:
+#         print("No se reconstruyó ningún item")
+#         print("OUT - Solve Slave Model")
+#         return None, objectiveValue, []
+
+#     height = obtenerYMaximo(construirPosicionesOcupadas(nombres, valores, itemHeight, itemWidth), itemHeight, itemWidth, itemsConstruidos)
+
+#     rebanada = Rebanada(
+#         alto=height,
+#         ancho=binWidth,
+#         items=itemsConstruidos
+#     )
+
+#     print("OUT - Solve Slave Model")
+
+#     variablesActivas = []
+
+#     nombres = model.variables.get_names()
+#     valores = model.solution.get_values()
+
+#     for nombre, valor in zip(nombres, valores):
+#         if valor > 0.5 and (nombre.startswith("z_x_") or nombre.startswith("z_y_")):
+#             variablesActivas.append(nombre)
+
+
+#     return rebanada, objectiveValue, variablesActivas
 

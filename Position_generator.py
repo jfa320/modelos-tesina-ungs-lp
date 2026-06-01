@@ -1,5 +1,5 @@
 import numpy as np
-import math
+import itertools
 
 def generatePositionsCastro(W, H, w, h):
     # Generar el conjunto de posiciones en el eje x (X)
@@ -102,76 +102,86 @@ def generatePositionsXY(W, H, w, h):
 
     return XY_x, XY_y
 
-def generatePositionsXYM1(W, H, w, h):
-    # Ítems no rotados
-    XY_x = {
-        (x, y)
-        for x in range(0, W - w + 1)
-        for y in range(0, H - h + 1)
+# def generatePositionsXYM1(W, H, w, h):
+#     # Ítems no rotados
+#     XY_x = {
+#         (x, y)
+#         for x in range(0, W - w + 1)
+#         for y in range(0, H - h + 1)
+#     }
+
+#     # Ítems rotados
+#     XY_y = {
+#         (x, y)
+#         for x in range(0, W - h + 1)
+#         for y in range(0, H - w + 1)
+#     }
+
+#     return XY_x, XY_y
+
+
+# def generatePositionsXYM2(W, H, w, h): #metodo Marcelo - parece que anda bien
+#     # Conjunto Q
+#     Q = {i * w + j * h for i in range(W // w + 1) for j in range(W // h + 1) if i * w + j * h <= W - h}
+#     Q = sorted(Q)  # ordeno el conjunto
+
+#     # Conjunto P
+#     P = {x for x in range(0, W - h + 1) if x in Q}
+
+#     # Puntos XY para ítems sin rotar (lado largo)
+#     XY_x = {(x, y) for x in P for y in P if x + w <= W and y + h <= H}
+
+#     # Puntos XY para ítems rotados (lado corto)
+#     XY_y = {(x, y) for x in P for y in P if x + h <= W and y + w <= H}
+
+#     return XY_x, XY_y
+
+# def generatePositionsXYM1(W, H, w, h):
+
+#     # Posiciones posibles para ítems NO rotados (w x h)
+#     P_x = range(0, W - w + 1)
+#     P_y = range(0, H - h + 1)
+
+#     XY_x = {(x, y) for x in P_x for y in P_y}
+
+#     # Posiciones posibles para ítems ROTADOS (h x w)
+#     P_x_r = range(0, W - h + 1)
+#     P_y_r = range(0, H - w + 1)
+
+#     XY_y = {(x, y) for x in P_x_r for y in P_y_r}
+
+#     return XY_x, XY_y
+
+
+def generatePositionsXYM(W, H, w, h):
+    # Método de Marcelo mejorado
+
+    Qx = {
+        i * w + j * h
+        for i in range(W // w + 1)
+        for j in range((W - i * w) // h + 1)
     }
 
-    # Ítems rotados
-    XY_y = {
-        (x, y)
-        for x in range(0, W - h + 1)
-        for y in range(0, H - w + 1)
+    Qy = {
+        i * w + j * h
+        for i in range(H // w + 1)
+        for j in range((H - i * w) // h + 1)
     }
-
-    return XY_x, XY_y
-
-
-def generatePositionsXYM2(W, H, w, h): #metodo Marcelo - parece que anda bien
-    # Conjunto Q
-    Q = {i * w + j * h for i in range(W // w + 1) for j in range(W // h + 1) if i * w + j * h <= W - h}
-    Q = sorted(Q)  # ordeno el conjunto
-
-    # Conjunto P
-    P = {x for x in range(0, W - h + 1) if x in Q}
-
-    # Puntos XY para ítems sin rotar (lado largo)
-    XY_x = {(x, y) for x in P for y in P if x + w <= W and y + h <= H}
-
-    # Puntos XY para ítems rotados (lado corto)
-    XY_y = {(x, y) for x in P for y in P if x + h <= W and y + w <= H}
-
-    return XY_x, XY_y
-
-def generatePositionsXYM1(W, H, w, h):
-
-    # Posiciones posibles para ítems NO rotados (w x h)
-    P_x = range(0, W - w + 1)
-    P_y = range(0, H - h + 1)
-
-    XY_x = {(x, y) for x in P_x for y in P_y}
-
-    # Posiciones posibles para ítems ROTADOS (h x w)
-    P_x_r = range(0, W - h + 1)
-    P_y_r = range(0, H - w + 1)
-
-    XY_y = {(x, y) for x in P_x_r for y in P_y_r}
-
-    return XY_x, XY_y
-
-
-def generatePositionsXYM(W, H, w, h):     #Método de Marcelo mejorado, sino fallaba en casos grandes como el 18
-
-    Qx = {i * w + j * h
-          for i in range(W // w + 1)
-          for j in range(W // h + 1)
-          if i * w + j * h <= W}
-
-    Qy = {i * w + j * h
-          for i in range(H // w + 1)
-          for j in range(H // h + 1)
-          if i * w + j * h <= H}
 
     Qx |= {0, max(0, W - w), max(0, W - h)}
     Qy |= {0, max(0, H - h), max(0, H - w)}
 
-    Px = sorted(x for x in Qx if 0 <= x <= W)
-    Py = sorted(y for y in Qy if 0 <= y <= H)
+    xSinRotar = sorted(x for x in Qx if x + w <= W)
+    ySinRotar = sorted(y for y in Qy if y + h <= H)
 
-    XY_x = {(x, y) for x in Px for y in Py if x + w <= W and y + h <= H}  # no rotado (w×h)
-    XY_y = {(x, y) for x in Px for y in Py if x + h <= W and y + w <= H}  # rotado (h×w)
+    XY_x = set(itertools.product(xSinRotar, ySinRotar))
+
+    if w != h:
+        xRotado = sorted(x for x in Qx if x + h <= W)
+        yRotado = sorted(y for y in Qy if y + w <= H)
+
+        XY_y = set(itertools.product(xRotado, yRotado))
+    else:
+        XY_y = set()
 
     return XY_x, XY_y
