@@ -84,74 +84,6 @@ def createCMatrix(W, H, positions, w, h, points): #usado en los modelos
 
 #-------------------------------------------------------------------
 
-def generatePositionsXY(W, H, w, h):
-    def axisPositions(binSize, sizes):
-        positions = {0} # incluyo siempre la posicion 0
-        for s in sizes: # tomo los posibles tamaños que entrarian de los items (en este caso w y h o al reves)
-            positions.update(range(0, binSize, s)) # guardo las posiciones en base a los multiplos de cada valor hasta el tamaño del bin
-            positions.add(binSize - s)  # incluyo la posicion limite empezando desde atras
-        return sorted(p for p in positions if p >= 0 and p < binSize) # ordeno de menor a mayor con p >= 0 y p < binSize
-    
-    Px = axisPositions(W, [w, h]) # armo las posibles posiciones en el eje x
-    Py = axisPositions(H, [h, w]) # armo las posibles posiciones en el eje y 
-
-    XY_x = {(x, y) for x in Px for y in Py if x + w <= W and y + h <= H} # armo los puntos (posiciones finales) para items SIN ROTAR 
-                                                                        # usando los Px y Py siempre y cuando entren en el bin
-    XY_y = {(x, y) for x in Px for y in Py if x + h <= W and y + w <= H} # armo los puntos (posiciones finales) para items ROTADOS 
-                                                                        # usando los Px y Py siempre y cuando entren en el bin
-
-    return XY_x, XY_y
-
-# def generatePositionsXYM1(W, H, w, h):
-#     # Ítems no rotados
-#     XY_x = {
-#         (x, y)
-#         for x in range(0, W - w + 1)
-#         for y in range(0, H - h + 1)
-#     }
-
-#     # Ítems rotados
-#     XY_y = {
-#         (x, y)
-#         for x in range(0, W - h + 1)
-#         for y in range(0, H - w + 1)
-#     }
-
-#     return XY_x, XY_y
-
-
-# def generatePositionsXYM2(W, H, w, h): #metodo Marcelo - parece que anda bien
-#     # Conjunto Q
-#     Q = {i * w + j * h for i in range(W // w + 1) for j in range(W // h + 1) if i * w + j * h <= W - h}
-#     Q = sorted(Q)  # ordeno el conjunto
-
-#     # Conjunto P
-#     P = {x for x in range(0, W - h + 1) if x in Q}
-
-#     # Puntos XY para ítems sin rotar (lado largo)
-#     XY_x = {(x, y) for x in P for y in P if x + w <= W and y + h <= H}
-
-#     # Puntos XY para ítems rotados (lado corto)
-#     XY_y = {(x, y) for x in P for y in P if x + h <= W and y + w <= H}
-
-#     return XY_x, XY_y
-
-# def generatePositionsXYM1(W, H, w, h):
-
-#     # Posiciones posibles para ítems NO rotados (w x h)
-#     P_x = range(0, W - w + 1)
-#     P_y = range(0, H - h + 1)
-
-#     XY_x = {(x, y) for x in P_x for y in P_y}
-
-#     # Posiciones posibles para ítems ROTADOS (h x w)
-#     P_x_r = range(0, W - h + 1)
-#     P_y_r = range(0, H - w + 1)
-
-#     XY_y = {(x, y) for x in P_x_r for y in P_y_r}
-
-#     return XY_x, XY_y
-
 
 def generatePositionsXYM(W, H, w, h):
     # Método de Marcelo mejorado
@@ -181,6 +113,32 @@ def generatePositionsXYM(W, H, w, h):
         yRotado = sorted(y for y in Qy if y + w <= H)
 
         XY_y = set(itertools.product(xRotado, yRotado))
+    else:
+        XY_y = set()
+
+    return XY_x, XY_y
+
+def generatePositionsXYM2(W, H, w, h):
+    limit = W - h
+
+    Q = {
+        i * w + j * h
+        for i in range(limit // w + 1)
+        for j in range((limit - i * w) // h + 1)
+    }
+
+    # Ítem sin rotar: ancho w, alto h
+    posicionesXNoRotado = [q for q in Q if q + w <= W]
+    posicionesYNoRotado = [q for q in Q if q + h <= H]
+
+    XY_x = set(itertools.product(posicionesXNoRotado, posicionesYNoRotado))
+
+    # Ítem rotado: ancho h, alto w
+    if w != h:
+        posicionesXRotado = [q for q in Q if q + h <= W]
+        posicionesYRotado = [q for q in Q if q + w <= H]
+
+        XY_y = set(itertools.product(posicionesXRotado, posicionesYRotado))
     else:
         XY_y = set()
 

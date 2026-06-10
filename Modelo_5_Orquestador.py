@@ -4,7 +4,7 @@ import time
 from Objetos import Rebanada
 from Objetos import Item
 
-from Position_generator import generatePositionsXYM
+from Position_generator import generatePositionsXYM, generatePositionsXYM2
 from Modelo_5_Propio_Maestro import * 
 from Modelo_5_Propio_Esclavo_Alternativo import * 
 from Config import *
@@ -185,7 +185,7 @@ def exportarLayoutFinal(binWidth, binHeight, itemWidth, itemHeight, itemsQuantit
 
 
 # Orquestador principal
-def orquestador(queue,manualInterruption,maxTime,initialTime,configData):
+def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver_solucion=False):
     try:
         # Reiniciar el contador de IDs de Rebanada para cada ejecución
         Rebanada.resetIdCounter()
@@ -199,7 +199,7 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData):
         itemsQuantity = configData.getItemsQuantity()
 
         # Genero posiciones a usar en el bin 
-        posXY_x, posXY_y=generatePositionsXYM(binWidth,binHeight, itemWidth, itemHeight)
+        posXY_x, posXY_y=generatePositionsXYM2(binWidth,binHeight, itemWidth, itemHeight)
         
         # Creo items a ubicar en los bins (sin posicion ni orientacion definida, eso lo decide el modelo)
         items=generarListaItems(itemsQuantity,itemHeight,itemWidth)
@@ -357,11 +357,17 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData):
         else:
             print("No se generó ninguna rebanada activa en la solución final del maestro. No se exporta layout.")
         # Devuelvo resultado
+        if devolver_solucion:
+            return objectiveValueSlaveModel, rebanadasActivas
+
         return objectiveValueSlaveModel
     
     except CplexSolverError as e:
         solverTime = round(time.time() - initialTime, 2)
         handleSolverError(e, queue, solverTime)
+        if devolver_solucion:
+            return None, []
+
         return None
 
 def executeWithTimeLimit(maxTime):
