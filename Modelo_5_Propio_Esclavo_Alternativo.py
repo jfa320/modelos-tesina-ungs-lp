@@ -84,6 +84,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, dualValues, anchoBin,altoItemSinRotar,
     print("--------------------------------------------------------------------------------------------------------------------")
     print("IN - Create Slave Model")
     A_i=dualValues
+    alpha = A_i.get("alpha", 0.0)
     h = altoItemSinRotar
     w = anchoItemSinRotar
     W= anchoBin
@@ -152,7 +153,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, dualValues, anchoBin,altoItemSinRotar,
             zVarsNoRotadas.append(varName)
 
             sumaDual = calcularSumaDual(a, b, 'x')
-            coeff = 1.0 - sumaDual
+            coeff = 1.0 - alpha - sumaDual
             objCoeffs.append(coeff)
 
         addVariables(model, zVarsNoRotadas, objCoeffs, "B")
@@ -166,7 +167,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, dualValues, anchoBin,altoItemSinRotar,
             zVarsRotadas.append(varName)
 
             sumaDual = calcularSumaDual(a, b, 'y')
-            coeff = 1.0 - sumaDual
+            coeff = 1.0 - alpha - sumaDual
             objCoeffs.append(coeff)
 
         addVariables(model, zVarsRotadas, objCoeffs, "B")

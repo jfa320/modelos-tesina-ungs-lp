@@ -190,11 +190,11 @@ ITEM_HEIGHT = 8        # h
 
 # # OR Library test
 # # Caso 18
-# ITEMS_QUANTITY = 100     # ítems
-# BIN_WIDTH = 10          # ancho del bin
-# BIN_HEIGHT = 30         # alto del bin
-# ITEM_WIDTH = 1         # ancho de cada ítem
-# ITEM_HEIGHT = 6         # alto de cada ítem
+ITEMS_QUANTITY = 100     # ítems
+BIN_WIDTH = 10          # ancho del bin
+BIN_HEIGHT = 30         # alto del bin
+ITEM_WIDTH = 1         # ancho de cada ítem
+ITEM_HEIGHT = 6         # alto de cada ítem
 # # optimo: 50
 
 # # Caso 3

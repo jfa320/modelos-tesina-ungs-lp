@@ -119,6 +119,8 @@ def generatePositionsXYM(W, H, w, h):
     return XY_x, XY_y
 
 def generatePositionsXYM2(W, H, w, h):
+    # Precondicion del metodo: dimensiones normalizadas con W >= H y w >= h.
+    # El orquestador normaliza la instancia antes de llamar a esta funcion.
     limit = W - h
 
     Q = {

@@ -127,7 +127,8 @@ def calcularReducedCostReal(rebanada, preciosDuales, w, h):
                 sumaDuales += preciosDuales["pi"].get(clave, 0.0)
 
     c_r = len(rebanada.getItems())
-    reducedCostReal = c_r - sumaDuales
+    alpha = preciosDuales.get("alpha", 0.0)
+    reducedCostReal = c_r - (alpha * c_r) - sumaDuales
 
     return reducedCostReal, c_r, sumaDuales
 
@@ -184,6 +185,52 @@ def exportarLayoutFinal(binWidth, binHeight, itemWidth, itemHeight, itemsQuantit
     print(f"Layout final exportado en: {outputPath}")
 
 
+def desnormalizarRebanadasParaSalida(rebanadas, binWidthOriginal, binHeightOriginal, binNormalizado, itemNormalizado):
+    if not binNormalizado and not itemNormalizado:
+        return rebanadas
+
+    rebanadasDesnormalizadas = []
+
+    for rebanada in rebanadas:
+        itemsDesnormalizados = []
+
+        for item in rebanada.getItems():
+            x = item.getPosicionX()
+            y = item.getPosicionY()
+            ancho = item.getAncho()
+            alto = item.getAlto()
+
+            if binNormalizado:
+                xOriginal = binWidthOriginal - (y + alto)
+                yOriginal = x
+                anchoOriginal = alto
+                altoOriginal = ancho
+            else:
+                xOriginal = x
+                yOriginal = y
+                anchoOriginal = ancho
+                altoOriginal = alto
+
+            itemOriginal = Item(
+                alto=altoOriginal,
+                ancho=anchoOriginal,
+                rotado=item.getRotado() ^ binNormalizado ^ itemNormalizado,
+                posicionX=xOriginal,
+                posicionY=yOriginal
+            )
+            itemsDesnormalizados.append(itemOriginal)
+
+        rebanadasDesnormalizadas.append(
+            Rebanada(
+                alto=binHeightOriginal,
+                ancho=binWidthOriginal,
+                items=itemsDesnormalizados
+            )
+        )
+
+    return rebanadasDesnormalizadas
+
+
 # Orquestador principal
 def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver_solucion=False):
     try:
@@ -192,11 +239,25 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
         iteracionesSinMejora = 0
 
         # Seteo configuraciones en base a los datos recibidos en configData
-        binWidth = configData.getBinWidth()
-        binHeight = configData.getBinHeight()  
-        itemWidth = configData.getItemWidth()
-        itemHeight = configData.getItemHeight()
+        binWidthOriginal = configData.getBinWidth()
+        binHeightOriginal = configData.getBinHeight()
+        itemWidthOriginal = configData.getItemWidth()
+        itemHeightOriginal = configData.getItemHeight()
         itemsQuantity = configData.getItemsQuantity()
+
+        binWidth = binWidthOriginal
+        binHeight = binHeightOriginal
+        itemWidth = itemWidthOriginal
+        itemHeight = itemHeightOriginal
+
+        binNormalizado = binHeight > binWidth
+        itemNormalizado = itemHeight > itemWidth
+
+        if binNormalizado:
+            binWidth, binHeight = binHeight, binWidth
+
+        if itemNormalizado:
+            itemWidth, itemHeight = itemHeight, itemWidth
 
         # Genero posiciones a usar en el bin 
         posXY_x, posXY_y=generatePositionsXYM2(binWidth,binHeight, itemWidth, itemHeight)
@@ -220,6 +281,7 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
             masterModel = createMasterModel(maxTime,rebanadas,binHeight,binWidth,itemHeight,itemWidth,items, posXY_x, posXY_y)
             # Resolver modelo maestro
             objectiveMaster , precios_duales, _ = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=True, initialTime=initialTime)
+            print(f"Dual consLimiteItems alpha: {precios_duales.get('alpha', 0.0)}")
 
             if objectiveMasterAnterior is None:
                 print("FO maestro relajado anterior: None (primera iteración)")
@@ -317,7 +379,69 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
             
             # Si la nueva rebanada es duplicada, corto el proceso para evitar ciclos
             if esDuplicada:
-                print("Rebanada duplicada detectada. Corte de generación.")
+                reducedCostReal, cantidadItems, sumaDuales = calcularReducedCostReal(nueva_rebanada, precios_duales, itemWidth, itemHeight)
+                print(
+                    "Rebanada duplicada detectada. "
+                    f"FO esclavo={objectiveValueSlaveModel}, "
+                    f"items={cantidadItems}, "
+                    f"sumaDualesOcupacion={sumaDuales}, "
+                    f"alpha={precios_duales.get('alpha', 0.0)}, "
+                    f"costoReducidoCompleto={reducedCostReal}"
+                )
+                solucionesExcluidas = []
+                if variablesActivas:
+                    solucionesExcluidas.append(variablesActivas)
+
+                seAgregoAlternativa = False
+                for _ in range(MAX_EXTRA):
+                    slaveModel = createSlaveModel(
+                        maxTime,
+                        posXY_x,
+                        posXY_y,
+                        precios_duales,
+                        binWidth,
+                        itemHeight,
+                        itemWidth,
+                        binHeight
+                    )
+
+                    agregarRestriccionNoVacia(slaveModel)
+
+                    for i, activas in enumerate(solucionesExcluidas):
+                        agregarNoGoodCut(slaveModel, activas, i)
+
+                    nuevaRebanadaAlternativa, objectiveValueAlternativa, variablesActivasAlternativa = solveSlaveModel(
+                        slaveModel,
+                        queue,
+                        manualInterruption,
+                        binWidth,
+                        itemHeight,
+                        itemWidth
+                    )
+
+                    if objectiveValueAlternativa is None:
+                        break
+
+                    if objectiveValueAlternativa <= EPS:
+                        print("[DUPLICADA] No se encontro alternativa con mejora positiva.")
+                        break
+
+                    if nuevaRebanadaAlternativa is None or not variablesActivasAlternativa:
+                        break
+
+                    firmaAlternativa = construirFirmaRebanada(nuevaRebanadaAlternativa)
+                    if firmaAlternativa not in firmasGeneradas:
+                        rebanadas.append(nuevaRebanadaAlternativa)
+                        firmasGeneradas.add(firmaAlternativa)
+                        seAgregoAlternativa = True
+                        break
+
+                    solucionesExcluidas.append(variablesActivasAlternativa)
+
+                if seAgregoAlternativa:
+                    continue
+
+                print("Rebanada duplicada detectada sin alternativa nueva. Corte de generación.")
                 break
 
             # Si el esclavo no generó ninguna rebanada, corto el proceso
@@ -352,13 +476,20 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
         objectiveValueSlaveModel, _, variablesActivasMaestro = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=False, initialTime=initialTime)
         # Genero png con layout final solo con las rebanadas activas en la solución final del maestro
         rebanadasActivas = obtenerRebanadasActivas(rebanadas, variablesActivasMaestro)
-        if rebanadasActivas:
-            exportarLayoutFinal(binWidth, binHeight, itemWidth, itemHeight, itemsQuantity, rebanadasActivas)
+        rebanadasActivasSalida = desnormalizarRebanadasParaSalida(
+            rebanadasActivas,
+            binWidthOriginal,
+            binHeightOriginal,
+            binNormalizado,
+            itemNormalizado
+        )
+        if rebanadasActivasSalida:
+            exportarLayoutFinal(binWidthOriginal, binHeightOriginal, itemWidthOriginal, itemHeightOriginal, itemsQuantity, rebanadasActivasSalida)
         else:
             print("No se generó ninguna rebanada activa en la solución final del maestro. No se exporta layout.")
         # Devuelvo resultado
         if devolver_solucion:
-            return objectiveValueSlaveModel, rebanadasActivas
+            return objectiveValueSlaveModel, rebanadasActivasSalida
 
         return objectiveValueSlaveModel
     

@@ -177,7 +177,7 @@ def solveMasterModel(model, queue, manualInterruption, relajarModelo, initialTim
 def getDualValues(model):
     print("Extrayendo valores duales...")
 
-    P_star = {"pi": {}}
+    P_star = {"pi": {}, "alpha": 0.0}
 
     dualValues = model.solution.get_dual_values()
     constraintNames = model.linear_constraints.get_names()
@@ -187,6 +187,8 @@ def getDualValues(model):
             # nombre: consItem_a_b
             _, a, b = name.split("_")
             P_star["pi"][f"({a},{b})"] = dualValue
+        elif name == "consLimiteItems":
+            P_star["alpha"] = dualValue
 
     return P_star
 
