@@ -48,6 +48,60 @@ def _obtener_rectangulo_rebanada(rebanada, escala, origen_x, origen_y, alto_bin)
     return x1, y1, x2, y2
 
 
+def _obtener_celdas_rebanada(rebanada):
+    celdas = set()
+    for item in rebanada.getItems():
+        x0 = item.getPosicionX()
+        y0 = item.getPosicionY()
+        for dx in range(item.getAncho()):
+            for dy in range(item.getAlto()):
+                celdas.add((x0 + dx, y0 + dy))
+    return celdas
+
+
+def _obtener_rectangulo_celda(celda, escala, origen_x, origen_y, alto_bin):
+    x, y = celda
+    x1 = origen_x + int(x * escala)
+    y1 = origen_y + int((alto_bin - y - 1) * escala)
+    x2 = origen_x + int((x + 1) * escala)
+    y2 = origen_y + int((alto_bin - y) * escala)
+    return x1, y1, x2, y2
+
+
+def _dibujar_rebanada(draw, font, rebanada, indice_rebanada, escala, origen_x, origen_y, alto_bin):
+    celdas = _obtener_celdas_rebanada(rebanada)
+    if not celdas:
+        return
+
+    for celda in celdas:
+        draw.rectangle(
+            _obtener_rectangulo_celda(celda, escala, origen_x, origen_y, alto_bin),
+            fill=COLOR_REBANADA_RELLENO
+        )
+
+    for x, y in celdas:
+        x1, y1, x2, y2 = _obtener_rectangulo_celda((x, y), escala, origen_x, origen_y, alto_bin)
+        if (x, y + 1) not in celdas:
+            draw.line([(x1, y1), (x2, y1)], fill=COLOR_REBANADA_BORDE, width=2)
+        if (x + 1, y) not in celdas:
+            draw.line([(x2, y1), (x2, y2)], fill=COLOR_REBANADA_BORDE, width=2)
+        if (x, y - 1) not in celdas:
+            draw.line([(x1, y2), (x2, y2)], fill=COLOR_REBANADA_BORDE, width=2)
+        if (x - 1, y) not in celdas:
+            draw.line([(x1, y1), (x1, y2)], fill=COLOR_REBANADA_BORDE, width=2)
+
+    min_x = min(x for x, _ in celdas)
+    max_y = max(y for _, y in celdas)
+    label_x = origen_x + int(min_x * escala) + 4
+    label_y = origen_y + int((alto_bin - max_y - 1) * escala) + 4
+    draw.text(
+        (label_x, label_y),
+        f"R{indice_rebanada}",
+        fill=COLOR_REBANADA_TEXTO,
+        font=font
+    )
+
+
 def _dibujar_ejes(draw, font, origen_x, origen_y, ancho_bin_px, alto_bin_px, bin_width, bin_height):
     x0 = origen_x
     y0 = origen_y + alto_bin_px
@@ -143,16 +197,7 @@ def exportar_solucion_bin_a_png(bin_width, bin_height, item_width, item_height, 
     _dibujar_ejes(draw, font, origen_x, origen_y, ancho_bin_px, alto_bin_px, bin_width, bin_height)
 
     for indice_rebanada, rebanada in enumerate(rebanadas_activas, start=1):
-        rect_rebanada = _obtener_rectangulo_rebanada(rebanada, escala, origen_x, origen_y, bin_height)
-        if rect_rebanada is not None:
-            rect_rebanada_expandida = _ajustar_rectangulo(rect_rebanada, -2)
-            draw.rectangle(rect_rebanada_expandida, fill=COLOR_REBANADA_RELLENO, outline=COLOR_REBANADA_BORDE, width=2)
-            draw.text(
-                (rect_rebanada_expandida[0] + 4, rect_rebanada_expandida[1] + 4),
-                f"R{indice_rebanada}",
-                fill=COLOR_REBANADA_TEXTO,
-                font=font
-            )
+        _dibujar_rebanada(draw, font, rebanada, indice_rebanada, escala, origen_x, origen_y, bin_height)
 
         for indice_item, item in enumerate(rebanada.getItems(), start=1):
             rect_item = _obtener_rectangulo_item(item, escala, origen_x, origen_y, bin_height)

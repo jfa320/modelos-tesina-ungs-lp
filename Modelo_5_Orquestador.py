@@ -26,10 +26,16 @@ MAX_ESTANCAMIENTO = 5
 MAX_EXTRA = 5
 
 
+def calcularAltoNominalRebanada(itemWidth, itemHeight):
+    return min(itemWidth, itemHeight)
+
+
 def generarRebanadasIniciales(binWidth, binHeight,
                               itemWidth, itemHeight,
                               posXY_x, posXY_y,
                               maxItems):
+
+    altoNominalRebanada = calcularAltoNominalRebanada(itemWidth, itemHeight)
 
     def generarPorOrientacion(posiciones, w, h, rotado):
         rebanadas = []
@@ -46,7 +52,7 @@ def generarRebanadasIniciales(binWidth, binHeight,
             if itemsColocados >= maxItems:
                 break
 
-            rebanada = Rebanada(alto=binHeight, ancho=binWidth)
+            rebanada = Rebanada(alto=altoNominalRebanada, ancho=binWidth)
             ocupadas = set()
             x = 0
 
@@ -185,10 +191,11 @@ def exportarLayoutFinal(binWidth, binHeight, itemWidth, itemHeight, itemsQuantit
     print(f"Layout final exportado en: {outputPath}")
 
 
-def desnormalizarRebanadasParaSalida(rebanadas, binWidthOriginal, binHeightOriginal, binNormalizado, itemNormalizado):
+def desnormalizarRebanadasParaSalida(rebanadas, binWidthOriginal, binHeightOriginal, itemWidthOriginal, itemHeightOriginal, binNormalizado, itemNormalizado):
     if not binNormalizado and not itemNormalizado:
         return rebanadas
 
+    altoNominalRebanada = calcularAltoNominalRebanada(itemWidthOriginal, itemHeightOriginal)
     rebanadasDesnormalizadas = []
 
     for rebanada in rebanadas:
@@ -222,7 +229,7 @@ def desnormalizarRebanadasParaSalida(rebanadas, binWidthOriginal, binHeightOrigi
 
         rebanadasDesnormalizadas.append(
             Rebanada(
-                alto=binHeightOriginal,
+                alto=altoNominalRebanada,
                 ancho=binWidthOriginal,
                 items=itemsDesnormalizados
             )
@@ -480,6 +487,8 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
             rebanadasActivas,
             binWidthOriginal,
             binHeightOriginal,
+            itemWidthOriginal,
+            itemHeightOriginal,
             binNormalizado,
             itemNormalizado
         )

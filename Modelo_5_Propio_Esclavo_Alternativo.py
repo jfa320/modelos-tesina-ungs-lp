@@ -197,6 +197,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, dualValues, anchoBin,altoItemSinRotar,
                 f"consNoOverlap_{x}_{y}",
                 DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS
             )
+
         print("OUT - Create Slave Model")    
         return model
     except CplexSolverError:
@@ -256,15 +257,10 @@ def solveSlaveModel(model, queue, manualInterruption, binWidth, itemHeight, item
             itemWidth
         )
 
-        height = obtenerYMaximo(
-            posicionesOcupadas,
-            itemHeight,
-            itemWidth,
-            itemsConstruidos
-        )
+        altoNominalRebanada = min(itemHeight, itemWidth)
 
         rebanada = Rebanada(
-            alto=height,
+            alto=altoNominalRebanada,
             ancho=binWidth,
             items=itemsConstruidos
         )
