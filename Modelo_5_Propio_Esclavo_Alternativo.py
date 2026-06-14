@@ -198,6 +198,55 @@ def createSlaveModel(maxTime, XY_x, XY_y, dualValues, anchoBin,altoItemSinRotar,
                 DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS
             )
 
+        # La rebanada tiene alto nominal min(h, w): los items pueden sobresalir,
+        # pero su posicion inicial vertical debe caer dentro de una unica franja.
+        altoRebanada = min(h, w)
+        basesRebanada = list(range(0, H - altoRebanada + 1))
+        uVars = [f"u_{s}" for s in basesRebanada]
+
+        if uVars:
+            addVariables(model, uVars, [0.0] * len(uVars), "B")
+            addConstraintSet(
+                model,
+                [1.0] * len(uVars),
+                uVars,
+                1.0,
+                "L",
+                added_constraints,
+                "consUnaBaseRebanada",
+                DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS
+            )
+
+            for (a, b) in posiciones_x_validas:
+                basesCompatibles = [s for s in basesRebanada if s <= b < s + altoRebanada]
+                indexes = [f"z_x_{a}_{b}"] + [f"u_{s}" for s in basesCompatibles]
+                coeffs = [1.0] + [-1.0] * len(basesCompatibles)
+                addConstraintSet(
+                    model,
+                    coeffs,
+                    indexes,
+                    0.0,
+                    "L",
+                    added_constraints,
+                    f"consFranja_x_{a}_{b}",
+                    DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS
+                )
+
+            for (a, b) in posiciones_y_validas:
+                basesCompatibles = [s for s in basesRebanada if s <= b < s + altoRebanada]
+                indexes = [f"z_y_{a}_{b}"] + [f"u_{s}" for s in basesCompatibles]
+                coeffs = [1.0] + [-1.0] * len(basesCompatibles)
+                addConstraintSet(
+                    model,
+                    coeffs,
+                    indexes,
+                    0.0,
+                    "L",
+                    added_constraints,
+                    f"consFranja_y_{a}_{b}",
+                    DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS
+                )
+
         print("OUT - Create Slave Model")    
         return model
     except CplexSolverError:
