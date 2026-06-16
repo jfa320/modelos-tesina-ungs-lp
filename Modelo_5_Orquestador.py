@@ -24,6 +24,8 @@ EPS = 1e-9  # tolerancia numérica
 EPS_MASTER = 1e-4
 MAX_ESTANCAMIENTO = 5
 MAX_EXTRA = 5
+MAX_EXTRA_PRICING_POOL = 2
+MAX_COLUMNAS_PRICING_POOL = 20
 
 
 def calcularAltoNominalRebanada(itemWidth, itemHeight):
@@ -174,6 +176,90 @@ def agregarRestriccionNoVacia(slaveModel):
     )
 
 
+def agregarLimiteCantidadItems(slaveModel, maxItemsColumna):
+    nombres = []
+    valores = []
+
+    for nombre in slaveModel.variables.get_names():
+        if nombre.startswith("z_x_") or nombre.startswith("z_y_"):
+            nombres.append(nombre)
+            valores.append(1.0)
+
+    if not nombres:
+        return
+
+    addConstraint(
+        slaveModel,
+        valores,
+        nombres,
+        maxItemsColumna,
+        "L",
+        f"max_items_col_{maxItemsColumna}_{slaveModel.linear_constraints.get_num()}"
+    )
+
+
+def generarAlternativasPricing(maxTime, posXY_x, posXY_y, precios_duales, rebanadas, firmasGeneradas, binWidth, binHeight, itemHeight, itemWidth, queue, manualInterruption, variablesIniciales=None):
+    solucionesExcluidas = []
+    nuevas = []
+
+    if variablesIniciales:
+        solucionesExcluidas.append(variablesIniciales)
+
+    maxItemsPorRebanada = max((r.getTotalItems() for r in rebanadas), default=0)
+    limitesCardinalidad = [None] + [
+        limite
+        for limite in range(maxItemsPorRebanada, max(maxItemsPorRebanada - 4, 0), -1)
+    ]
+
+    for limiteCardinalidad in limitesCardinalidad:
+        for _ in range(MAX_EXTRA_PRICING_POOL):
+            slaveModel = createSlaveModel(
+                maxTime,
+                posXY_x,
+                posXY_y,
+                precios_duales,
+                binWidth,
+                itemHeight,
+                itemWidth,
+                binHeight
+            )
+
+            agregarRestriccionNoVacia(slaveModel)
+            if limiteCardinalidad is not None:
+                agregarLimiteCantidadItems(slaveModel, limiteCardinalidad)
+
+            for i, activas in enumerate(solucionesExcluidas):
+                agregarNoGoodCut(slaveModel, activas, i)
+
+            nuevaRebanada, objectiveValue, variablesActivas = solveSlaveModel(
+                slaveModel,
+                queue,
+                manualInterruption,
+                binWidth,
+                itemHeight,
+                itemWidth
+            )
+
+            if objectiveValue is None or objectiveValue < -EPS:
+                break
+
+            if nuevaRebanada is None or not variablesActivas:
+                break
+
+            firma = construirFirmaRebanada(nuevaRebanada)
+            if firma not in firmasGeneradas:
+                rebanadas.append(nuevaRebanada)
+                firmasGeneradas.add(firma)
+                nuevas.append(nuevaRebanada)
+
+                if len(nuevas) >= MAX_COLUMNAS_PRICING_POOL:
+                    return nuevas
+
+            solucionesExcluidas.append(variablesActivas)
+
+    return nuevas
+
+
 def obtenerRebanadasActivas(rebanadas, variablesActivasMaestro):
     idsActivos = set()
 
@@ -280,6 +366,7 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
         # Construyo firma de rebanadas iniciales para evitar que se generen nuevamente en alguna iteracion
         firmasGeneradas = {construirFirmaRebanada(r) for r in rebanadas}
         objectiveMasterAnterior = None
+        poolAlternativoUsado = False
 
         while True:
             #TODO: Aca podria mejorar evitando la creacion del modelo en cada vuelta.
@@ -470,6 +557,33 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
 
             # Si el maestro no mejora luego de MAX_ESTANCAMIENTO iteraciones, corto el proceso para evitar estancamiento numérico
             if iteracionesSinMejora >= MAX_ESTANCAMIENTO:
+                rebanadasAlternativas = []
+
+                if not poolAlternativoUsado and objectiveValueSlaveModel > EPS:
+                    poolAlternativoUsado = True
+                    rebanadasAlternativas = generarAlternativasPricing(
+                        maxTime,
+                        posXY_x,
+                        posXY_y,
+                        precios_duales,
+                        rebanadas,
+                        firmasGeneradas,
+                        binWidth,
+                        binHeight,
+                        itemHeight,
+                        itemWidth,
+                        queue,
+                        manualInterruption,
+                        variablesActivas
+                    )
+
+                if rebanadasAlternativas:
+                    print(f"Estancamiento LP con pricing positivo: se agregaron {len(rebanadasAlternativas)} columnas alternativas.")
+                    iteracionesSinMejora = 0
+                    objectiveMasterAnterior = objectiveMaster
+                    iteracion += 1
+                    continue
+
                 print("Corte por estancamiento numerico del maestro.")
                 break
 

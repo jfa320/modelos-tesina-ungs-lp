@@ -91,11 +91,11 @@ ITEM_HEIGHT= 2 # h en el modelo
 # Desde acá empiezan los casos de la OR Library (grandes)
 
 # # Caso 7 (optimo = 7)
-# ITEMS_QUANTITY = 14    # obliga a aprovechar bien el espacio
-# BIN_WIDTH = 50         # W
-# BIN_HEIGHT = 20        # H
-# ITEM_WIDTH = 13        # w
-# ITEM_HEIGHT = 8        # h
+ITEMS_QUANTITY = 14    # obliga a aprovechar bien el espacio
+BIN_WIDTH = 50         # W
+BIN_HEIGHT = 20        # H
+ITEM_WIDTH = 13        # w
+ITEM_HEIGHT = 8        # h
 
 # Caso 8:
 # Optimo 16

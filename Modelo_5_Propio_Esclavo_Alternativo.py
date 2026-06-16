@@ -342,7 +342,8 @@ def solveSlaveModel(model, queue, manualInterruption, binWidth, itemHeight, item
     model.solve()
 
     statusString = model.solution.get_status_string()
-    if "optimal" not in statusString.lower() and "feasible" not in statusString.lower():
+    statusStringLower = statusString.lower()
+    if "infeasible" in statusStringLower or ("optimal" not in statusStringLower and "feasible" not in statusStringLower):
         print("No hay solución factible en el esclavo")
         print("OUT - Solve Slave Model")
         return None, None, []
@@ -391,7 +392,8 @@ def solveSlaveModel(model, queue, manualInterruption, binWidth, itemHeight, item
         model.solve()
 
         statusStringFase2 = model.solution.get_status_string()
-        if "optimal" in statusStringFase2.lower() or "feasible" in statusStringFase2.lower():
+        statusStringFase2Lower = statusStringFase2.lower()
+        if "infeasible" not in statusStringFase2Lower and ("optimal" in statusStringFase2Lower or "feasible" in statusStringFase2Lower):
             rebanadaFase2, itemsFase2, variablesActivasFase2, solucionRawFase2 = extraerSolucionActual(model)
 
             if rebanadaFase2 is not None:
