@@ -203,7 +203,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, dualValues, anchoBin,altoItemSinRotar,
     except CplexSolverError:
         raise
         
-def solveSlaveModel(model, queue, manualInterruption, binWidth, itemHeight, itemWidth):
+def solveSlaveModel(model, queue, manualInterruption, binWidth, itemHeight, itemWidth, altoRebanada):
     print("IN - Solve Slave Model")
 
     EPS_SECOND_PHASE = 1e-8
@@ -257,10 +257,8 @@ def solveSlaveModel(model, queue, manualInterruption, binWidth, itemHeight, item
             itemWidth
         )
 
-        altoNominalRebanada = min(itemHeight, itemWidth)
-
         rebanada = Rebanada(
-            alto=altoNominalRebanada,
+            alto=altoRebanada,
             ancho=binWidth,
             items=itemsConstruidos
         )

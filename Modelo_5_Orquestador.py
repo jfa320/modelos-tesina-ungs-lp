@@ -1,5 +1,6 @@
 import multiprocessing
 import os
+import math
 import time
 from Objetos import Rebanada
 from Objetos import Item
@@ -26,8 +27,19 @@ MAX_ESTANCAMIENTO = 5
 MAX_EXTRA = 5
 
 
-def calcularAltoNominalRebanada(itemWidth, itemHeight):
-    return min(itemWidth, itemHeight)
+def calcularAltoRebanada(binWidth, binHeight, itemWidth, itemHeight, porcentaje=0.05):
+    cotaMaxima = math.floor((binHeight * binWidth) / (itemHeight * itemWidth))
+    itemsObjetivo = math.ceil(cotaMaxima * porcentaje)
+
+    itemsPorFilaNormal = math.floor(binWidth / itemWidth)
+    filasNormal = math.ceil(itemsObjetivo / itemsPorFilaNormal)
+    altoNormal = filasNormal * itemHeight
+
+    itemsPorFilaRotado = math.floor(binWidth / itemHeight)
+    filasRotado = math.ceil(itemsObjetivo / itemsPorFilaRotado)
+    altoRotado = filasRotado * itemWidth
+
+    return min(altoNormal, altoRotado)
 
 
 def generarRebanadasIniciales(binWidth, binHeight,
@@ -35,7 +47,7 @@ def generarRebanadasIniciales(binWidth, binHeight,
                               posXY_x, posXY_y,
                               maxItems):
 
-    altoNominalRebanada = calcularAltoNominalRebanada(itemWidth, itemHeight)
+    altoRebanada = calcularAltoRebanada(binWidth, binHeight, itemWidth, itemHeight)
 
     def generarPorOrientacion(posiciones, w, h, rotado):
         rebanadas = []
@@ -52,7 +64,7 @@ def generarRebanadasIniciales(binWidth, binHeight,
             if itemsColocados >= maxItems:
                 break
 
-            rebanada = Rebanada(alto=altoNominalRebanada, ancho=binWidth)
+            rebanada = Rebanada(alto=altoRebanada, ancho=binWidth)
             ocupadas = set()
             x = 0
 
@@ -195,7 +207,7 @@ def desnormalizarRebanadasParaSalida(rebanadas, binWidthOriginal, binHeightOrigi
     if not binNormalizado and not itemNormalizado:
         return rebanadas
 
-    altoNominalRebanada = calcularAltoNominalRebanada(itemWidthOriginal, itemHeightOriginal)
+    altoRebanada = calcularAltoRebanada(binWidthOriginal, binHeightOriginal, itemWidthOriginal, itemHeightOriginal)
     rebanadasDesnormalizadas = []
 
     for rebanada in rebanadas:
@@ -229,7 +241,7 @@ def desnormalizarRebanadasParaSalida(rebanadas, binWidthOriginal, binHeightOrigi
 
         rebanadasDesnormalizadas.append(
             Rebanada(
-                alto=altoNominalRebanada,
+                alto=altoRebanada,
                 ancho=binWidthOriginal,
                 items=itemsDesnormalizados
             )
@@ -266,6 +278,8 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
         if itemNormalizado:
             itemWidth, itemHeight = itemHeight, itemWidth
 
+        altoRebanada = calcularAltoRebanada(binWidth, binHeight, itemWidth, itemHeight)
+
         # Genero posiciones a usar en el bin 
         posXY_x, posXY_y=generatePositionsXYM2(binWidth,binHeight, itemWidth, itemHeight)
         
@@ -296,7 +310,7 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
                 mejoraMaster = objectiveMaster - objectiveMasterAnterior
 
             slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,precios_duales, binWidth,itemHeight,itemWidth,binHeight)
-            nueva_rebanada, objectiveValueSlaveModel, variablesActivas  = solveSlaveModel(slaveModel,queue,manualInterruption,binWidth,itemHeight,itemWidth)
+            nueva_rebanada, objectiveValueSlaveModel, variablesActivas  = solveSlaveModel(slaveModel,queue,manualInterruption,binWidth,itemHeight,itemWidth,altoRebanada)
 
             esDuplicada = False
             
@@ -348,7 +362,8 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
                         manualInterruption,
                         binWidth,
                         itemHeight,
-                        itemWidth
+                        itemWidth,
+                        altoRebanada
                     )
                     
                     # Si el esclavo no devolvió una solución factible, corto la generación de rebanadas extra
@@ -423,7 +438,8 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
                         manualInterruption,
                         binWidth,
                         itemHeight,
-                        itemWidth
+                        itemWidth,
+                        altoRebanada
                     )
 
                     if objectiveValueAlternativa is None:
