@@ -47,9 +47,11 @@ El programa en detalle funciona de la siguiente manera:
 ---
 
 ## Definición de rebanada
-Una rebanada es un conjunto de ítems ubicados dentro del bin que se extiende de un extremo al otro de su ancho, de forma análoga a un corte guillotina horizontal. Cada ítem posee una posición `(x, y)` correspondiente a la esquina inferior izquierda desde donde es colocado.
+Una rebanada es un espacio dentro del bin que se extiende de un extremo al otro de su ancho, de forma análoga a un corte guillotina horizontal, donde se ubica un conjunto de ítems. Cada ítem posee una posición `(x, y)` correspondiente a la esquina inferior izquierda desde donde es ubicado.
 
-La rebanada tiene asociados un ancho y un alto. Sin embargo, los ítems que la componen pueden exceder hacia arriba dicho alto, por lo que el contorno ocupado por la rebanada no necesariamente coincide con un rectángulo de dimensiones `ancho × alto`.
+La rebanada tiene asociados un ancho `W` (igual al ancho del bin) y un alto `hr`. Sin embargo, los ítems que la componen pueden exceder hacia arriba dicho alto, por lo que el contorno ocupado por la rebanada no necesariamente coincide con un rectángulo de dimensiones `W x hr`. 
+
+Como condición de pertenencia, la esquina inferior izquierda de cada ítem debe ubicarse dentro de la región de ancho `W` y alto `hr - ε`, donde ε es un valor positivo pequeño utilizado para evitar que un ítem quede exactamente sobre el borde superior de la rebanada.
 
 ### Representación interna
 
