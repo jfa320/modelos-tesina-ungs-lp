@@ -55,13 +55,11 @@ class TestFactibilidadOrquestador:
             rebanadasActivas,
             configData.getBinWidth(),
             configData.getBinHeight(),
-            configData.getItemsQuantity(),
             objectiveValue
         )
 
     def test_factibilidad_caso_1(self, orquestador_context):
         configData = ConfigData(
-            itemsQuantity=6,
             binWidth=6,
             binHeight=4,
             itemWidth=2,
@@ -72,7 +70,6 @@ class TestFactibilidadOrquestador:
 
     def test_factibilidad_caso_2(self, orquestador_context):
         configData = ConfigData(
-            itemsQuantity=6,
             binWidth=5,
             binHeight=5,
             itemWidth=3,
@@ -83,7 +80,6 @@ class TestFactibilidadOrquestador:
 
     def test_factibilidad_caso_nuevo_optimo_6(self, orquestador_context):
         configData = ConfigData(
-            itemsQuantity=6,
             binWidth=6,
             binHeight=6,
             itemWidth=3,
@@ -94,7 +90,6 @@ class TestFactibilidadOrquestador:
 
     def test_factibilidad_caso_3(self, orquestador_context):
         configData = ConfigData(
-            itemsQuantity=8,
             binWidth=6,
             binHeight=6,
             itemWidth=4,
@@ -105,7 +100,6 @@ class TestFactibilidadOrquestador:
 
     def test_factibilidad_caso_4(self, orquestador_context):
         configData = ConfigData(
-            itemsQuantity=5,
             binWidth=7,
             binHeight=3,
             itemWidth=3,
@@ -116,7 +110,6 @@ class TestFactibilidadOrquestador:
 
     def test_factibilidad_caso_5(self, orquestador_context):
         configData = ConfigData(
-            itemsQuantity=6,
             binWidth=6,
             binHeight=3,
             itemWidth=3,
@@ -127,18 +120,16 @@ class TestFactibilidadOrquestador:
 
     def test_factibilidad_caso_6(self, orquestador_context):
         configData = ConfigData(
-            itemsQuantity=10,
             binWidth=120,
             binHeight=20,
             itemWidth=12,
             itemHeight=8
         )
 
-        self.ejecutar_y_validar_factibilidad(orquestador_context, configData, valor_esperado=10)
+        self.ejecutar_y_validar_factibilidad(orquestador_context, configData, valor_esperado=25)
 
     def test_factibilidad_caso_7(self, orquestador_context):
         configData = ConfigData(
-            itemsQuantity=14,
             binWidth=50,
             binHeight=20,
             itemWidth=13,
@@ -149,7 +140,6 @@ class TestFactibilidadOrquestador:
 
     def test_factibilidad_caso_8(self, orquestador_context):
         configData = ConfigData(
-            itemsQuantity=18,
             binWidth=40,
             binHeight=25,
             itemWidth=10,
@@ -160,7 +150,6 @@ class TestFactibilidadOrquestador:
 
     def test_factibilidad_caso_9(self, orquestador_context):
         configData = ConfigData(
-            itemsQuantity=22,
             binWidth=60,
             binHeight=20,
             itemWidth=12,
@@ -171,7 +160,6 @@ class TestFactibilidadOrquestador:
 
     def test_factibilidad_caso_10(self, orquestador_context):
         configData = ConfigData(
-            itemsQuantity=15,
             binWidth=45,
             binHeight=30,
             itemWidth=9,
@@ -182,7 +170,6 @@ class TestFactibilidadOrquestador:
 
     def test_factibilidad_caso_11(self, orquestador_context):
         configData = ConfigData(
-            itemsQuantity=28,
             binWidth=70,
             binHeight=25,
             itemWidth=14,
@@ -193,7 +180,6 @@ class TestFactibilidadOrquestador:
 
     def test_factibilidad_caso_12(self, orquestador_context):
         configData = ConfigData(
-            itemsQuantity=20,
             binWidth=55,
             binHeight=22,
             itemWidth=11,
@@ -204,7 +190,6 @@ class TestFactibilidadOrquestador:
 
     def test_factibilidad_caso_13(self, orquestador_context):
         configData = ConfigData(
-            itemsQuantity=25,
             binWidth=20,
             binHeight=20,
             itemWidth=6,
@@ -215,7 +200,6 @@ class TestFactibilidadOrquestador:
 
     def test_factibilidad_caso_14(self, orquestador_context):
         configData = ConfigData(
-            itemsQuantity=25,
             binWidth=40,
             binHeight=30,
             itemWidth=10,
@@ -226,7 +210,6 @@ class TestFactibilidadOrquestador:
 
     def test_factibilidad_caso_15(self, orquestador_context):
         configData = ConfigData(
-            itemsQuantity=30,
             binWidth=60,
             binHeight=25,
             itemWidth=12,
@@ -237,18 +220,16 @@ class TestFactibilidadOrquestador:
 
     def test_factibilidad_caso_16(self, orquestador_context):
         configData = ConfigData(
-            itemsQuantity=18,
             binWidth=48,
             binHeight=24,
             itemWidth=8,
             itemHeight=6
         )
 
-        self.ejecutar_y_validar_factibilidad(orquestador_context, configData, valor_esperado=18)
+        self.ejecutar_y_validar_factibilidad(orquestador_context, configData, valor_esperado=24)
 
     def test_factibilidad_caso_17(self, orquestador_context):
         configData = ConfigData(
-            itemsQuantity=40,
             binWidth=70,
             binHeight=28,
             itemWidth=14,
@@ -259,7 +240,6 @@ class TestFactibilidadOrquestador:
 
     def test_factibilidad_caso_18(self, orquestador_context):
         configData = ConfigData(
-            itemsQuantity=100,
             binWidth=10,
             binHeight=30,
             itemWidth=1,
@@ -281,6 +261,5 @@ class TestFactibilidadOrquestador:
                 rebanadas,
                 bin_width=5,
                 bin_height=5,
-                items_quantity=2,
                 objective_value=2
             )

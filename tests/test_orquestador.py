@@ -10,7 +10,6 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            itemsQuantity=6,   # N
             binWidth=6,        # W
             binHeight=4,       # H
             itemWidth=2,       # w
@@ -33,7 +32,6 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            itemsQuantity=6,   # N
             binWidth=5,        # W
             binHeight=5,       # H
             itemWidth=3,       # w
@@ -55,7 +53,6 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            itemsQuantity=6,   # N
             binWidth=6,        # W
             binHeight=6,       # H
             itemWidth=3,       # w
@@ -78,7 +75,6 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            itemsQuantity=8,   # N
             binWidth=6,        # W
             binHeight=6,       # H
             itemWidth=4,       # w
@@ -100,7 +96,6 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            itemsQuantity=5,   # N
             binWidth=7,        # W
             binHeight=3,       # H
             itemWidth=3,       # w
@@ -122,7 +117,6 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            itemsQuantity=6,   # N
             binWidth=6,        # W
             binHeight=3,       # H
             itemWidth=3,       # w
@@ -144,7 +138,6 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            itemsQuantity=10,   # N
             binWidth=120,       # W
             binHeight=20,       # H
             itemWidth=12,       # w
@@ -160,7 +153,7 @@ class TestOrquestador:
         )
 
         assert objectiveValue is not None
-        assert objectiveValue == 10
+        assert objectiveValue == 25
     
     # Desde acá empiezan los casos de la OR Library (grandes)
 
@@ -168,7 +161,6 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            itemsQuantity=14,   # N
             binWidth=50,        # W
             binHeight=20,       # H
             itemWidth=13,       # w
@@ -191,7 +183,6 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            itemsQuantity=18,   # N
             binWidth=40,        # W
             binHeight=25,       # H
             itemWidth=10,       # w
@@ -213,7 +204,6 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            itemsQuantity=22,   # N
             binWidth=60,        # W
             binHeight=20,       # H
             itemWidth=12,       # w
@@ -235,7 +225,6 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            itemsQuantity=15,   # N
             binWidth=45,        # W
             binHeight=30,       # H
             itemWidth=9,        # w
@@ -257,7 +246,6 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            itemsQuantity=28,   # N
             binWidth=70,        # W
             binHeight=25,       # H
             itemWidth=14,       # w
@@ -279,7 +267,6 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            itemsQuantity=20,   # N
             binWidth=55,        # W
             binHeight=22,       # H
             itemWidth=11,       # w
@@ -301,7 +288,6 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            itemsQuantity=25,   # N
             binWidth=20,        # W
             binHeight=20,       # H
             itemWidth=6,        # w
@@ -324,7 +310,6 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            itemsQuantity=25,   # N
             binWidth=40,        # W
             binHeight=30,       # H
             itemWidth=10,       # w
@@ -346,7 +331,6 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            itemsQuantity=30,   # N
             binWidth=60,        # W
             binHeight=25,       # H
             itemWidth=12,       # w
@@ -368,7 +352,6 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            itemsQuantity=18,   # N
             binWidth=48,        # W
             binHeight=24,       # H
             itemWidth=8,        # w
@@ -384,13 +367,12 @@ class TestOrquestador:
         )
 
         assert objectiveValue is not None
-        assert objectiveValue == 18
+        assert objectiveValue == 24
 
     def test_caso_17(self, orquestador_context):
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            itemsQuantity=40,   # N
             binWidth=70,        # W
             binHeight=28,       # H
             itemWidth=14,       # w
@@ -412,7 +394,6 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            itemsQuantity=100,  # N
             binWidth=10,        # W
             binHeight=30,       # H
             itemWidth=1,        # w

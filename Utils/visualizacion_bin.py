@@ -124,11 +124,11 @@ def _dibujar_ejes(draw, font, origen_x, origen_y, ancho_bin_px, alto_bin_px, bin
     draw.text((x0 - 14, origen_y - 16), "y", fill=COLOR_EJE, font=font)
 
 
-def _construir_lineas_leyenda(bin_width, bin_height, item_width, item_height, total_items, total_items_disponibles):
+def _construir_lineas_leyenda(bin_width, bin_height, item_width, item_height, total_items, cota_fisica_items):
     return [
         f"Bin: {bin_width} x {bin_height} | Item base: {item_width} x {item_height}",
         f"Cantidad de items colocados: {total_items}",
-        f"Cantidad total de items disponibles: {total_items_disponibles}",
+        f"Cota fisica de items: {cota_fisica_items}",
         "Bordes: bin negro, rebanada verde, item azul",
         "Labels: Rk = rebanada k | Ij.i-NR = item no rotado | Ij.i-R = item rotado"
     ]
@@ -145,7 +145,7 @@ def _dibujar_leyenda(draw, font, margen, inicio_y, line_spacing, lineas):
         )
 
 
-def exportar_solucion_bin_a_png(bin_width, bin_height, item_width, item_height, total_items_disponibles, rebanadas_activas, output_path, escala=40, margen=32):
+def exportar_solucion_bin_a_png(bin_width, bin_height, item_width, item_height, cota_fisica_items, rebanadas_activas, output_path, escala=40, margen=32):
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
     ancho_bin_px = int(bin_width * escala)
@@ -159,7 +159,7 @@ def exportar_solucion_bin_a_png(bin_width, bin_height, item_width, item_height, 
         item_width,
         item_height,
         total_items,
-        total_items_disponibles
+        cota_fisica_items
     )
 
     imagen_aux = Image.new("RGBA", (1, 1), COLOR_FONDO)

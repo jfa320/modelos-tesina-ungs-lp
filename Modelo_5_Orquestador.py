@@ -15,11 +15,6 @@ from Objetos.ConfigData import ConfigData
 
 MODEL_NAME = "Model5Orchestrator"
 
-
-#TODO: corregir esto. Ubicar items en otro lado
-def generarListaItems(ITEMS_QUANTITY, ITEM_HEIGHT, ITEM_WIDTH):
-    return [Item(alto=ITEM_HEIGHT, ancho=ITEM_WIDTH) for _ in range(ITEMS_QUANTITY)]
-
 EPS = 1e-9  # tolerancia numérica
 
 EPS_MASTER = 1e-4
@@ -40,6 +35,9 @@ def calcularAltoRebanada(binWidth, binHeight, itemWidth, itemHeight, porcentaje=
     altoRotado = filasRotado * itemWidth
 
     return min(altoNormal, altoRotado)
+
+def calcularCotaFisicaItems(binWidth, binHeight, itemWidth, itemHeight):
+    return math.floor((binWidth * binHeight) / (itemWidth * itemHeight))
 
 
 def generarRebanadasIniciales(binWidth, binHeight,
@@ -145,8 +143,7 @@ def calcularReducedCostReal(rebanada, preciosDuales, w, h):
                 sumaDuales += preciosDuales["pi"].get(clave, 0.0)
 
     c_r = len(rebanada.getItems())
-    alpha = preciosDuales.get("alpha", 0.0)
-    reducedCostReal = c_r - (alpha * c_r) - sumaDuales
+    reducedCostReal = c_r - sumaDuales
 
     return reducedCostReal, c_r, sumaDuales
 
@@ -197,9 +194,9 @@ def obtenerRebanadasActivas(rebanadas, variablesActivasMaestro):
     return [rebanada for rebanada in rebanadas if rebanada.getId() in idsActivos]
 
 
-def exportarLayoutFinal(binWidth, binHeight, itemWidth, itemHeight, itemsQuantity, rebanadasActivas):
+def exportarLayoutFinal(binWidth, binHeight, itemWidth, itemHeight, cotaFisicaItems, rebanadasActivas):
     outputPath = os.path.join("Resultados", f"{CASE_NAME}_layout.png")
-    exportar_solucion_bin_a_png(binWidth, binHeight, itemWidth, itemHeight, itemsQuantity, rebanadasActivas, outputPath)
+    exportar_solucion_bin_a_png(binWidth, binHeight, itemWidth, itemHeight, cotaFisicaItems, rebanadasActivas, outputPath)
     print(f"Layout final exportado en: {outputPath}")
 
 
@@ -262,8 +259,6 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
         binHeightOriginal = configData.getBinHeight()
         itemWidthOriginal = configData.getItemWidth()
         itemHeightOriginal = configData.getItemHeight()
-        itemsQuantity = configData.getItemsQuantity()
-
         binWidth = binWidthOriginal
         binHeight = binHeightOriginal
         itemWidth = itemWidthOriginal
@@ -283,11 +278,10 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
         # Genero posiciones a usar en el bin 
         posXY_x, posXY_y=generatePositionsXYM2(binWidth,binHeight, itemWidth, itemHeight)
         
-        # Creo items a ubicar en los bins (sin posicion ni orientacion definida, eso lo decide el modelo)
-        items=generarListaItems(itemsQuantity,itemHeight,itemWidth)
+        maxItemsFisicos = calcularCotaFisicaItems(binWidth, binHeight, itemWidth, itemHeight)
 
-        # Genero rebanadas iniciales a partir de las posiciones generadas y la info de los items
-        rebanadas= generarRebanadasIniciales(binWidth, binHeight, itemWidth, itemHeight,posXY_x,posXY_y, itemsQuantity)  
+        # Genero rebanadas iniciales usando una cota fisica, no una demanda finita de items.
+        rebanadas= generarRebanadasIniciales(binWidth, binHeight, itemWidth, itemHeight,posXY_x,posXY_y, maxItemsFisicos)  
         
         iteracion = 0
 
@@ -299,10 +293,9 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
             #TODO: Aca podria mejorar evitando la creacion del modelo en cada vuelta.
             # En su lugar, podria crear uno y luego agregar las columnas (rebanadas) nuevas
 
-            masterModel = createMasterModel(maxTime,rebanadas,binHeight,binWidth,itemHeight,itemWidth,items, posXY_x, posXY_y)
+            masterModel = createMasterModel(maxTime,rebanadas,binHeight,binWidth,itemHeight,itemWidth, posXY_x, posXY_y)
             # Resolver modelo maestro
             objectiveMaster , precios_duales, _ = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=True, initialTime=initialTime)
-            print(f"Dual consLimiteItems alpha: {precios_duales.get('alpha', 0.0)}")
 
             if objectiveMasterAnterior is None:
                 print("FO maestro relajado anterior: None (primera iteración)")
@@ -407,7 +400,6 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
                     f"FO esclavo={objectiveValueSlaveModel}, "
                     f"items={cantidadItems}, "
                     f"sumaDualesOcupacion={sumaDuales}, "
-                    f"alpha={precios_duales.get('alpha', 0.0)}, "
                     f"costoReducidoCompleto={reducedCostReal}"
                 )
                 solucionesExcluidas = []
@@ -495,7 +487,7 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
             
         
         # Resuelvo el modelo maestro final sin relajar para obtener una solución entera factible y su valor objetivo final
-        masterModel = createMasterModel(maxTime,rebanadas,binHeight,binWidth,itemHeight,itemWidth,items, posXY_x, posXY_y)
+        masterModel = createMasterModel(maxTime,rebanadas,binHeight,binWidth,itemHeight,itemWidth, posXY_x, posXY_y)
         objectiveValueSlaveModel, _, variablesActivasMaestro = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=False, initialTime=initialTime)
         # Genero png con layout final solo con las rebanadas activas en la solución final del maestro
         rebanadasActivas = obtenerRebanadasActivas(rebanadas, variablesActivasMaestro)
@@ -509,7 +501,7 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
             itemNormalizado
         )
         if rebanadasActivasSalida:
-            exportarLayoutFinal(binWidthOriginal, binHeightOriginal, itemWidthOriginal, itemHeightOriginal, itemsQuantity, rebanadasActivasSalida)
+            exportarLayoutFinal(binWidthOriginal, binHeightOriginal, itemWidthOriginal, itemHeightOriginal, maxItemsFisicos, rebanadasActivasSalida)
         else:
             print("No se generó ninguna rebanada activa en la solución final del maestro. No se exporta layout.")
         # Devuelvo resultado
@@ -540,7 +532,6 @@ def executeWithTimeLimit(maxTime):
     manualInterruption = multiprocessing.Value('b', True)
 
     configData = ConfigData(
-        itemsQuantity=ITEMS_QUANTITY,
         binWidth=BIN_WIDTH,
         binHeight=BIN_HEIGHT,
         itemWidth=ITEM_WIDTH,

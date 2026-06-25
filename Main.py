@@ -3,6 +3,7 @@ import Modelo_1_simplificado__seccion_2_9_overleaf_CON_ROTACION
 import Modelo_5_Orquestador
 
 import Modelo_6_Andrade_Birgin_Monoitem
+import Modelo_7_Backtracking_Monoitem_Exacto
 
 from TraceFileGenerator import TraceFileGenerator
 
@@ -12,11 +13,11 @@ if __name__ == '__main__':
     generator = TraceFileGenerator("output.trc")
     
     models = [
-        Modelo_5_Orquestador,
         # Modelo_5_Orquestador,
-        # Modelo_1_simplificado__seccion_2_8_overleaf_SIN_ROTACION,
-        # Modelo_1_simplificado__seccion_2_9_overleaf_CON_ROTACION,
-        Modelo_6_Andrade_Birgin_Monoitem
+        # # Modelo_1_simplificado__seccion_2_8_overleaf_SIN_ROTACION,
+        # # Modelo_1_simplificado__seccion_2_9_overleaf_CON_ROTACION,
+        # # Modelo_6_Andrade_Birgin_Monoitem,
+        # Modelo_7_Backtracking_Monoitem_Exacto
     ]
     
     for model in models:

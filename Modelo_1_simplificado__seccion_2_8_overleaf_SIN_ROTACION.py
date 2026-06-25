@@ -9,6 +9,9 @@ from Config import *
 # Caso sencillo que mejora con rotacion
 MODEL_NAME="Model1"
 
+def calcularCotaFisicaItems():
+    return (BIN_WIDTH // ITEM_WIDTH) * (BIN_HEIGHT // ITEM_HEIGHT)
+
 # def createAndSolveModel(queue,manualInterruption,maxTime):
 #     #valores por default para enviar a paver
 #     modelStatus, solverStatus, objectiveValue, solverTime = "1", "1", 0, 1
@@ -27,7 +30,7 @@ MODEL_NAME="Model1"
        
 #         # Definir variables y objetivos
 #         varsNames = [f"f_{i}" for i in ITEMS]
-#         coeffs = [1.0] * ITEMS_QUANTITY  
+#         coeffs = [1.0] * len(ITEMS)
 #         addVariables(model, varsNames, coeffs, "B")
 
 #         additionalVarsNames=[f"x_{i}" for i in ITEMS] + [f"y_{i}" for i in ITEMS]
@@ -138,23 +141,24 @@ def createModel(maxTime):
     model= cplex.Cplex()
         
     model.set_results_stream(None) # deshabilito log de CPLEX de la info paso a paso
-    model.set_problem_type(cplex.Cplex.problem_type.LP)
+    model.set_problem_type(cplex.Cplex.problem_type.MILP)
     model.objective.set_sense(model.objective.sense.maximize)
     # Definir el limite tiempo de la ejecución en un minuto
     model.parameters.timelimit.set(maxTime)
 
         # Definir variables y objetivos
-    varsNames = [f"f_{i}" for i in ITEMS]
-    coeffs = [1.0] * ITEMS_QUANTITY  
+    items = list(range(1, calcularCotaFisicaItems() + 1))
+    varsNames = [f"f_{i}" for i in items]
+    coeffs = [1.0] * len(items)  
     addVariables(model, varsNames, coeffs, "B")
 
-    additionalVarsNames=[f"x_{i}" for i in ITEMS] + [f"y_{i}" for i in ITEMS]
+    additionalVarsNames=[f"x_{i}" for i in items] + [f"y_{i}" for i in items]
     additionalCoeffObj = [0.0] * len(additionalVarsNames)
     addVariables(model, additionalVarsNames, additionalCoeffObj, "I")
 
     additionalVarsNames= set()
-    for i in ITEMS:
-        for j in ITEMS:
+    for i in items:
+        for j in items:
             if i != j:
                 additionalVarsNames.add(f"l_{i},{j}") # agrego variable l_{ij}
                 additionalVarsNames.add(f"l_{j},{i}") # agrego variable l_{ij}
@@ -165,8 +169,8 @@ def createModel(maxTime):
     addVariables(model, additionalVarsNames, additionalCoeffObj, "B")
 
         # Añadir las restricciones para cada par (i, j) con i < j
-    for i in ITEMS:
-        for j in ITEMS:
+    for i in items:
+        for j in items:
             if i < j: #Aca fue necesario reescribir la restriccion para que funcione con CPLEX
                 consCoeff = [1.0, 1.0, 1.0, 1.0, -1.0, -1.0]
                 consVars = [f"l_{i},{j}", f"l_{j},{i}", f"b_{i},{j}", f"b_{j},{i}", f"f_{i}", f"f_{j}"] 
@@ -175,8 +179,8 @@ def createModel(maxTime):
                 addConstraint(model,consCoeff,consVars,consRhs,consSense)
 
     # Añadir las restricciones x_i - x_j + W l_{ij} <= W - w para cada i en I
-    for i in ITEMS:
-        for j in ITEMS:
+    for i in items:
+        for j in items:
             if i != j:
                 consCoeff = [1.0, -1.0, BIN_WIDTH]
                 consVars = [f"x_{i}", f"x_{j}", f"l_{i},{j}"]
@@ -185,8 +189,8 @@ def createModel(maxTime):
                 addConstraint(model,consCoeff,consVars,consRhs,consSense)
 
     # Añadir las restricciones y_i - y_j + H b_{ij} <= H - h para cada i en I
-    for i in ITEMS:
-        for j in ITEMS:
+    for i in items:
+        for j in items:
             if i != j:
                 consCoeff = [1.0, -1.0, BIN_HEIGHT]
                 consVars = [f"y_{i}", f"y_{j}", f"b_{i},{j}"]
@@ -195,7 +199,7 @@ def createModel(maxTime):
                 addConstraint(model,consCoeff,consVars,consRhs,consSense)
                     
     # Añadir la restricción x_i + W f_i <= 2W - w  para cada i en I
-    for i in ITEMS:
+    for i in items:
         consCoeff = [1.0, BIN_WIDTH]  # Coeficientes para x_i y f_i
         consVars = [f"x_{i}", f"f_{i}"]  # Variables en la restricción
         consRhs = 2 * BIN_WIDTH - ITEM_WIDTH  # Lado derecho de la restricción
@@ -203,10 +207,10 @@ def createModel(maxTime):
         addConstraint(model,consCoeff,consVars,consRhs,consSense)
 
     # Añadir la restricción y_i + H f_i <= 2H - h para cada i en I
-    for i in ITEMS:
-        consCoeff = [1.0, BIN_WIDTH]  # Coeficientes para x_i y f_i
-        consVars = [f"x_{i}", f"f_{i}"]  # Variables en la restricción
-        consRhs = 2 * BIN_WIDTH - ITEM_WIDTH  # Lado derecho de la restricción
+    for i in items:
+        consCoeff = [1.0, BIN_HEIGHT]  # Coeficientes para y_i y f_i
+        consVars = [f"y_{i}", f"f_{i}"]  # Variables en la restricción
+        consRhs = 2 * BIN_HEIGHT - ITEM_HEIGHT  # Lado derecho de la restricción
         consSense = "L"  # "L" indica <=
         addConstraint(model,consCoeff,consVars,consRhs,consSense)
 

@@ -7,6 +7,9 @@ from Config import *
 
 MODEL_NAME = "AndradeBirginBigM"
 
+def calcularCotaFisicaItems():
+    return (BIN_WIDTH * BIN_HEIGHT) // (ITEM_WIDTH * ITEM_HEIGHT)
+
 
 def createModel(maxTime):
     model = cplex.Cplex()
@@ -20,29 +23,30 @@ def createModel(maxTime):
 
     bigMx = 2 * BIN_WIDTH + 2 * maxItemDim
     bigMy = 2 * BIN_HEIGHT + 2 * maxItemDim
+    items = list(range(1, calcularCotaFisicaItems() + 1))
 
     # -----------------------------
     # Variables
     # -----------------------------
-    usedVarNames = [f"f_{i}" for i in ITEMS]
-    usedVarObj = [1.0] * ITEMS_QUANTITY
+    usedVarNames = [f"f_{i}" for i in items]
+    usedVarObj = [1.0] * len(items)
     addVariables(model, usedVarNames, usedVarObj, "B")
 
-    rotVarNames = [f"r_{i}" for i in ITEMS]
-    rotVarObj = [0.0] * ITEMS_QUANTITY
+    rotVarNames = [f"r_{i}" for i in items]
+    rotVarObj = [0.0] * len(items)
     addVariables(model, rotVarNames, rotVarObj, "B")
 
-    centerVarNames = [f"cx2_{i}" for i in ITEMS] + [f"cy2_{i}" for i in ITEMS]
+    centerVarNames = [f"cx_{i}" for i in items] + [f"cy_{i}" for i in items]
     centerVarObj = [0.0] * len(centerVarNames)
-    addVariables(model, centerVarNames, centerVarObj, "I")
+    addVariables(model, centerVarNames, centerVarObj, "C")
 
-    effDimVarNames = [f"wEff_{i}" for i in ITEMS] + [f"hEff_{i}" for i in ITEMS]
+    effDimVarNames = [f"wEff_{i}" for i in items] + [f"hEff_{i}" for i in items]
     effDimVarObj = [0.0] * len(effDimVarNames)
-    addVariables(model, effDimVarNames, effDimVarObj, "I")
+    addVariables(model, effDimVarNames, effDimVarObj, "C")
 
     relativePosVars = []
-    for i in ITEMS:
-        for j in ITEMS:
+    for i in items:
+        for j in items:
             if i < j:
                 relativePosVars.append(f"q_{i},{j}")
                 relativePosVars.append(f"q_{j},{i}")
@@ -54,7 +58,7 @@ def createModel(maxTime):
     # -----------------------------
     delta = ITEM_HEIGHT - ITEM_WIDTH
 
-    for i in ITEMS:
+    for i in items:
         # wEff_i = ITEM_WIDTH + delta * r_i
         consCoeff = [1.0, -delta]
         consVars = [f"wEff_{i}", f"r_{i}"]
@@ -72,40 +76,40 @@ def createModel(maxTime):
     # -----------------------------
     # Contención en el bin
     # -----------------------------
-    for i in ITEMS:
-        # cx2_i - wEff_i >= -bigMx * (1 - f_i)
-        consCoeff = [1.0, -1.0, -bigMx]
-        consVars = [f"cx2_{i}", f"wEff_{i}", f"f_{i}"]
-        consRhs = -bigMx
+    for i in items:
+        # cx_i - wEff_i / 2 >= 0
+        consCoeff = [1.0, -0.5]
+        consVars = [f"cx_{i}", f"wEff_{i}"]
+        consRhs = 0.0
         consSense = "G"
         addConstraint(model, consCoeff, consVars, consRhs, consSense)
 
-        # cx2_i + wEff_i <= 2*BIN_WIDTH + bigMx*(1-f_i)
-        consCoeff = [1.0, 1.0, bigMx]
-        consVars = [f"cx2_{i}", f"wEff_{i}", f"f_{i}"]
-        consRhs = 2 * BIN_WIDTH + bigMx
+        # cx_i + wEff_i / 2 <= BIN_WIDTH
+        consCoeff = [1.0, 0.5]
+        consVars = [f"cx_{i}", f"wEff_{i}"]
+        consRhs = BIN_WIDTH
         consSense = "L"
         addConstraint(model, consCoeff, consVars, consRhs, consSense)
 
-        # cy2_i - hEff_i >= -bigMy * (1 - f_i)
-        consCoeff = [1.0, -1.0, -bigMy]
-        consVars = [f"cy2_{i}", f"hEff_{i}", f"f_{i}"]
-        consRhs = -bigMy
+        # cy_i - hEff_i / 2 >= 0
+        consCoeff = [1.0, -0.5]
+        consVars = [f"cy_{i}", f"hEff_{i}"]
+        consRhs = 0.0
         consSense = "G"
         addConstraint(model, consCoeff, consVars, consRhs, consSense)
 
-        # cy2_i + hEff_i <= 2*BIN_HEIGHT + bigMy*(1-f_i)
-        consCoeff = [1.0, 1.0, bigMy]
-        consVars = [f"cy2_{i}", f"hEff_{i}", f"f_{i}"]
-        consRhs = 2 * BIN_HEIGHT + bigMy
+        # cy_i + hEff_i / 2 <= BIN_HEIGHT
+        consCoeff = [1.0, 0.5]
+        consVars = [f"cy_{i}", f"hEff_{i}"]
+        consRhs = BIN_HEIGHT
         consSense = "L"
         addConstraint(model, consCoeff, consVars, consRhs, consSense)
 
     # -----------------------------
     # No superposición
     # -----------------------------
-    for i in ITEMS:
-        for j in ITEMS:
+    for i in items:
+        for j in items:
             if i < j:
                 qij = f"q_{i},{j}"
                 qji = f"q_{j},{i}"
@@ -113,68 +117,60 @@ def createModel(maxTime):
                 # 1) i a la derecha de j
                 consCoeff = [
                     1.0, -1.0,
-                    -1.0, -1.0,
-                    bigMx, bigMx,
-                    -bigMx, -bigMx
+                    -0.5, -0.5,
+                    bigMx, bigMx
                 ]
                 consVars = [
-                    f"cx2_{i}", f"cx2_{j}",
+                    f"cx_{i}", f"cx_{j}",
                     f"wEff_{i}", f"wEff_{j}",
-                    qij, qji,
-                    f"f_{i}", f"f_{j}"
+                    qij, qji
                 ]
-                consRhs = -2 * bigMx
+                consRhs = 0.0
                 consSense = "G"
                 addConstraint(model, consCoeff, consVars, consRhs, consSense)
 
                 # 2) j a la derecha de i
                 consCoeff = [
                     1.0, -1.0,
-                    -1.0, -1.0,
-                    -bigMx, -bigMx,
+                    -0.5, -0.5,
                     -bigMx, -bigMx
                 ]
                 consVars = [
-                    f"cx2_{j}", f"cx2_{i}",
+                    f"cx_{j}", f"cx_{i}",
                     f"wEff_{i}", f"wEff_{j}",
-                    qij, qji,
-                    f"f_{i}", f"f_{j}"
+                    qij, qji
                 ]
-                consRhs = -4 * bigMx
+                consRhs = -2 * bigMx
                 consSense = "G"
                 addConstraint(model, consCoeff, consVars, consRhs, consSense)
 
                 # 3) i arriba de j
                 consCoeff = [
                     1.0, -1.0,
-                    -1.0, -1.0,
-                    -bigMy, bigMy,
-                    -bigMy, -bigMy
+                    -0.5, -0.5,
+                    -bigMy, bigMy
                 ]
                 consVars = [
-                    f"cy2_{i}", f"cy2_{j}",
+                    f"cy_{i}", f"cy_{j}",
                     f"hEff_{i}", f"hEff_{j}",
-                    qij, qji,
-                    f"f_{i}", f"f_{j}"
+                    qij, qji
                 ]
-                consRhs = -3 * bigMy
+                consRhs = -bigMy
                 consSense = "G"
                 addConstraint(model, consCoeff, consVars, consRhs, consSense)
 
                 # 4) j arriba de i
                 consCoeff = [
                     1.0, -1.0,
-                    -1.0, -1.0,
-                    bigMy, -bigMy,
-                    -bigMy, -bigMy
+                    -0.5, -0.5,
+                    bigMy, -bigMy
                 ]
                 consVars = [
-                    f"cy2_{j}", f"cy2_{i}",
+                    f"cy_{j}", f"cy_{i}",
                     f"hEff_{i}", f"hEff_{j}",
-                    qij, qji,
-                    f"f_{i}", f"f_{j}"
+                    qij, qji
                 ]
-                consRhs = -3 * bigMy
+                consRhs = -bigMy
                 consSense = "G"
                 addConstraint(model, consCoeff, consVars, consRhs, consSense)
 

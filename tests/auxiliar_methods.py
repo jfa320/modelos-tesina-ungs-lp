@@ -9,7 +9,7 @@ def posiciones_ocupadas(item):
         for dy in range(item.getAlto())
     }
 
-def validar_factibilidad(rebanadas, bin_width, bin_height, items_quantity, objective_value):
+def validar_factibilidad(rebanadas, bin_width, bin_height, objective_value):
     ocupadas = set()
     total_items = 0
     for rebanada in rebanadas:
@@ -20,5 +20,4 @@ def validar_factibilidad(rebanadas, bin_width, bin_height, items_quantity, objec
             assert ocupadas.isdisjoint(celdas_item)
             ocupadas.update(celdas_item)
             total_items += 1
-    assert total_items <= items_quantity
     assert total_items == objective_value

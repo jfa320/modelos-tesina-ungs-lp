@@ -19,15 +19,12 @@ def calcularPosicionesOcupadas(posicion, ancho, alto):
                 posicionesOcupadas.add((x + dx, y + dy))
         return posicionesOcupadas
 
-def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,items,posXY_x,posXY_y):
+def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,posXY_x,posXY_y):
     print("IN - Create Master Model")
     H = altoBin  
     R = rebanadas 
     posiciones = [(x, y) for x in range(anchoBin) for y in range(altoBin)]
 
-
-    TI= len(items)  # Total de ítems
-   
     try:
         # Crear instancia del problema
         model = cplex.Cplex()
@@ -93,15 +90,6 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,item
                     DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS
                 )
 
-        # # ----------------------------------------------------
-       
-        indexes = [p_r_by_id[r.getId()] for r in R]
-
-        coeffs = [r.getTotalItems() for r in R]
-        consRhs=TI
-        consSense="L"
-        addConstraintSet(model,coeffs,indexes,consRhs,consSense,added_constraints,f"consLimiteItems",DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS)
-        
         # print(f"Rebanadas usadas: {R}")
         print("OUT - Create Master Model")
         return model
@@ -177,7 +165,7 @@ def solveMasterModel(model, queue, manualInterruption, relajarModelo, initialTim
 def getDualValues(model):
     print("Extrayendo valores duales...")
 
-    P_star = {"pi": {}, "alpha": 0.0}
+    P_star = {"pi": {}}
 
     dualValues = model.solution.get_dual_values()
     constraintNames = model.linear_constraints.get_names()
@@ -187,8 +175,6 @@ def getDualValues(model):
             # nombre: consItem_a_b
             _, a, b = name.split("_")
             P_star["pi"][f"({a},{b})"] = dualValue
-        elif name == "consLimiteItems":
-            P_star["alpha"] = dualValue
 
     return P_star
 

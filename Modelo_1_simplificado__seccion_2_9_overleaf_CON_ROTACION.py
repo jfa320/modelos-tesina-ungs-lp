@@ -7,6 +7,9 @@ from Config import *
 
 MODEL_NAME="Model1"
 
+def calcularCotaFisicaItems():
+    return (BIN_WIDTH * BIN_HEIGHT) // (ITEM_WIDTH * ITEM_HEIGHT)
+
 # def createAndSolveModel(queue,manualInterruption,maxTime):
 #     #valores por default para enviar a paver
 #     modelStatus, solverStatus, objectiveValue, solverTime = "1", "1", 0, 1
@@ -23,12 +26,12 @@ MODEL_NAME="Model1"
 
 #         # Definir variables y objetivos
 #         varsNames = [f"f_{i}" for i in ITEMS]
-#         coeffs = [1.0] * ITEMS_QUANTITY  # Esto asigna 1 como coeficiente a cada variable
+#         coeffs = [1.0] * len(ITEMS)  # Esto asigna 1 como coeficiente a cada variable
 #         addVariables(model, varsNames, coeffs, "B")
 
 #         additionalVarsNames = [f"x_{i}" for i in ITEMS] + [f"y_{i}" for i in ITEMS] + [f"r_{i}" for i in ITEMS] 
 #         additionalCoeffObj = [0.0] * len(additionalVarsNames)
-#         model.variables.add(names=additionalVarsNames, obj=additionalCoeffObj, types="I" * (2 * ITEMS_QUANTITY) + "B" * ITEMS_QUANTITY)
+#         model.variables.add(names=additionalVarsNames, obj=additionalCoeffObj, types="I" * (2 * len(ITEMS)) + "B" * len(ITEMS))
 
 #         additionalVarsNames = []
 #         for i in ITEMS:
@@ -132,7 +135,7 @@ def createModel(maxTime):
         # Crear un modelo de CPLEX
         model = cplex.Cplex()
         model.set_results_stream(None) # deshabilito log de CPLEX de la info paso a paso
-        model.set_problem_type(cplex.Cplex.problem_type.LP)
+        model.set_problem_type(cplex.Cplex.problem_type.MILP)
         model.objective.set_sense(model.objective.sense.maximize)
         model.parameters.timelimit.set(maxTime)
         
@@ -140,17 +143,19 @@ def createModel(maxTime):
         initialTimeT = time.time()
 
         # Definir variables y objetivos
-        varsNames = [f"f_{i}" for i in ITEMS]
-        coeffs = [1.0] * ITEMS_QUANTITY  # Esto asigna 1 como coeficiente a cada variable
+        items = list(range(1, calcularCotaFisicaItems() + 1))
+        itemQuantity = len(items)
+        varsNames = [f"f_{i}" for i in items]
+        coeffs = [1.0] * itemQuantity  # Esto asigna 1 como coeficiente a cada variable
         addVariables(model, varsNames, coeffs, "B")
 
-        additionalVarsNames = [f"x_{i}" for i in ITEMS] + [f"y_{i}" for i in ITEMS] + [f"r_{i}" for i in ITEMS] 
+        additionalVarsNames = [f"x_{i}" for i in items] + [f"y_{i}" for i in items] + [f"r_{i}" for i in items] 
         additionalCoeffObj = [0.0] * len(additionalVarsNames)
-        model.variables.add(names=additionalVarsNames, obj=additionalCoeffObj, types="I" * (2 * ITEMS_QUANTITY) + "B" * ITEMS_QUANTITY)
+        model.variables.add(names=additionalVarsNames, obj=additionalCoeffObj, types="I" * (2 * itemQuantity) + "B" * itemQuantity)
 
         additionalVarsNames = []
-        for i in ITEMS:
-            for j in ITEMS:
+        for i in items:
+            for j in items:
                 if i != j:
                     additionalVarsNames.append(f"l_{i},{j}")  # Variable l_{ij}
                     additionalVarsNames.append(f"b_{i},{j}")  # Variable b_{ij}
@@ -159,8 +164,8 @@ def createModel(maxTime):
         addVariables(model, additionalVarsNames, additionalCoeffObj, "B")
 
         # Restricciones de no solapamiento
-        for i in ITEMS:
-            for j in ITEMS:
+        for i in items:
+            for j in items:
                 if i < j:
                     consCoeff = [1.0, 1.0, 1.0, 1.0, -1.0, -1.0]
                     consVars = [f"l_{i},{j}", f"l_{j},{i}", f"b_{i},{j}", f"b_{j},{i}", f"f_{i}", f"f_{j}"]
@@ -169,8 +174,8 @@ def createModel(maxTime):
                     addConstraint(model,consCoeff,consVars,consRhs,consSense)
 
         # Restricciones x_i - x_j + W l_{ij} <= W - w (1 - r_i) - h r_i
-        for i in ITEMS:
-            for j in ITEMS:
+        for i in items:
+            for j in items:
                 if i != j:
                     consCoeff = [1.0, -1.0, BIN_WIDTH, -ITEM_WIDTH + ITEM_HEIGHT ]
                     consVars = [f"x_{i}", f"x_{j}", f"l_{i},{j}", f"r_{i}"]
@@ -179,8 +184,8 @@ def createModel(maxTime):
                     addConstraint(model,consCoeff,consVars,consRhs,consSense)
 
         # Restricciones y_i - y_j + H  b_{ij} <= H - h  (1 - r_i) - w r_i
-        for i in ITEMS:
-            for j in ITEMS:
+        for i in items:
+            for j in items:
                 if i != j:
                     consCoeff = [1.0, -1.0, BIN_HEIGHT, -ITEM_HEIGHT+ITEM_WIDTH]
                     consVars = [f"y_{i}", f"y_{j}", f"b_{i},{j}", f"r_{i}"]
@@ -189,7 +194,7 @@ def createModel(maxTime):
                     addConstraint(model,consCoeff,consVars,consRhs,consSense)
 
         # Restricciones para asegurar que los objetos estén dentro del bin (considerando rotación)
-        for i in ITEMS:
+        for i in items:
             consXCoeff = [1.0, BIN_WIDTH, -ITEM_WIDTH + ITEM_HEIGHT]  # Coeficientes para x_i, f_i, r_i
             consXVars = [f"x_{i}", f"f_{i}", f"r_{i}"]
             consXRhs = 2 * BIN_WIDTH - ITEM_WIDTH
