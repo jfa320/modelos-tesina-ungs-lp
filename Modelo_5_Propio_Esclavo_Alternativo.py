@@ -80,7 +80,7 @@ def rectsSolapan(x1, y1, w1, h1, x2, y2, w2, h2):
     )
 
 
-def createSlaveModel(maxTime, XY_x, XY_y, dualValues, anchoBin,altoItemSinRotar,anchoItemSinRotar,altoBin):    
+def createSlaveModel(maxTime, XY_x, XY_y, dualValues, anchoBin,altoItemSinRotar,anchoItemSinRotar,altoBin,altoRebanada):    
     print("--------------------------------------------------------------------------------------------------------------------")
     print("IN - Create Slave Model")
     A_i=dualValues
@@ -172,6 +172,10 @@ def createSlaveModel(maxTime, XY_x, XY_y, dualValues, anchoBin,altoItemSinRotar,
         addVariables(model, zVarsRotadas, objCoeffs, "B")
         objCoeffs.clear()
 
+        yBasesValidos = sorted({b for (_, b) in posiciones_x_validas + posiciones_y_validas})
+        yBaseVars = [f"s_{yBase}" for yBase in yBasesValidos]
+        addVariables(model, yBaseVars, [0.0] * len(yBaseVars), "B")
+
 
         # Restricciones
         # Restricciones de no solapamiento
@@ -194,6 +198,56 @@ def createSlaveModel(maxTime, XY_x, XY_y, dualValues, anchoBin,altoItemSinRotar,
                 "L",
                 added_constraints,
                 f"consNoOverlap_{x}_{y}",
+                DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS
+            )
+
+        # El esclavo elige internamente una unica franja vertical de alto
+        # altoRebanada. Cada item seleccionado debe iniciar dentro de esa franja.
+        if yBaseVars:
+            addConstraintSet(
+                model,
+                [1.0] * len(yBaseVars),
+                yBaseVars,
+                1.0,
+                "L",
+                added_constraints,
+                "consOneSliceWindow",
+                DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS
+            )
+
+        for (a, b) in posiciones_x_validas:
+            varName = f"z_x_{a}_{b}"
+            ventanasQueContienenInicio = [
+                f"s_{yBase}"
+                for yBase in yBasesValidos
+                if yBase <= b and b < yBase + altoRebanada
+            ]
+            addConstraintSet(
+                model,
+                [1.0] + [-1.0] * len(ventanasQueContienenInicio),
+                [varName] + ventanasQueContienenInicio,
+                0.0,
+                "L",
+                added_constraints,
+                f"consSliceWindow_x_{a}_{b}",
+                DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS
+            )
+
+        for (a, b) in posiciones_y_validas:
+            varName = f"z_y_{a}_{b}"
+            ventanasQueContienenInicio = [
+                f"s_{yBase}"
+                for yBase in yBasesValidos
+                if yBase <= b and b < yBase + altoRebanada
+            ]
+            addConstraintSet(
+                model,
+                [1.0] + [-1.0] * len(ventanasQueContienenInicio),
+                [varName] + ventanasQueContienenInicio,
+                0.0,
+                "L",
+                added_constraints,
+                f"consSliceWindow_y_{a}_{b}",
                 DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS
             )
 

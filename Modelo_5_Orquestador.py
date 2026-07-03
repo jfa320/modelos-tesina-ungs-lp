@@ -302,7 +302,7 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
             else:
                 mejoraMaster = objectiveMaster - objectiveMasterAnterior
 
-            slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,precios_duales, binWidth,itemHeight,itemWidth,binHeight)
+            slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,precios_duales, binWidth,itemHeight,itemWidth,binHeight,altoRebanada)
             nueva_rebanada, objectiveValueSlaveModel, variablesActivas  = solveSlaveModel(slaveModel,queue,manualInterruption,binWidth,itemHeight,itemWidth,altoRebanada)
 
             esDuplicada = False
@@ -337,7 +337,8 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
                         binWidth,
                         itemHeight,
                         itemWidth,
-                        binHeight
+                        binHeight,
+                        altoRebanada
                     )
 
                     # obligo al modelo a generar rebanadas con al menos 1 item (no quiero triviales)
@@ -416,7 +417,8 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
                         binWidth,
                         itemHeight,
                         itemWidth,
-                        binHeight
+                        binHeight,
+                        altoRebanada
                     )
 
                     agregarRestriccionNoVacia(slaveModel)

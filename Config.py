@@ -77,10 +77,10 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 # Desde acá empiezan los casos de la OR Library (grandes)
 
 # # Caso 7 (optimo = 7)
-# BIN_WIDTH = 50         # W
-# BIN_HEIGHT = 20        # H
-# ITEM_WIDTH = 13        # w
-# ITEM_HEIGHT = 8        # h
+BIN_WIDTH = 50         # W
+BIN_HEIGHT = 20        # H
+ITEM_WIDTH = 13        # w
+ITEM_HEIGHT = 8        # h
 
 # Caso 8:
 # Optimo 16
