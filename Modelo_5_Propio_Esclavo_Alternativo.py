@@ -155,7 +155,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, dualValues, anchoBin,altoItemSinRotar,
             coeff = 1.0 - sumaDual
             objCoeffs.append(coeff)
 
-        addVariables(model, zVarsNoRotadas, objCoeffs, "B")
+        add_variables(model, zVarsNoRotadas, objCoeffs, "B")
         objCoeffs.clear()
 
         # ---------------------------------------------------------------------
@@ -169,12 +169,12 @@ def createSlaveModel(maxTime, XY_x, XY_y, dualValues, anchoBin,altoItemSinRotar,
             coeff = 1.0 - sumaDual
             objCoeffs.append(coeff)
 
-        addVariables(model, zVarsRotadas, objCoeffs, "B")
+        add_variables(model, zVarsRotadas, objCoeffs, "B")
         objCoeffs.clear()
 
         yBasesValidos = sorted({b for (_, b) in posiciones_x_validas + posiciones_y_validas})
         yBaseVars = [f"s_{yBase}" for yBase in yBasesValidos]
-        addVariables(model, yBaseVars, [0.0] * len(yBaseVars), "B")
+        add_variables(model, yBaseVars, [0.0] * len(yBaseVars), "B")
 
 
         # Restricciones
@@ -190,7 +190,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, dualValues, anchoBin,altoItemSinRotar,
 
         for (x, y), varsQueCubren in coverMap.items():
             coeffs = [1.0] * len(varsQueCubren)
-            addConstraintSet(
+            add_constraint_set(
                 model,
                 coeffs,
                 varsQueCubren,
@@ -204,7 +204,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, dualValues, anchoBin,altoItemSinRotar,
         # El esclavo elige internamente una unica franja vertical de alto
         # altoRebanada. Cada item seleccionado debe iniciar dentro de esa franja.
         if yBaseVars:
-            addConstraintSet(
+            add_constraint_set(
                 model,
                 [1.0] * len(yBaseVars),
                 yBaseVars,
@@ -222,7 +222,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, dualValues, anchoBin,altoItemSinRotar,
                 for yBase in yBasesValidos
                 if yBase <= b and b < yBase + altoRebanada
             ]
-            addConstraintSet(
+            add_constraint_set(
                 model,
                 [1.0] + [-1.0] * len(ventanasQueContienenInicio),
                 [varName] + ventanasQueContienenInicio,
@@ -240,7 +240,7 @@ def createSlaveModel(maxTime, XY_x, XY_y, dualValues, anchoBin,altoItemSinRotar,
                 for yBase in yBasesValidos
                 if yBase <= b and b < yBase + altoRebanada
             ]
-            addConstraintSet(
+            add_constraint_set(
                 model,
                 [1.0] + [-1.0] * len(ventanasQueContienenInicio),
                 [varName] + ventanasQueContienenInicio,

@@ -31,11 +31,11 @@ def calcularCotaFisicaItems():
 #         # Definir variables y objetivos
 #         varsNames = [f"f_{i}" for i in ITEMS]
 #         coeffs = [1.0] * len(ITEMS)
-#         addVariables(model, varsNames, coeffs, "B")
+#         add_variables(model, varsNames, coeffs, "B")
 
 #         additionalVarsNames=[f"x_{i}" for i in ITEMS] + [f"y_{i}" for i in ITEMS]
 #         additionalCoeffObj = [0.0] * len(additionalVarsNames)
-#         addVariables(model, additionalVarsNames, additionalCoeffObj, "I")
+#         add_variables(model, additionalVarsNames, additionalCoeffObj, "I")
 
 #         additionalVarsNames= set()
 #         for i in ITEMS:
@@ -47,7 +47,7 @@ def calcularCotaFisicaItems():
 #                     additionalVarsNames.add(f"b_{j},{i}") # agrego variable b_{ij}
 #         additionalVarsNames = list(additionalVarsNames)
 #         additionalCoeffObj = [0.0] * len(additionalVarsNames)
-#         addVariables(model, additionalVarsNames, additionalCoeffObj, "B")
+#         add_variables(model, additionalVarsNames, additionalCoeffObj, "B")
 
 #         # Añadir las restricciones para cada par (i, j) con i < j
 #         for i in ITEMS:
@@ -57,7 +57,7 @@ def calcularCotaFisicaItems():
 #                     consVars = [f"l_{i},{j}", f"l_{j},{i}", f"b_{i},{j}", f"b_{j},{i}", f"f_{i}", f"f_{j}"] 
 #                     consRhs = -1.0
 #                     consSense = "G"  # "G" indica >=
-#                     addConstraint(model,consCoeff,consVars,consRhs,consSense)
+#                     add_constraint(model,consCoeff,consVars,consRhs,consSense)
 
 #         # Añadir las restricciones x_i - x_j + W l_{ij} <= W - w para cada i en I
 #         for i in ITEMS:
@@ -67,7 +67,7 @@ def calcularCotaFisicaItems():
 #                     consVars = [f"x_{i}", f"x_{j}", f"l_{i},{j}"]
 #                     consRhs = BIN_WIDTH - ITEM_WIDTH
 #                     consSense = "L"  # "L" indica <=
-#                     addConstraint(model,consCoeff,consVars,consRhs,consSense)
+#                     add_constraint(model,consCoeff,consVars,consRhs,consSense)
 
 #         # Añadir las restricciones y_i - y_j + H b_{ij} <= H - h para cada i en I
 #         for i in ITEMS:
@@ -77,7 +77,7 @@ def calcularCotaFisicaItems():
 #                     consVars = [f"y_{i}", f"y_{j}", f"b_{i},{j}"]
 #                     consRhs = BIN_HEIGHT - ITEM_HEIGHT
 #                     consSense = "L"  # "L" indica <=
-#                     addConstraint(model,consCoeff,consVars,consRhs,consSense)
+#                     add_constraint(model,consCoeff,consVars,consRhs,consSense)
                     
 #         # Añadir la restricción x_i + W f_i <= 2W - w  para cada i en I
 #         for i in ITEMS:
@@ -85,7 +85,7 @@ def calcularCotaFisicaItems():
 #             consVars = [f"x_{i}", f"f_{i}"]  # Variables en la restricción
 #             consRhs = 2 * BIN_WIDTH - ITEM_WIDTH  # Lado derecho de la restricción
 #             consSense = "L"  # "L" indica <=
-#             addConstraint(model,consCoeff,consVars,consRhs,consSense)
+#             add_constraint(model,consCoeff,consVars,consRhs,consSense)
 
 #         # Añadir la restricción y_i + H f_i <= 2H - h para cada i en I
 #         for i in ITEMS:
@@ -93,7 +93,7 @@ def calcularCotaFisicaItems():
 #             consVars = [f"x_{i}", f"f_{i}"]  # Variables en la restricción
 #             consRhs = 2 * BIN_WIDTH - ITEM_WIDTH  # Lado derecho de la restricción
 #             consSense = "L"  # "L" indica <=
-#             addConstraint(model,consCoeff,consVars,consRhs,consSense)
+#             add_constraint(model,consCoeff,consVars,consRhs,consSense)
 
 #         # Desactivar la interrupción manual aquí
 #         manualInterruption.value = False
@@ -132,7 +132,7 @@ def calcularCotaFisicaItems():
 #         })
         
 #     except CplexSolverError as e:
-#         handleSolverError(e, queue,solverTimeT)
+#         handle_solver_error(e, queue,solverTimeT)
 
 def createModel(maxTime):
    
@@ -150,11 +150,11 @@ def createModel(maxTime):
     items = list(range(1, calcularCotaFisicaItems() + 1))
     varsNames = [f"f_{i}" for i in items]
     coeffs = [1.0] * len(items)  
-    addVariables(model, varsNames, coeffs, "B")
+    add_variables(model, varsNames, coeffs, "B")
 
     additionalVarsNames=[f"x_{i}" for i in items] + [f"y_{i}" for i in items]
     additionalCoeffObj = [0.0] * len(additionalVarsNames)
-    addVariables(model, additionalVarsNames, additionalCoeffObj, "I")
+    add_variables(model, additionalVarsNames, additionalCoeffObj, "I")
 
     additionalVarsNames= set()
     for i in items:
@@ -166,7 +166,7 @@ def createModel(maxTime):
                 additionalVarsNames.add(f"b_{j},{i}") # agrego variable b_{ij}
     additionalVarsNames = list(additionalVarsNames)
     additionalCoeffObj = [0.0] * len(additionalVarsNames)
-    addVariables(model, additionalVarsNames, additionalCoeffObj, "B")
+    add_variables(model, additionalVarsNames, additionalCoeffObj, "B")
 
         # Añadir las restricciones para cada par (i, j) con i < j
     for i in items:
@@ -176,7 +176,7 @@ def createModel(maxTime):
                 consVars = [f"l_{i},{j}", f"l_{j},{i}", f"b_{i},{j}", f"b_{j},{i}", f"f_{i}", f"f_{j}"] 
                 consRhs = -1.0
                 consSense = "G"  # "G" indica >=
-                addConstraint(model,consCoeff,consVars,consRhs,consSense)
+                add_constraint(model,consCoeff,consVars,consRhs,consSense)
 
     # Añadir las restricciones x_i - x_j + W l_{ij} <= W - w para cada i en I
     for i in items:
@@ -186,7 +186,7 @@ def createModel(maxTime):
                 consVars = [f"x_{i}", f"x_{j}", f"l_{i},{j}"]
                 consRhs = BIN_WIDTH - ITEM_WIDTH
                 consSense = "L"  # "L" indica <=
-                addConstraint(model,consCoeff,consVars,consRhs,consSense)
+                add_constraint(model,consCoeff,consVars,consRhs,consSense)
 
     # Añadir las restricciones y_i - y_j + H b_{ij} <= H - h para cada i en I
     for i in items:
@@ -196,7 +196,7 @@ def createModel(maxTime):
                 consVars = [f"y_{i}", f"y_{j}", f"b_{i},{j}"]
                 consRhs = BIN_HEIGHT - ITEM_HEIGHT
                 consSense = "L"  # "L" indica <=
-                addConstraint(model,consCoeff,consVars,consRhs,consSense)
+                add_constraint(model,consCoeff,consVars,consRhs,consSense)
                     
     # Añadir la restricción x_i + W f_i <= 2W - w  para cada i en I
     for i in items:
@@ -204,7 +204,7 @@ def createModel(maxTime):
         consVars = [f"x_{i}", f"f_{i}"]  # Variables en la restricción
         consRhs = 2 * BIN_WIDTH - ITEM_WIDTH  # Lado derecho de la restricción
         consSense = "L"  # "L" indica <=
-        addConstraint(model,consCoeff,consVars,consRhs,consSense)
+        add_constraint(model,consCoeff,consVars,consRhs,consSense)
 
     # Añadir la restricción y_i + H f_i <= 2H - h para cada i en I
     for i in items:
@@ -212,7 +212,7 @@ def createModel(maxTime):
         consVars = [f"y_{i}", f"f_{i}"]  # Variables en la restricción
         consRhs = 2 * BIN_HEIGHT - ITEM_HEIGHT  # Lado derecho de la restricción
         consSense = "L"  # "L" indica <=
-        addConstraint(model,consCoeff,consVars,consRhs,consSense)
+        add_constraint(model,consCoeff,consVars,consRhs,consSense)
 
     return model
         
@@ -250,7 +250,7 @@ def executeWithTimeLimit(maxTime):
     manualInterruption = multiprocessing.Value('b', True)
 
     # Crear el subproceso que correrá la función
-    process = multiprocessing.Process(target=runModel, args=(createModel,solveModel,queue,manualInterruption,maxTime))
+    process = multiprocessing.Process(target=run_model, args=(createModel,solveModel,queue,manualInterruption,maxTime))
 
     # Iniciar el subproceso
     process.start()

@@ -2,31 +2,31 @@ import cplex
 from cplex.exceptions import CplexSolverError
 import time
 
-def addVariables(model, varNames, objCoeffs, varType):
-    n = len(varNames)
-    types = [varType] * n
+def add_variables(model, var_names, obj_coeffs, var_type):
+    n = len(var_names)
+    types = [var_type] * n
 
     lb = [0.0] * n
-    if varType == "B":
+    if var_type == "B":
         ub = [1.0] * n
     else:
         ub = [cplex.infinity] * n
 
     model.variables.add(
-        names=varNames,
-        obj=objCoeffs,
+        names=var_names,
+        obj=obj_coeffs,
         lb=lb,
         ub=ub,
         types=types
     )
 
-def addConstraint(model, coeff, vars, rhs, sense,constraintName=None):
-    if(constraintName):
+def add_constraint(model, coeff, vars, rhs, sense, constraint_name=None):
+    if constraint_name:
         model.linear_constraints.add(
             lin_expr=[cplex.SparsePair(vars, coeff)],
             senses=[sense],
             rhs=[rhs],
-            names=[constraintName]
+            names=[constraint_name]
         )
     else:
         model.linear_constraints.add(
@@ -35,7 +35,16 @@ def addConstraint(model, coeff, vars, rhs, sense,constraintName=None):
             rhs=[rhs]
         )
     
-def addConstraintSet(model, coeff, vars, rhs, sense, added_constraints,constraintName=None,desactivarCondicionRestriccionesRepetidas=False):
+def add_constraint_set(
+    model,
+    coeff,
+    vars,
+    rhs,
+    sense,
+    added_constraints,
+    constraint_name=None,
+    desactivar_condicion_restricciones_repetidas=False
+):
     filtered = [(c, v) for c, v in zip(coeff, vars) if c != 0]
     if filtered:
         coeff, vars = zip(*filtered)
@@ -45,47 +54,47 @@ def addConstraintSet(model, coeff, vars, rhs, sense, added_constraints,constrain
     new_constraint = (tuple(coeff), tuple(vars), rhs, sense)
     
 
-    if new_constraint in added_constraints and not desactivarCondicionRestriccionesRepetidas:
+    if new_constraint in added_constraints and not desactivar_condicion_restricciones_repetidas:
         return
     
     if vars:
-        addConstraint(model, coeff, vars, rhs, sense, constraintName)
+        add_constraint(model, coeff, vars, rhs, sense, constraint_name)
         added_constraints.add(new_constraint)
     
     
-def handleSolverError(e, queue,solverTime):
-    errorCode = e.args[2]
-    modelStatus, solverStatus = ("14", "4") if errorCode == 1217 else ("12", "10")
+def handle_solver_error(e, queue, solver_time):
+    error_code = e.args[2]
+    model_status, solver_status = ("14", "4") if error_code == 1217 else ("12", "10")
     queue.put({
-        "modelStatus": modelStatus,
-        "solverStatus": solverStatus,
+        "modelStatus": model_status,
+        "solverStatus": solver_status,
         "objectiveValue": 0,
-        "solverTime": solverTime
+        "solverTime": solver_time
     })
 
 
-def runModel(createModel,solveModel,queue, manualInterruption, maxTime):
+def run_model(create_model, solve_model, queue, manual_interruption, max_time):
     # Valores por defecto para Paver
-    modelStatus, solverStatus, objectiveValue, solverTime = "1", "1", 0, 1
+    model_status, solver_status, objective_value, solver_time = "1", "1", 0, 1
     start = time.time()
 
     try:
-        model = createModel(maxTime)
-        modelStatus, solverStatus, objectiveValue = solveModel(model, queue, manualInterruption)
-        solverTime = round(time.time() - start, 2)
+        model = create_model(max_time)
+        model_status, solver_status, objective_value = solve_model(model, queue, manual_interruption)
+        solver_time = round(time.time() - start, 2)
 
     except CplexSolverError as e:
-        solverTime = round(time.time() - start, 2)
-        handleSolverError(e, queue, solverTime)
+        solver_time = round(time.time() - start, 2)
+        handle_solver_error(e, queue, solver_time)
         return
 
     except Exception as e:
-        solverTime = round(time.time() - start, 2)
+        solver_time = round(time.time() - start, 2)
         print(f"Error inesperado durante creación/resolución: {e}")
 
     queue.put({
-        "modelStatus": modelStatus,
-        "solverStatus": solverStatus,
-        "objectiveValue": objectiveValue,
-        "solverTime": solverTime
+        "modelStatus": model_status,
+        "solverStatus": solver_status,
+        "objectiveValue": objective_value,
+        "solverTime": solver_time
     })

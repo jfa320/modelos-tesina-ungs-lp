@@ -48,7 +48,7 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,posX
         for r, nombre, coef in zip(R, p_r_names, coeffs_p_r):
             print(f"{nombre} | id={r.get_id()} | totalItems={r.get_total_items()} | lenItems={len(r.get_items())} | resumen={resumirRebanada(r)}")
         
-        addVariables(model, p_r_names, coeffs_p_r, model.variables.type.binary)
+        add_variables(model, p_r_names, coeffs_p_r, model.variables.type.binary)
 
 
         p_r_by_id = {r.get_id(): f"p_{r.get_id()}" for r in R}
@@ -79,7 +79,7 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,posX
             if rebanadasQueOcupanPos:
                 indexes = [f"p_{r.get_id()}" for r in rebanadasQueOcupanPos]
                 coeffs = [1.0] * len(rebanadasQueOcupanPos)
-                addConstraintSet(
+                add_constraint_set(
                     model,
                     coeffs,
                     indexes,
@@ -160,7 +160,7 @@ def solveMasterModel(model, queue, manualInterruption, relajarModelo, initialTim
         return objectiveValue, dualValues, variablesActivas
     
     except CplexSolverError as e:
-        handleSolverError(e, queue,solverTime)
+        handle_solver_error(e, queue,solverTime)
         
 def getDualValues(model):
     print("Extrayendo valores duales...")
@@ -168,9 +168,9 @@ def getDualValues(model):
     P_star = {"pi": {}}
 
     dualValues = model.solution.get_dual_values()
-    constraintNames = model.linear_constraints.get_names()
+    constraint_names = model.linear_constraints.get_names()
 
-    for name, dualValue in zip(constraintNames, dualValues):
+    for name, dualValue in zip(constraint_names, dualValues):
         if name.startswith("consItem_"):
             # nombre: consItem_a_b
             _, a, b = name.split("_")

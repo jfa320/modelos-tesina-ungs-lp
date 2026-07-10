@@ -152,7 +152,7 @@ def agregarNoGoodCut(slaveModel, variablesActivas, cutId):
     if not variablesActivas:
         return
 
-    addConstraint(
+    add_constraint(
         slaveModel,
         [1.0] * len(variablesActivas),
         variablesActivas,
@@ -173,7 +173,7 @@ def agregarRestriccionNoVacia(slaveModel):
     if not nombres:
         return
 
-    addConstraint(
+    add_constraint(
         slaveModel,
         valores,
         nombres,
@@ -514,7 +514,7 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
     
     except CplexSolverError as e:
         solverTime = round(time.time() - initialTime, 2)
-        handleSolverError(e, queue, solverTime)
+        handle_solver_error(e, queue, solverTime)
         if devolver_solucion:
             return None, []
 

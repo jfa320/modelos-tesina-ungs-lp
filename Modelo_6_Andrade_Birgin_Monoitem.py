@@ -30,19 +30,19 @@ def createModel(maxTime):
     # -----------------------------
     usedVarNames = [f"f_{i}" for i in items]
     usedVarObj = [1.0] * len(items)
-    addVariables(model, usedVarNames, usedVarObj, "B")
+    add_variables(model, usedVarNames, usedVarObj, "B")
 
     rotVarNames = [f"r_{i}" for i in items]
     rotVarObj = [0.0] * len(items)
-    addVariables(model, rotVarNames, rotVarObj, "B")
+    add_variables(model, rotVarNames, rotVarObj, "B")
 
     centerVarNames = [f"cx_{i}" for i in items] + [f"cy_{i}" for i in items]
     centerVarObj = [0.0] * len(centerVarNames)
-    addVariables(model, centerVarNames, centerVarObj, "C")
+    add_variables(model, centerVarNames, centerVarObj, "C")
 
     effDimVarNames = [f"wEff_{i}" for i in items] + [f"hEff_{i}" for i in items]
     effDimVarObj = [0.0] * len(effDimVarNames)
-    addVariables(model, effDimVarNames, effDimVarObj, "C")
+    add_variables(model, effDimVarNames, effDimVarObj, "C")
 
     relativePosVars = []
     for i in items:
@@ -51,7 +51,7 @@ def createModel(maxTime):
                 relativePosVars.append(f"q_{i},{j}")
                 relativePosVars.append(f"q_{j},{i}")
 
-    addVariables(model, relativePosVars, [0.0] * len(relativePosVars), "B")
+    add_variables(model, relativePosVars, [0.0] * len(relativePosVars), "B")
 
     # -----------------------------
     # Dimensiones efectivas
@@ -64,14 +64,14 @@ def createModel(maxTime):
         consVars = [f"wEff_{i}", f"r_{i}"]
         consRhs = ITEM_WIDTH
         consSense = "E"
-        addConstraint(model, consCoeff, consVars, consRhs, consSense)
+        add_constraint(model, consCoeff, consVars, consRhs, consSense)
 
         # hEff_i = ITEM_HEIGHT - delta * r_i
         consCoeff = [1.0, delta]
         consVars = [f"hEff_{i}", f"r_{i}"]
         consRhs = ITEM_HEIGHT
         consSense = "E"
-        addConstraint(model, consCoeff, consVars, consRhs, consSense)
+        add_constraint(model, consCoeff, consVars, consRhs, consSense)
 
     # -----------------------------
     # Contención en el bin
@@ -82,28 +82,28 @@ def createModel(maxTime):
         consVars = [f"cx_{i}", f"wEff_{i}"]
         consRhs = 0.0
         consSense = "G"
-        addConstraint(model, consCoeff, consVars, consRhs, consSense)
+        add_constraint(model, consCoeff, consVars, consRhs, consSense)
 
         # cx_i + wEff_i / 2 <= BIN_WIDTH
         consCoeff = [1.0, 0.5]
         consVars = [f"cx_{i}", f"wEff_{i}"]
         consRhs = BIN_WIDTH
         consSense = "L"
-        addConstraint(model, consCoeff, consVars, consRhs, consSense)
+        add_constraint(model, consCoeff, consVars, consRhs, consSense)
 
         # cy_i - hEff_i / 2 >= 0
         consCoeff = [1.0, -0.5]
         consVars = [f"cy_{i}", f"hEff_{i}"]
         consRhs = 0.0
         consSense = "G"
-        addConstraint(model, consCoeff, consVars, consRhs, consSense)
+        add_constraint(model, consCoeff, consVars, consRhs, consSense)
 
         # cy_i + hEff_i / 2 <= BIN_HEIGHT
         consCoeff = [1.0, 0.5]
         consVars = [f"cy_{i}", f"hEff_{i}"]
         consRhs = BIN_HEIGHT
         consSense = "L"
-        addConstraint(model, consCoeff, consVars, consRhs, consSense)
+        add_constraint(model, consCoeff, consVars, consRhs, consSense)
 
     # -----------------------------
     # No superposición
@@ -127,7 +127,7 @@ def createModel(maxTime):
                 ]
                 consRhs = 0.0
                 consSense = "G"
-                addConstraint(model, consCoeff, consVars, consRhs, consSense)
+                add_constraint(model, consCoeff, consVars, consRhs, consSense)
 
                 # 2) j a la derecha de i
                 consCoeff = [
@@ -142,7 +142,7 @@ def createModel(maxTime):
                 ]
                 consRhs = -2 * bigMx
                 consSense = "G"
-                addConstraint(model, consCoeff, consVars, consRhs, consSense)
+                add_constraint(model, consCoeff, consVars, consRhs, consSense)
 
                 # 3) i arriba de j
                 consCoeff = [
@@ -157,7 +157,7 @@ def createModel(maxTime):
                 ]
                 consRhs = -bigMy
                 consSense = "G"
-                addConstraint(model, consCoeff, consVars, consRhs, consSense)
+                add_constraint(model, consCoeff, consVars, consRhs, consSense)
 
                 # 4) j arriba de i
                 consCoeff = [
@@ -172,7 +172,7 @@ def createModel(maxTime):
                 ]
                 consRhs = -bigMy
                 consSense = "G"
-                addConstraint(model, consCoeff, consVars, consRhs, consSense)
+                add_constraint(model, consCoeff, consVars, consRhs, consSense)
 
     return model
 
@@ -240,7 +240,7 @@ def solveModel(model, queue, manualInterruption):
         })
 
 
-def runModel(createModelFn, solveModelFn, queue, manualInterruption, maxTime):
+def run_model(createModelFn, solveModelFn, queue, manualInterruption, maxTime):
     try:
         model = createModelFn(maxTime)
         solveModelFn(model, queue, manualInterruption)
@@ -264,7 +264,7 @@ def executeWithTimeLimit(maxTime):
     manualInterruption = multiprocessing.Value('b', True)
 
     process = multiprocessing.Process(
-        target=runModel,
+        target=run_model,
         args=(createModel, solveModel, queue, manualInterruption, maxTime)
     )
 
