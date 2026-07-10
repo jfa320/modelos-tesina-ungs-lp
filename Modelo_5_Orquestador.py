@@ -5,7 +5,7 @@ import time
 from Objetos import Rebanada
 from Objetos import Item
 
-from Position_generator import generatePositionsXYM, generatePositionsXYM2
+from Position_generator import generate_positions_xym2
 from Modelo_5_Propio_Maestro import * 
 from Modelo_5_Propio_Esclavo_Alternativo import * 
 from Config import *
@@ -276,7 +276,7 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
         altoRebanada = calcularAltoRebanada(binWidth, binHeight, itemWidth, itemHeight)
 
         # Genero posiciones a usar en el bin 
-        posXY_x, posXY_y=generatePositionsXYM2(binWidth,binHeight, itemWidth, itemHeight)
+        posXY_x, posXY_y=generate_positions_xym2(binWidth,binHeight, itemWidth, itemHeight)
         
         maxItemsFisicos = calcularCotaFisicaItems(binWidth, binHeight, itemWidth, itemHeight)
 

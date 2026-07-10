@@ -57,21 +57,21 @@ class Item:
 
     def set_posicion_x(self, x):
         if isinstance(x, (int, float)) or x is None:
-            self.__posX = x
+            self.__pos_x = x
         else:
             raise ValueError("La posición X debe ser un número o None.")
 
     def get_posicion_x(self):
-        return self.__posX
+        return self.__pos_x
 
     def set_posicion_y(self, y):
         if isinstance(y, (int, float)) or y is None:
-            self.__posY = y
+            self.__pos_y = y
         else:
             raise ValueError("La posición Y debe ser un número o None.")
 
     def get_posicion_y(self):
-        return self.__posY
+        return self.__pos_y
     
     def get_posicion(self):
         return (self.get_posicion_x(), self.get_posicion_y())

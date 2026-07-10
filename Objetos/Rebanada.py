@@ -22,7 +22,7 @@ class Rebanada:
         for item in self.get_items():
             x = item.get_posicion_x()
             y = item.get_posicion_y()
-            self.__puntosDeInicioItems.append((x, y))
+            self.__puntos_de_inicio_items.append((x, y))
 
     def set_id(self, id):
         if isinstance(id, int) and id > 0:
@@ -72,10 +72,10 @@ class Rebanada:
             raise TypeError("Las posiciones ocupadas deben ser una lista.")
         if not all(isinstance(pos, tuple) and len(pos) == 2 for pos in posiciones):
             raise ValueError("Cada posición debe ser una tupla (x, y).")
-        self.__puntosDeInicioItems = posiciones
+        self.__puntos_de_inicio_items = posiciones
 
     def get_puntos_de_inicio_items(self):
-        return self.__puntosDeInicioItems
+        return self.__puntos_de_inicio_items
 
     def _append_item(self, item, posicion=None):
         if not isinstance(item, Item):
@@ -86,13 +86,13 @@ class Rebanada:
     def append_posicion_inicio_de_item(self, posicion):
         if not isinstance(posicion, tuple) or len(posicion) != 2:
             raise ValueError("La posición debe ser una tupla (x, y).")
-        self.__puntosDeInicioItems.append(posicion)
+        self.__puntos_de_inicio_items.append(posicion)
         
     def colocar_item(self, nuevo_item, x, y):
         if not isinstance(x, (int, float)) or not isinstance(y, (int, float)):
             raise ValueError("Las coordenadas deben ser números.")
         
-        if (x, y) in self.__puntosDeInicioItems:
+        if (x, y) in self.__puntos_de_inicio_items:
             raise ValueError("La posición ya está ocupada.")
         
         nuevo_item.set_posicion_x(x)
