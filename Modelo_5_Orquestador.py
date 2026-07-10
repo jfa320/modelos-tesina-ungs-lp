@@ -22,53 +22,53 @@ MAX_ESTANCAMIENTO = 5
 MAX_EXTRA = 5
 
 
-def calcularAltoRebanada(binWidth, binHeight, itemWidth, itemHeight, porcentaje=0.05):
-    cotaMaxima = math.floor((binHeight * binWidth) / (itemHeight * itemWidth))
-    itemsObjetivo = math.ceil(cotaMaxima * porcentaje)
+def calcular_alto_rebanada(bin_width, bin_height, item_width, item_height, porcentaje=0.05):
+    cota_maxima = math.floor((bin_height * bin_width) / (item_height * item_width))
+    items_objetivo = math.ceil(cota_maxima * porcentaje)
 
-    itemsPorFilaNormal = math.floor(binWidth / itemWidth)
-    filasNormal = math.ceil(itemsObjetivo / itemsPorFilaNormal)
-    altoNormal = filasNormal * itemHeight
+    items_por_fila_normal = math.floor(bin_width / item_width)
+    filas_normal = math.ceil(items_objetivo / items_por_fila_normal)
+    alto_normal = filas_normal * item_height
 
-    itemsPorFilaRotado = math.floor(binWidth / itemHeight)
-    filasRotado = math.ceil(itemsObjetivo / itemsPorFilaRotado)
-    altoRotado = filasRotado * itemWidth
+    items_por_fila_rotado = math.floor(bin_width / item_height)
+    filas_rotado = math.ceil(items_objetivo / items_por_fila_rotado)
+    alto_rotado = filas_rotado * item_width
 
-    return min(altoNormal, altoRotado)
+    return min(alto_normal, alto_rotado)
 
-def calcularCotaFisicaItems(binWidth, binHeight, itemWidth, itemHeight):
-    return math.floor((binWidth * binHeight) / (itemWidth * itemHeight))
+def calcular_cota_fisica_items(bin_width, bin_height, item_width, item_height):
+    return math.floor((bin_width * bin_height) / (item_width * item_height))
 
 
-def generarRebanadasIniciales(binWidth, binHeight,
-                              itemWidth, itemHeight,
-                              posXY_x, posXY_y,
-                              maxItems):
+def generar_rebanadas_iniciales(bin_width, bin_height,
+                                item_width, item_height,
+                                pos_xy_x, pos_xy_y,
+                                max_items):
 
-    altoRebanada = calcularAltoRebanada(binWidth, binHeight, itemWidth, itemHeight)
+    alto_rebanada = calcular_alto_rebanada(bin_width, bin_height, item_width, item_height)
 
-    def generarPorOrientacion(posiciones, w, h, rotado):
+    def generar_por_orientacion(posiciones, w, h, rotado):
         rebanadas = []
-        itemsColocados = 0
+        items_colocados = 0
 
-        posicionesSet = set(posiciones)
+        posiciones_set = set(posiciones)
 
         # Agrupar posiciones por fila (y)
-        posicionesPorFila = {}
+        posiciones_por_fila = {}
         for (x, y) in posiciones:
-            posicionesPorFila.setdefault(y, []).append(x)
+            posiciones_por_fila.setdefault(y, []).append(x)
 
-        for y in sorted(posicionesPorFila.keys()):
-            if itemsColocados >= maxItems:
+        for y in sorted(posiciones_por_fila.keys()):
+            if items_colocados >= max_items:
                 break
 
-            rebanada = Rebanada(alto=altoRebanada, ancho=binWidth)
+            rebanada = Rebanada(alto=alto_rebanada, ancho=bin_width)
             ocupadas = set()
             x = 0
 
             # Recorremos TODO el ancho del bin
-            while x + w <= binWidth:
-                if itemsColocados >= maxItems:
+            while x + w <= bin_width:
+                if items_colocados >= max_items:
                     break
 
                 # Región ocupada por el ítem
@@ -82,11 +82,11 @@ def generarRebanadasIniciales(binWidth, binHeight,
                     continue
 
                 # Validar SOLO el punto de inicio
-                if (x, y) in posicionesSet:
+                if (x, y) in posiciones_set:
                     item = Item(alto=h, ancho=w, rotado=rotado)
                     rebanada.colocar_item(item, x, y)
                     ocupadas |= region
-                    itemsColocados += 1
+                    items_colocados += 1
 
                     # salto exacto del ancho del ítem
                     x += w
@@ -95,37 +95,37 @@ def generarRebanadasIniciales(binWidth, binHeight,
 
             if rebanada.get_puntos_de_inicio_items():
                 rebanadas.append(rebanada)
-                itemsColocados = 0  # mantenemos tu semántica original
+                items_colocados = 0  # mantenemos tu semántica original
 
         return rebanadas
 
     # Generar rebanadas no rotadas
-    rebanadasNoRotadas = generarPorOrientacion(
-        posXY_x, itemWidth, itemHeight, rotado=False
+    rebanadas_no_rotadas = generar_por_orientacion(
+        pos_xy_x, item_width, item_height, rotado=False
     )
 
     # Generar rebanadas rotadas
-    rebanadasRotadas = generarPorOrientacion(
-        posXY_y, itemHeight, itemWidth, rotado=True
+    rebanadas_rotadas = generar_por_orientacion(
+        pos_xy_y, item_height, item_width, rotado=True
     )
 
-    return rebanadasNoRotadas + rebanadasRotadas
+    return rebanadas_no_rotadas + rebanadas_rotadas
 
-def construirFirmaRebanada(rebanada):
+def construir_firma_rebanada(rebanada):
     return tuple(sorted((item.get_posicion_x(), item.get_posicion_y(), item.get_rotado()) for item in rebanada.get_items()))
 
-def resumirRebanada(rebanada):
+def resumir_rebanada(rebanada):
     return sorted((item.get_posicion_x(), item.get_posicion_y(), item.get_rotado()) for item in rebanada.get_items())
 
-def extraerDualesNoNulos(precios_duales, tol=1e-9):
-    dualesNoNulos = {}
+def extraer_duales_no_nulos(precios_duales, tol=1e-9):
+    duales_no_nulos = {}
     for clave, valor in precios_duales.get("pi", {}).items():
         if abs(valor) > tol:
-            dualesNoNulos[clave] = valor
-    return dualesNoNulos
+            duales_no_nulos[clave] = valor
+    return duales_no_nulos
 
-def calcularReducedCostReal(rebanada, preciosDuales, w, h):
-    sumaDuales = 0.0
+def calcular_reduced_cost_real(rebanada, precios_duales, w, h):
+    suma_duales = 0.0
     
     if(rebanada is None):
         return 0.0, 0, 0.0
@@ -140,32 +140,32 @@ def calcularReducedCostReal(rebanada, preciosDuales, w, h):
         for dx in range(ancho):
             for dy in range(alto):
                 clave = f"({x+dx},{y+dy})"
-                sumaDuales += preciosDuales["pi"].get(clave, 0.0)
+                suma_duales += precios_duales["pi"].get(clave, 0.0)
 
     c_r = len(rebanada.get_items())
-    reducedCostReal = c_r - sumaDuales
+    reduced_cost_real = c_r - suma_duales
 
-    return reducedCostReal, c_r, sumaDuales
+    return reduced_cost_real, c_r, suma_duales
 
 
-def agregarNoGoodCut(slaveModel, variablesActivas, cutId):
-    if not variablesActivas:
+def agregar_no_good_cut(slave_model, variables_activas, cut_id):
+    if not variables_activas:
         return
 
     add_constraint(
-        slaveModel,
-        [1.0] * len(variablesActivas),
-        variablesActivas,
-        len(variablesActivas) - 1,
+        slave_model,
+        [1.0] * len(variables_activas),
+        variables_activas,
+        len(variables_activas) - 1,
         "L",
-        f"nogood_{cutId}"
+        f"nogood_{cut_id}"
     )
 
-def agregarRestriccionNoVacia(slaveModel):
+def agregar_restriccion_no_vacia(slave_model):
     nombres = []
     valores = []
 
-    for nombre in slaveModel.variables.get_names():
+    for nombre in slave_model.variables.get_names():
         if nombre.startswith("z_x_") or nombre.startswith("z_y_"):
             nombres.append(nombre)
             valores.append(1.0)
@@ -174,41 +174,41 @@ def agregarRestriccionNoVacia(slaveModel):
         return
 
     add_constraint(
-        slaveModel,
+        slave_model,
         valores,
         nombres,
         1.0,
         "G",
-        f"non_empty_{slaveModel.linear_constraints.get_num()}"
+        f"non_empty_{slave_model.linear_constraints.get_num()}"
     )
 
 
-def obtenerRebanadasActivas(rebanadas, variablesActivasMaestro):
-    idsActivos = set()
+def obtener_rebanadas_activas(rebanadas, variables_activas_maestro):
+    ids_activos = set()
 
-    for nombreVariable in variablesActivasMaestro:
-        if not nombreVariable.startswith("p_"):
+    for nombre_variable in variables_activas_maestro:
+        if not nombre_variable.startswith("p_"):
             continue
-        idsActivos.add(int(nombreVariable.split("_")[1]))
+        ids_activos.add(int(nombre_variable.split("_")[1]))
 
-    return [rebanada for rebanada in rebanadas if rebanada.get_id() in idsActivos]
-
-
-def exportarLayoutFinal(binWidth, binHeight, itemWidth, itemHeight, cotaFisicaItems, rebanadasActivas):
-    outputPath = os.path.join("Resultados", f"{CASE_NAME}_layout.png")
-    exportar_solucion_bin_a_png(binWidth, binHeight, itemWidth, itemHeight, cotaFisicaItems, rebanadasActivas, outputPath)
-    print(f"Layout final exportado en: {outputPath}")
+    return [rebanada for rebanada in rebanadas if rebanada.get_id() in ids_activos]
 
 
-def desnormalizarRebanadasParaSalida(rebanadas, binWidthOriginal, binHeightOriginal, itemWidthOriginal, itemHeightOriginal, binNormalizado, itemNormalizado):
-    if not binNormalizado and not itemNormalizado:
+def exportar_layout_final(bin_width, bin_height, item_width, item_height, cota_fisica_items, rebanadas_activas):
+    output_path = os.path.join("Resultados", f"{CASE_NAME}_layout.png")
+    exportar_solucion_bin_a_png(bin_width, bin_height, item_width, item_height, cota_fisica_items, rebanadas_activas, output_path)
+    print(f"Layout final exportado en: {output_path}")
+
+
+def desnormalizar_rebanadas_para_salida(rebanadas, bin_width_original, bin_height_original, item_width_original, item_height_original, bin_normalizado, item_normalizado):
+    if not bin_normalizado and not item_normalizado:
         return rebanadas
 
-    altoRebanada = calcularAltoRebanada(binWidthOriginal, binHeightOriginal, itemWidthOriginal, itemHeightOriginal)
-    rebanadasDesnormalizadas = []
+    alto_rebanada = calcular_alto_rebanada(bin_width_original, bin_height_original, item_width_original, item_height_original)
+    rebanadas_desnormalizadas = []
 
     for rebanada in rebanadas:
-        itemsDesnormalizados = []
+        items_desnormalizados = []
 
         for item in rebanada.get_items():
             x = item.get_posicion_x()
@@ -216,246 +216,245 @@ def desnormalizarRebanadasParaSalida(rebanadas, binWidthOriginal, binHeightOrigi
             ancho = item.get_ancho()
             alto = item.get_alto()
 
-            if binNormalizado:
-                xOriginal = binWidthOriginal - (y + alto)
-                yOriginal = x
-                anchoOriginal = alto
-                altoOriginal = ancho
+            if bin_normalizado:
+                x_original = bin_width_original - (y + alto)
+                y_original = x
+                ancho_original = alto
+                alto_original = ancho
             else:
-                xOriginal = x
-                yOriginal = y
-                anchoOriginal = ancho
-                altoOriginal = alto
+                x_original = x
+                y_original = y
+                ancho_original = ancho
+                alto_original = alto
 
-            itemOriginal = Item(
-                alto=altoOriginal,
-                ancho=anchoOriginal,
-                rotado=item.get_rotado() ^ binNormalizado ^ itemNormalizado,
-                posicion_x=xOriginal,
-                posicion_y=yOriginal
+            item_original = Item(
+                alto=alto_original,
+                ancho=ancho_original,
+                rotado=item.get_rotado() ^ bin_normalizado ^ item_normalizado,
+                posicion_x=x_original,
+                posicion_y=y_original
             )
-            itemsDesnormalizados.append(itemOriginal)
+            items_desnormalizados.append(item_original)
 
-        rebanadasDesnormalizadas.append(
+        rebanadas_desnormalizadas.append(
             Rebanada(
-                alto=altoRebanada,
-                ancho=binWidthOriginal,
-                items=itemsDesnormalizados
+                alto=alto_rebanada,
+                ancho=bin_width_original,
+                items=items_desnormalizados
             )
         )
 
-    return rebanadasDesnormalizadas
+    return rebanadas_desnormalizadas
 
 
 # Orquestador principal
-def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver_solucion=False):
+def orquestador(queue, manual_interruption, max_time, initial_time, config_data, devolver_solucion=False):
     try:
         # Reiniciar el contador de IDs de Rebanada para cada ejecución
         Rebanada.reset_id_counter()
-        iteracionesSinMejora = 0
+        iteraciones_sin_mejora = 0
 
-        # Seteo configuraciones en base a los datos recibidos en configData
-        binWidthOriginal = configData.get_bin_width()
-        binHeightOriginal = configData.get_bin_height()
-        itemWidthOriginal = configData.get_item_width()
-        itemHeightOriginal = configData.get_item_height()
-        binWidth = binWidthOriginal
-        binHeight = binHeightOriginal
-        itemWidth = itemWidthOriginal
-        itemHeight = itemHeightOriginal
+        # Seteo configuraciones en base a los datos recibidos en config_data
+        bin_width_original = config_data.get_bin_width()
+        bin_height_original = config_data.get_bin_height()
+        item_width_original = config_data.get_item_width()
+        item_height_original = config_data.get_item_height()
+        bin_width = bin_width_original
+        bin_height = bin_height_original
+        item_width = item_width_original
+        item_height = item_height_original
 
-        binNormalizado = binHeight > binWidth
-        itemNormalizado = itemHeight > itemWidth
+        bin_normalizado = bin_height > bin_width
+        item_normalizado = item_height > item_width
 
-        if binNormalizado:
-            binWidth, binHeight = binHeight, binWidth
+        if bin_normalizado:
+            bin_width, bin_height = bin_height, bin_width
 
-        if itemNormalizado:
-            itemWidth, itemHeight = itemHeight, itemWidth
+        if item_normalizado:
+            item_width, item_height = item_height, item_width
 
-        altoRebanada = calcularAltoRebanada(binWidth, binHeight, itemWidth, itemHeight)
+        alto_rebanada = calcular_alto_rebanada(bin_width, bin_height, item_width, item_height)
 
-        # Genero posiciones a usar en el bin 
-        posXY_x, posXY_y=generate_positions_xym2(binWidth,binHeight, itemWidth, itemHeight)
-        
-        maxItemsFisicos = calcularCotaFisicaItems(binWidth, binHeight, itemWidth, itemHeight)
+        # Genero posiciones a usar en el bin
+        pos_xy_x, pos_xy_y = generate_positions_xym2(bin_width, bin_height, item_width, item_height)
+
+        max_items_fisicos = calcular_cota_fisica_items(bin_width, bin_height, item_width, item_height)
 
         # Genero rebanadas iniciales usando una cota fisica, no una demanda finita de items.
-        rebanadas= generarRebanadasIniciales(binWidth, binHeight, itemWidth, itemHeight,posXY_x,posXY_y, maxItemsFisicos)  
-        
+        rebanadas = generar_rebanadas_iniciales(bin_width, bin_height, item_width, item_height, pos_xy_x, pos_xy_y, max_items_fisicos)
+
         iteracion = 0
 
         # Construyo firma de rebanadas iniciales para evitar que se generen nuevamente en alguna iteracion
-        firmasGeneradas = {construirFirmaRebanada(r) for r in rebanadas}
-        objectiveMasterAnterior = None
+        firmas_generadas = {construir_firma_rebanada(r) for r in rebanadas}
+        objective_master_anterior = None
 
         while True:
             #TODO: Aca podria mejorar evitando la creacion del modelo en cada vuelta.
             # En su lugar, podria crear uno y luego agregar las columnas (rebanadas) nuevas
 
-            masterModel = createMasterModel(maxTime,rebanadas,binHeight,binWidth,itemHeight,itemWidth, posXY_x, posXY_y)
+            master_model = createMasterModel(max_time, rebanadas, bin_height, bin_width, item_height, item_width, pos_xy_x, pos_xy_y)
             # Resolver modelo maestro
-            objectiveMaster , precios_duales, _ = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=True, initialTime=initialTime)
+            objective_master, precios_duales, _ = solveMasterModel(master_model, queue, manual_interruption, True, initial_time)
 
-            if objectiveMasterAnterior is None:
+            if objective_master_anterior is None:
                 print("FO maestro relajado anterior: None (primera iteración)")
             else:
-                mejoraMaster = objectiveMaster - objectiveMasterAnterior
+                mejora_master = objective_master - objective_master_anterior
 
-            slaveModel= createSlaveModel(maxTime,posXY_x,posXY_y,precios_duales, binWidth,itemHeight,itemWidth,binHeight,altoRebanada)
-            nueva_rebanada, objectiveValueSlaveModel, variablesActivas  = solveSlaveModel(slaveModel,queue,manualInterruption,binWidth,itemHeight,itemWidth,altoRebanada)
+            slave_model = createSlaveModel(max_time, pos_xy_x, pos_xy_y, precios_duales, bin_width, item_height, item_width, bin_height, alto_rebanada)
+            nueva_rebanada, objective_value_slave_model, variables_activas = solveSlaveModel(slave_model, queue, manual_interruption, bin_width, item_height, item_width, alto_rebanada)
 
-            esDuplicada = False
-            
+            es_duplicada = False
+
             # validacion de duplicados solo si se genero una nueva rebanada
-            if(nueva_rebanada is not None):
-                firma = construirFirmaRebanada(nueva_rebanada)
-                esDuplicada = firma in firmasGeneradas
+            if nueva_rebanada is not None:
+                firma = construir_firma_rebanada(nueva_rebanada)
+                es_duplicada = firma in firmas_generadas
 
             # Si el esclavo no devolvió una solución factible, corto el proceso
-            if objectiveValueSlaveModel is None:
+            if objective_value_slave_model is None:
                 print("El esclavo no devolvió una solución factible. CORTE.")
                 break
-            
-            # Si la FO del esclavo es menor o igual a EPS, se considera que no hay mejora significativa pero aun no se cierra el proceso, 
-            # sino que se generan algunas adicionales  
-            if objectiveValueSlaveModel <= EPS:
-                solucionesExcluidas = []
-                
-                # excluyo la solución actual del esclavo para forzar la generación de una nueva rebanada en la próxima iteración
-                if variablesActivas:
-                    solucionesExcluidas.append(variablesActivas)
 
-                # inicio el proceso de generacion de nuevas rebanadas, realizado MAX_EXTRA iteraciones 
-                # o hasta que ocurra algun corte 
+            # Si la FO del esclavo es menor o igual a EPS, se considera que no hay mejora significativa pero aun no se cierra el proceso,
+            # sino que se generan algunas adicionales
+            if objective_value_slave_model <= EPS:
+                soluciones_excluidas = []
+
+                # excluyo la solución actual del esclavo para forzar la generación de una nueva rebanada en la próxima iteración
+                if variables_activas:
+                    soluciones_excluidas.append(variables_activas)
+
+                # inicio el proceso de generacion de nuevas rebanadas, realizado MAX_EXTRA iteraciones
+                # o hasta que ocurra algun corte
                 for _ in range(MAX_EXTRA):
-                    slaveModel = createSlaveModel(
-                        maxTime,
-                        posXY_x,
-                        posXY_y,
+                    slave_model = createSlaveModel(
+                        max_time,
+                        pos_xy_x,
+                        pos_xy_y,
                         precios_duales,
-                        binWidth,
-                        itemHeight,
-                        itemWidth,
-                        binHeight,
-                        altoRebanada
+                        bin_width,
+                        item_height,
+                        item_width,
+                        bin_height,
+                        alto_rebanada
                     )
 
                     # obligo al modelo a generar rebanadas con al menos 1 item (no quiero triviales)
-                    agregarRestriccionNoVacia(slaveModel)
+                    agregar_restriccion_no_vacia(slave_model)
 
                     # obligo al modelo a que no me devuelva la misma rebanada anterior
                     # evitando que se activen las mismas variables que en la solución anterior del esclavo
-                    for i, activas in enumerate(solucionesExcluidas):
-                        agregarNoGoodCut(slaveModel, activas, i)
+                    for i, activas in enumerate(soluciones_excluidas):
+                        agregar_no_good_cut(slave_model, activas, i)
 
                     # resuelvo el modelo esclavo modificado
-                    nuevaRebanadaExtra, objectiveValueExtra, variablesActivasExtra = solveSlaveModel(
-                        slaveModel,
+                    nueva_rebanada_extra, objective_value_extra, variables_activas_extra = solveSlaveModel(
+                        slave_model,
                         queue,
-                        manualInterruption,
-                        binWidth,
-                        itemHeight,
-                        itemWidth,
-                        altoRebanada
+                        manual_interruption,
+                        bin_width,
+                        item_height,
+                        item_width,
+                        alto_rebanada
                     )
-                    
+
                     # Si el esclavo no devolvió una solución factible, corto la generación de rebanadas extra
-                    if objectiveValueExtra is None:
+                    if objective_value_extra is None:
                         break
-                    
+
                     # Si el valor objetivo es claramente negativo, no conviene agregar la rebanada
-                    if objectiveValueExtra < -EPS:
+                    if objective_value_extra < -EPS:
                         print("[EXTRA] FO del esclavo < -EPS. No se agrega.")
                         break
-                    
+
                     # Si no se genero ninguna rebanda extra, corto el proceso
-                    if nuevaRebanadaExtra is None:
+                    if nueva_rebanada_extra is None:
                         print("[EXTRA] No se genero ninguna rebanada. Corte.")
                         break
-                    
+
                     # Si no se genero ninguna variable activa en el esclavo, corto el proceso
-                    if not variablesActivasExtra:
+                    if not variables_activas_extra:
                         print("[EXTRA] No hay variables activas. Corte.")
                         break
 
-                    
                     # Construyo firma de la nueva rebanada extra generada para validar duplicados
-                    firmaExtra = construirFirmaRebanada(nuevaRebanadaExtra)
+                    firma_extra = construir_firma_rebanada(nueva_rebanada_extra)
 
                     # Si la firma de la nueva rebanada extra no se ha generado antes, la agrego a la lista de rebanadas y a las firmas generadas
-                    if firmaExtra not in firmasGeneradas:
-                        rebanadas.append(nuevaRebanadaExtra)
-                        firmasGeneradas.add(firmaExtra)
+                    if firma_extra not in firmas_generadas:
+                        rebanadas.append(nueva_rebanada_extra)
+                        firmas_generadas.add(firma_extra)
 
                     # excluyo la solucion actual del esclavo para forzar la generación de una nueva rebanada en la próxima iteración
-                    solucionesExcluidas.append(variablesActivasExtra)
+                    soluciones_excluidas.append(variables_activas_extra)
 
                 break
-            
+
             # Si la nueva rebanada es duplicada, corto el proceso para evitar ciclos
-            if esDuplicada:
-                reducedCostReal, cantidadItems, sumaDuales = calcularReducedCostReal(nueva_rebanada, precios_duales, itemWidth, itemHeight)
+            if es_duplicada:
+                reduced_cost_real, cantidad_items, suma_duales = calcular_reduced_cost_real(nueva_rebanada, precios_duales, item_width, item_height)
                 print(
                     "Rebanada duplicada detectada. "
-                    f"FO esclavo={objectiveValueSlaveModel}, "
-                    f"items={cantidadItems}, "
-                    f"sumaDualesOcupacion={sumaDuales}, "
-                    f"costoReducidoCompleto={reducedCostReal}"
+                    f"FO esclavo={objective_value_slave_model}, "
+                    f"items={cantidad_items}, "
+                    f"sumaDualesOcupacion={suma_duales}, "
+                    f"costoReducidoCompleto={reduced_cost_real}"
                 )
-                solucionesExcluidas = []
-                if variablesActivas:
-                    solucionesExcluidas.append(variablesActivas)
+                soluciones_excluidas = []
+                if variables_activas:
+                    soluciones_excluidas.append(variables_activas)
 
-                seAgregoAlternativa = False
+                se_agrego_alternativa = False
                 for _ in range(MAX_EXTRA):
-                    slaveModel = createSlaveModel(
-                        maxTime,
-                        posXY_x,
-                        posXY_y,
+                    slave_model = createSlaveModel(
+                        max_time,
+                        pos_xy_x,
+                        pos_xy_y,
                         precios_duales,
-                        binWidth,
-                        itemHeight,
-                        itemWidth,
-                        binHeight,
-                        altoRebanada
+                        bin_width,
+                        item_height,
+                        item_width,
+                        bin_height,
+                        alto_rebanada
                     )
 
-                    agregarRestriccionNoVacia(slaveModel)
+                    agregar_restriccion_no_vacia(slave_model)
 
-                    for i, activas in enumerate(solucionesExcluidas):
-                        agregarNoGoodCut(slaveModel, activas, i)
+                    for i, activas in enumerate(soluciones_excluidas):
+                        agregar_no_good_cut(slave_model, activas, i)
 
-                    nuevaRebanadaAlternativa, objectiveValueAlternativa, variablesActivasAlternativa = solveSlaveModel(
-                        slaveModel,
+                    nueva_rebanada_alternativa, objective_value_alternativa, variables_activas_alternativa = solveSlaveModel(
+                        slave_model,
                         queue,
-                        manualInterruption,
-                        binWidth,
-                        itemHeight,
-                        itemWidth,
-                        altoRebanada
+                        manual_interruption,
+                        bin_width,
+                        item_height,
+                        item_width,
+                        alto_rebanada
                     )
 
-                    if objectiveValueAlternativa is None:
+                    if objective_value_alternativa is None:
                         break
 
-                    if objectiveValueAlternativa <= EPS:
+                    if objective_value_alternativa <= EPS:
                         print("[DUPLICADA] No se encontro alternativa con mejora positiva.")
                         break
 
-                    if nuevaRebanadaAlternativa is None or not variablesActivasAlternativa:
+                    if nueva_rebanada_alternativa is None or not variables_activas_alternativa:
                         break
 
-                    firmaAlternativa = construirFirmaRebanada(nuevaRebanadaAlternativa)
-                    if firmaAlternativa not in firmasGeneradas:
-                        rebanadas.append(nuevaRebanadaAlternativa)
-                        firmasGeneradas.add(firmaAlternativa)
-                        seAgregoAlternativa = True
+                    firma_alternativa = construir_firma_rebanada(nueva_rebanada_alternativa)
+                    if firma_alternativa not in firmas_generadas:
+                        rebanadas.append(nueva_rebanada_alternativa)
+                        firmas_generadas.add(firma_alternativa)
+                        se_agrego_alternativa = True
                         break
 
-                    solucionesExcluidas.append(variablesActivasAlternativa)
+                    soluciones_excluidas.append(variables_activas_alternativa)
 
-                if seAgregoAlternativa:
+                if se_agrego_alternativa:
                     continue
 
                 print("Rebanada duplicada detectada sin alternativa nueva. Corte de generación.")
@@ -465,75 +464,73 @@ def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver
             if nueva_rebanada is None:
                 print("El esclavo no generó ninguna rebanada. CORTE.")
                 break
-            
+
             # Agrego la nueva rebanada generada a la lista de rebanadas y su firma al conjunto de firmas generadas
-            firmasGeneradas.add(firma)
+            firmas_generadas.add(firma)
             rebanadas.append(nueva_rebanada)
 
             # Actualizo el contador de iteraciones sin mejora del maestro
-            if objectiveMasterAnterior is not None:
-                mejoraMaster = objectiveMaster - objectiveMasterAnterior
-                if abs(mejoraMaster) <= EPS_MASTER:
-                    iteracionesSinMejora += 1
+            if objective_master_anterior is not None:
+                mejora_master = objective_master - objective_master_anterior
+                if abs(mejora_master) <= EPS_MASTER:
+                    iteraciones_sin_mejora += 1
                 else:
-                    iteracionesSinMejora = 0
+                    iteraciones_sin_mejora = 0
 
             # Si el maestro no mejora luego de MAX_ESTANCAMIENTO iteraciones, corto el proceso para evitar estancamiento numérico
-            if iteracionesSinMejora >= MAX_ESTANCAMIENTO:
+            if iteraciones_sin_mejora >= MAX_ESTANCAMIENTO:
                 print("Corte por estancamiento numerico del maestro.")
                 break
 
             # Actualizo el valor de la FO del maestro anterior para la próxima iteración
-            objectiveMasterAnterior = objectiveMaster
+            objective_master_anterior = objective_master
             iteracion += 1
-            
-        
+
         # Resuelvo el modelo maestro final sin relajar para obtener una solución entera factible y su valor objetivo final
-        masterModel = createMasterModel(maxTime,rebanadas,binHeight,binWidth,itemHeight,itemWidth, posXY_x, posXY_y)
-        objectiveValueSlaveModel, _, variablesActivasMaestro = solveMasterModel(masterModel, queue, manualInterruption, relajarModelo=False, initialTime=initialTime)
+        master_model = createMasterModel(max_time, rebanadas, bin_height, bin_width, item_height, item_width, pos_xy_x, pos_xy_y)
+        objective_value_slave_model, _, variables_activas_maestro = solveMasterModel(master_model, queue, manual_interruption, False, initial_time)
         # Genero png con layout final solo con las rebanadas activas en la solución final del maestro
-        rebanadasActivas = obtenerRebanadasActivas(rebanadas, variablesActivasMaestro)
-        rebanadasActivasSalida = desnormalizarRebanadasParaSalida(
-            rebanadasActivas,
-            binWidthOriginal,
-            binHeightOriginal,
-            itemWidthOriginal,
-            itemHeightOriginal,
-            binNormalizado,
-            itemNormalizado
+        rebanadas_activas = obtener_rebanadas_activas(rebanadas, variables_activas_maestro)
+        rebanadas_activas_salida = desnormalizar_rebanadas_para_salida(
+            rebanadas_activas,
+            bin_width_original,
+            bin_height_original,
+            item_width_original,
+            item_height_original,
+            bin_normalizado,
+            item_normalizado
         )
-        if rebanadasActivasSalida:
-            exportarLayoutFinal(binWidthOriginal, binHeightOriginal, itemWidthOriginal, itemHeightOriginal, maxItemsFisicos, rebanadasActivasSalida)
+        if rebanadas_activas_salida:
+            exportar_layout_final(bin_width_original, bin_height_original, item_width_original, item_height_original, max_items_fisicos, rebanadas_activas_salida)
         else:
             print("No se generó ninguna rebanada activa en la solución final del maestro. No se exporta layout.")
         # Devuelvo resultado
         if devolver_solucion:
-            return objectiveValueSlaveModel, rebanadasActivasSalida
+            return objective_value_slave_model, rebanadas_activas_salida
 
-        return objectiveValueSlaveModel
-    
+        return objective_value_slave_model
+
     except CplexSolverError as e:
-        solverTime = round(time.time() - initialTime, 2)
-        handle_solver_error(e, queue, solverTime)
+        solver_time = round(time.time() - initial_time, 2)
+        handle_solver_error(e, queue, solver_time)
         if devolver_solucion:
             return None, []
 
         return None
 
-def executeWithTimeLimit(maxTime):
-    global modelStatus, solverStatus, objectiveValue, solverTime 
-    global excedingLimitTime
-    excedingLimitTime=False
-    initialTime = time.time()
-    
+def executeWithTimeLimit(max_time):
+    global model_status, solver_status, objective_value, solver_time
+    global exceding_limit_time
+    exceding_limit_time = False
+    initial_time = time.time()
 
     # Crear una cola para recibir los resultados del subproceso
     queue = multiprocessing.Queue()
 
     # Crear una variable compartida para manejar la interrupción manual
-    manualInterruption = multiprocessing.Value('b', True)
+    manual_interruption = multiprocessing.Value('b', True)
 
-    configData = ConfigData(
+    config_data = ConfigData(
         bin_width=BIN_WIDTH,
         bin_height=BIN_HEIGHT,
         item_width=ITEM_WIDTH,
@@ -541,40 +538,37 @@ def executeWithTimeLimit(maxTime):
     )
 
     # Crear el subproceso que correrá la función
-    process = multiprocessing.Process(target=orquestador, args=(queue,manualInterruption,maxTime,initialTime,configData))
+    process = multiprocessing.Process(target=orquestador, args=(queue, manual_interruption, max_time, initial_time, config_data))
 
     # Iniciar el subproceso
     process.start()
 
-
     # Monitorear la cola mientras el proceso está en ejecución
     while process.is_alive():
-        if manualInterruption.value and time.time() - initialTime > maxTime:
+        if manual_interruption.value and time.time() - initial_time > max_time:
             print("Limit time reached. Aborting process.")
-            modelStatus="14" #valor en paver para marcar que el modelo no devolvio respuesta por error
-            solverStatus="4" #el solver finalizo la ejecucion del modelo
-            solverTime=maxTime
-            excedingLimitTime=True
+            model_status = "14" #valor en paver para marcar que el modelo no devolvio respuesta por error
+            solver_status = "4" #el solver finalizo la ejecucion del modelo
+            solver_time = max_time
+            exceding_limit_time = True
             process.terminate()
             process.join()
             break
         time.sleep(0.1)  # Evitar consumir demasiados recursos
 
-    
     # Imprimo resultados de la ejecucion que se guardan luego en el archivo trc para usar en paver
     while not queue.empty():
         message = queue.get()
         if isinstance(message, dict):
-            objectiveValue = message["objectiveValue"]
-            modelStatus = message["modelStatus"]
-            solverStatus = message["solverStatus"]
-            solverTime = message["solverTime"]
-            print(f"Optimal value: {objectiveValue}")
+            objective_value = message["objectiveValue"]
+            model_status = message["modelStatus"]
+            solver_status = message["solverStatus"]
+            solver_time = message["solverTime"]
+            print(f"Optimal value: {objective_value}")
             print(message)
-    if excedingLimitTime:
+    if exceding_limit_time:
         print("El modelo excedió el tiempo límite de ejecución.")
-        objectiveValue = "n/a"
-        modelStatus = "14" 
-    
-        
-    return CASE_NAME, MODEL_NAME, modelStatus, solverStatus, objectiveValue, solverTime
+        objective_value = "n/a"
+        model_status = "14"
+
+    return CASE_NAME, MODEL_NAME, model_status, solver_status, objective_value, solver_time
