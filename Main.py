@@ -21,5 +21,5 @@ if __name__ == '__main__':
     ]
     
     for model in models:
-        CASE_NAME, MODEL_NAME, modelStatus, solverStatus, objectiveValue, solverTime = model.executeWithTimeLimit(EXECUTION_TIME)
-        generator.writeTraceRecord(CASE_NAME, MODEL_NAME, modelStatus, solverStatus, objectiveValue, solverTime)
+        case_name, model_name, model_status, solver_status, objective_value, solver_time = model.executeWithTimeLimit(EXECUTION_TIME)
+        generator.write_trace_record(case_name, model_name, model_status, solver_status, objective_value, solver_time)

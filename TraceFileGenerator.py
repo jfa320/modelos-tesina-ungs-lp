@@ -4,7 +4,7 @@ class TraceFileGenerator:
     def __init__(self, filename):
         self.filename = filename
 
-    def writeTraceRecord(self, input_file_name, solver_name, model_status, solver_status, objective_value, solver_time):
+    def write_trace_record(self, input_file_name, solver_name, model_status, solver_status, objective_value, solver_time):
             # Crear la carpeta 'RESULTADOS' solo cuando se llama a este método
             directory = "Resultados"
             if not os.path.exists(directory):
