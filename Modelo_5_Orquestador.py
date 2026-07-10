@@ -293,9 +293,9 @@ def orquestador(queue, manual_interruption, max_time, initial_time, config_data,
             #TODO: Aca podria mejorar evitando la creacion del modelo en cada vuelta.
             # En su lugar, podria crear uno y luego agregar las columnas (rebanadas) nuevas
 
-            master_model = createMasterModel(max_time, rebanadas, bin_height, bin_width, item_height, item_width, pos_xy_x, pos_xy_y)
+            master_model = create_master_model(max_time, rebanadas, bin_height, bin_width, item_height, item_width, pos_xy_x, pos_xy_y)
             # Resolver modelo maestro
-            objective_master, precios_duales, _ = solveMasterModel(master_model, queue, manual_interruption, True, initial_time)
+            objective_master, precios_duales, _ = solve_master_model(master_model, queue, manual_interruption, True, initial_time)
 
             if objective_master_anterior is None:
                 print("FO maestro relajado anterior: None (primera iteración)")
@@ -487,8 +487,8 @@ def orquestador(queue, manual_interruption, max_time, initial_time, config_data,
             iteracion += 1
 
         # Resuelvo el modelo maestro final sin relajar para obtener una solución entera factible y su valor objetivo final
-        master_model = createMasterModel(max_time, rebanadas, bin_height, bin_width, item_height, item_width, pos_xy_x, pos_xy_y)
-        objective_value_slave_model, _, variables_activas_maestro = solveMasterModel(master_model, queue, manual_interruption, False, initial_time)
+        master_model = create_master_model(max_time, rebanadas, bin_height, bin_width, item_height, item_width, pos_xy_x, pos_xy_y)
+        objective_value_slave_model, _, variables_activas_maestro = solve_master_model(master_model, queue, manual_interruption, False, initial_time)
         # Genero png con layout final solo con las rebanadas activas en la solución final del maestro
         rebanadas_activas = obtener_rebanadas_activas(rebanadas, variables_activas_maestro)
         rebanadas_activas_salida = desnormalizar_rebanadas_para_salida(

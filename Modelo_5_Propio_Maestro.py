@@ -4,32 +4,32 @@ from Utils.Model_Functions import *
 from Config import *
 import time
 
-MODEL_NAME="Model5Master"
+MODEL_NAME = "Model5Master"
 DESACTIVAR_CONTROL_DE_RESTRICCIONES_REPETIDAS = True
 
 
-def calcularPosicionesOcupadas(posicion, ancho, alto):
+def calcular_posiciones_ocupadas(posicion, ancho, alto):
         """
         Retorna todas las posiciones ocupadas por un ítem ubicado en `posicion` con dimensiones `ancho` x `alto`.
         """
         x, y = posicion
-        posicionesOcupadas = set()
+        posiciones_ocupadas = set()
         for dx in range(ancho):
             for dy in range(alto):
-                posicionesOcupadas.add((x + dx, y + dy))
-        return posicionesOcupadas
+                posiciones_ocupadas.add((x + dx, y + dy))
+        return posiciones_ocupadas
 
-def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,posXY_x,posXY_y):
+def create_master_model(max_time, rebanadas, alto_bin, ancho_bin, alto_item, ancho_item, pos_xy_x, pos_xy_y):
     print("IN - Create Master Model")
-    H = altoBin  
-    R = rebanadas 
-    posiciones = [(x, y) for x in range(anchoBin) for y in range(altoBin)]
+    h = alto_bin
+    rebanadas_modelo = rebanadas
+    posiciones = [(x, y) for x in range(ancho_bin) for y in range(alto_bin)]
 
     try:
         # Crear instancia del problema
         model = cplex.Cplex()
         model.set_problem_type(cplex.Cplex.problem_type.MILP) 
-        model.parameters.timelimit.set(maxTime)
+        model.parameters.timelimit.set(max_time)
         
         #Desactivo el presolve
         model.parameters.preprocessing.presolve.set(0)
@@ -37,21 +37,21 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,posX
         model.parameters.lpmethod.set(1)
         # Variables
         # Variables p_r (binarias)
-        p_r_names = [f"p_{r.get_id()}" for r in R]
-        coeffs_p_r = [r.get_total_items() for r in R]
+        p_r_names = [f"p_{r.get_id()}" for r in rebanadas_modelo]
+        coeffs_p_r = [r.get_total_items() for r in rebanadas_modelo]
         print("======================================")
         print("COEFICIENTES FO MAESTRO")
         print("======================================")
-        def resumirRebanada(rebanada):
+        def resumir_rebanada(rebanada):
             return sorted((item.get_posicion_x(), item.get_posicion_y(), item.get_rotado()) for item in rebanada.get_items())
 
-        for r, nombre, coef in zip(R, p_r_names, coeffs_p_r):
-            print(f"{nombre} | id={r.get_id()} | totalItems={r.get_total_items()} | lenItems={len(r.get_items())} | resumen={resumirRebanada(r)}")
+        for r, nombre, coef in zip(rebanadas_modelo, p_r_names, coeffs_p_r):
+            print(f"{nombre} | id={r.get_id()} | totalItems={r.get_total_items()} | lenItems={len(r.get_items())} | resumen={resumir_rebanada(r)}")
         
         add_variables(model, p_r_names, coeffs_p_r, model.variables.type.binary)
 
 
-        p_r_by_id = {r.get_id(): f"p_{r.get_id()}" for r in R}
+        p_r_by_id = {r.get_id(): f"p_{r.get_id()}" for r in rebanadas_modelo}
     
         model.objective.set_sense(model.objective.sense.maximize)
 
@@ -60,8 +60,8 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,posX
         
         # # ----------------------------------------------------
         # Precomputar celdas ocupadas por cada rebanada: Φ(r)
-        celulasPorReb = {}
-        for r in R:
+        celulas_por_rebanada = {}
+        for r in rebanadas_modelo:
             ocupadas = set()
             for it in r.get_items():
                 if it.get_posicion_x() is None or it.get_posicion_y() is None:
@@ -70,15 +70,15 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,posX
                 for dx in range(it.get_ancho()):
                     for dy in range(it.get_alto()):
                         ocupadas.add((x + dx, y + dy))
-            celulasPorReb[r.get_id()] = ocupadas
+            celulas_por_rebanada[r.get_id()] = ocupadas
 
 
         # Restricción de posiciones ocupadas por rebanadas
         for (a, b) in posiciones:
-            rebanadasQueOcupanPos = [r for r in R if (a, b) in celulasPorReb[r.get_id()]]
-            if rebanadasQueOcupanPos:
-                indexes = [f"p_{r.get_id()}" for r in rebanadasQueOcupanPos]
-                coeffs = [1.0] * len(rebanadasQueOcupanPos)
+            rebanadas_que_ocupan_posicion = [r for r in rebanadas_modelo if (a, b) in celulas_por_rebanada[r.get_id()]]
+            if rebanadas_que_ocupan_posicion:
+                indexes = [f"p_{r.get_id()}" for r in rebanadas_que_ocupan_posicion]
+                coeffs = [1.0] * len(rebanadas_que_ocupan_posicion)
                 add_constraint_set(
                     model,
                     coeffs,
@@ -98,17 +98,17 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,posX
         raise
 
 
-def solveMasterModel(model, queue, manualInterruption, relajarModelo, initialTime):
+def solve_master_model(model, queue, manual_interruption, relajar_modelo, initial_time):
     print("IN - Solve Master Model")
     # valores por default para enviar a paver
-    modelStatus, solverStatus, objectiveValue, solverTime = "1", "1", 0, 1
+    model_status, solver_status, objective_value, solver_time = "1", "1", 0, 1
     
     try:    
         # Desactivar la interrupción manual aquí
-        manualInterruption.value = False
+        manual_interruption.value = False
         
         
-        if(relajarModelo):
+        if(relajar_modelo):
             print("Relajando modelo...")
             model.set_problem_type(cplex.Cplex.problem_type.LP)
         else:
@@ -118,22 +118,22 @@ def solveMasterModel(model, queue, manualInterruption, relajarModelo, initialTim
         # Resolver el modelo
         model.solve()
             
-        objectiveValue = model.solution.get_objective_value()
+        objective_value = model.solution.get_objective_value()
         # Imprimir resultados
-        print("Optimal value:", objectiveValue)
-        dualValues=None
-        variablesActivas = []
-        if(relajarModelo):
+        print("Optimal value:", objective_value)
+        dual_values = None
+        variables_activas = []
+        if(relajar_modelo):
             # Obtener valores duales
-            dualValues=getDualValues(model)
+            dual_values = get_dual_values(model)
             # print("Dual values:", dualValues)    
             
             
         # imprimo valor que toman las variables
-        for i, varName in enumerate(model.variables.get_names()):
-            valorVariable = model.solution.get_values(varName)
-            if valorVariable > 0.5:
-                variablesActivas.append(varName)
+        for i, var_name in enumerate(model.variables.get_names()):
+            valor_variable = model.solution.get_values(var_name)
+            if valor_variable > 0.5:
+                variables_activas.append(var_name)
 
         status = model.solution.get_status()
         
@@ -141,41 +141,41 @@ def solveMasterModel(model, queue, manualInterruption, relajarModelo, initialTim
         
         if status == 105:  # CPLEX código 105 = Time limit exceeded
             print("The solver stopped because it reached the time limit.")
-            modelStatus="2" #valor en paver para marcar un optimo local
+            model_status = "2" #valor en paver para marcar un optimo local
 
-        if(not relajarModelo):
-            finalTime = time.time()
-            solverTime=finalTime-initialTime
-            solverTime=round(solverTime, 2)
+        if(not relajar_modelo):
+            final_time = time.time()
+            solver_time = final_time - initial_time
+            solver_time = round(solver_time, 2)
             # Enviar resultados a través de la cola solo cuando el modelo no está relajado, es decir, cuando se va a resolver finalmente
             queue.put({
-                "modelStatus": modelStatus,
-                "solverStatus": solverStatus,
-                "objectiveValue": objectiveValue,
-                "solverTime": solverTime
+                "modelStatus": model_status,
+                "solverStatus": solver_status,
+                "objectiveValue": objective_value,
+                "solverTime": solver_time
             })
         # Obtener la cantidad de restricciones
         
         print("OUT - Solve Master Model")
-        return objectiveValue, dualValues, variablesActivas
+        return objective_value, dual_values, variables_activas
     
     except CplexSolverError as e:
-        handle_solver_error(e, queue,solverTime)
+        handle_solver_error(e, queue, solver_time)
         
-def getDualValues(model):
+def get_dual_values(model):
     print("Extrayendo valores duales...")
 
-    P_star = {"pi": {}}
+    p_star = {"pi": {}}
 
-    dualValues = model.solution.get_dual_values()
+    dual_values = model.solution.get_dual_values()
     constraint_names = model.linear_constraints.get_names()
 
-    for name, dualValue in zip(constraint_names, dualValues):
+    for name, dual_value in zip(constraint_names, dual_values):
         if name.startswith("consItem_"):
             # nombre: consItem_a_b
             _, a, b = name.split("_")
-            P_star["pi"][f"({a},{b})"] = dualValue
+            p_star["pi"][f"({a},{b})"] = dual_value
 
-    return P_star
+    return p_star
 
 
