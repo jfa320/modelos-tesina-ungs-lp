@@ -302,8 +302,8 @@ def orquestador(queue, manual_interruption, max_time, initial_time, config_data,
             else:
                 mejora_master = objective_master - objective_master_anterior
 
-            slave_model = createSlaveModel(max_time, pos_xy_x, pos_xy_y, precios_duales, bin_width, item_height, item_width, bin_height, alto_rebanada)
-            nueva_rebanada, objective_value_slave_model, variables_activas = solveSlaveModel(slave_model, queue, manual_interruption, bin_width, item_height, item_width, alto_rebanada)
+            slave_model = create_slave_model(max_time, pos_xy_x, pos_xy_y, precios_duales, bin_width, item_height, item_width, bin_height, alto_rebanada)
+            nueva_rebanada, objective_value_slave_model, variables_activas = solve_slave_model(slave_model, queue, manual_interruption, bin_width, item_height, item_width, alto_rebanada)
 
             es_duplicada = False
 
@@ -329,7 +329,7 @@ def orquestador(queue, manual_interruption, max_time, initial_time, config_data,
                 # inicio el proceso de generacion de nuevas rebanadas, realizado MAX_EXTRA iteraciones
                 # o hasta que ocurra algun corte
                 for _ in range(MAX_EXTRA):
-                    slave_model = createSlaveModel(
+                    slave_model = create_slave_model(
                         max_time,
                         pos_xy_x,
                         pos_xy_y,
@@ -350,7 +350,7 @@ def orquestador(queue, manual_interruption, max_time, initial_time, config_data,
                         agregar_no_good_cut(slave_model, activas, i)
 
                     # resuelvo el modelo esclavo modificado
-                    nueva_rebanada_extra, objective_value_extra, variables_activas_extra = solveSlaveModel(
+                    nueva_rebanada_extra, objective_value_extra, variables_activas_extra = solve_slave_model(
                         slave_model,
                         queue,
                         manual_interruption,
@@ -408,7 +408,7 @@ def orquestador(queue, manual_interruption, max_time, initial_time, config_data,
 
                 se_agrego_alternativa = False
                 for _ in range(MAX_EXTRA):
-                    slave_model = createSlaveModel(
+                    slave_model = create_slave_model(
                         max_time,
                         pos_xy_x,
                         pos_xy_y,
@@ -425,7 +425,7 @@ def orquestador(queue, manual_interruption, max_time, initial_time, config_data,
                     for i, activas in enumerate(soluciones_excluidas):
                         agregar_no_good_cut(slave_model, activas, i)
 
-                    nueva_rebanada_alternativa, objective_value_alternativa, variables_activas_alternativa = solveSlaveModel(
+                    nueva_rebanada_alternativa, objective_value_alternativa, variables_activas_alternativa = solve_slave_model(
                         slave_model,
                         queue,
                         manual_interruption,
