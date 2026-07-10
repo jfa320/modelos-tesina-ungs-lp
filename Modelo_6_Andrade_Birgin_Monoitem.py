@@ -254,7 +254,7 @@ def run_model(createModelFn, solveModelFn, queue, manualInterruption, maxTime):
         })
 
 
-def executeWithTimeLimit(maxTime):
+def execute_with_time_limit(maxTime):
     global modelStatus, solverStatus, objectiveValue, solverTime
     global excedingLimitTime
 

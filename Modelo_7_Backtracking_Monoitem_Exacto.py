@@ -220,7 +220,7 @@ def _resolver_en_proceso(queue, max_time):
         })
 
 
-def executeWithTimeLimit(maxTime):
+def execute_with_time_limit(maxTime):
     queue = multiprocessing.Queue()
     process = multiprocessing.Process(target=_resolver_en_proceso, args=(queue, maxTime))
     process.start()
@@ -247,4 +247,4 @@ def executeWithTimeLimit(maxTime):
 
 
 if __name__ == "__main__":
-    print(executeWithTimeLimit(1200))
+    print(execute_with_time_limit(1200))

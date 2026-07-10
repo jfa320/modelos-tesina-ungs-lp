@@ -238,7 +238,7 @@ def solveModel(model, queue, manualInterruption):
     return modelStatus, solverStatus, objectiveValue
 
 
-def executeWithTimeLimit(maxTime):
+def execute_with_time_limit(maxTime):
     global modelStatus, solverStatus, objectiveValue, solverTime 
     global excedingLimitTime
     excedingLimitTime=False

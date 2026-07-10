@@ -518,7 +518,7 @@ def orquestador(queue, manual_interruption, max_time, initial_time, config_data,
 
         return None
 
-def executeWithTimeLimit(max_time):
+def execute_with_time_limit(max_time):
     global model_status, solver_status, objective_value, solver_time
     global exceding_limit_time
     exceding_limit_time = False

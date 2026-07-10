@@ -14,12 +14,12 @@ if __name__ == '__main__':
     
     models = [
         Modelo_5_Orquestador,
-        # # Modelo_1_simplificado__seccion_2_8_overleaf_SIN_ROTACION,
-        Modelo_1_simplificado__seccion_2_9_overleaf_CON_ROTACION
-        # # Modelo_6_Andrade_Birgin_Monoitem,
-        # Modelo_7_Backtracking_Monoitem_Exacto
+        # Modelo_1_simplificado__seccion_2_8_overleaf_SIN_ROTACION,
+        Modelo_1_simplificado__seccion_2_9_overleaf_CON_ROTACION,
+        Modelo_6_Andrade_Birgin_Monoitem,
+        Modelo_7_Backtracking_Monoitem_Exacto
     ]
     
     for model in models:
-        case_name, model_name, model_status, solver_status, objective_value, solver_time = model.executeWithTimeLimit(EXECUTION_TIME)
+        case_name, model_name, model_status, solver_status, objective_value, solver_time = model.execute_with_time_limit(EXECUTION_TIME)
         generator.write_trace_record(case_name, model_name, model_status, solver_status, objective_value, solver_time)
