@@ -84,7 +84,7 @@ def generarRebanadasIniciales(binWidth, binHeight,
                 # Validar SOLO el punto de inicio
                 if (x, y) in posicionesSet:
                     item = Item(alto=h, ancho=w, rotado=rotado)
-                    rebanada.colocarItem(item, x, y)
+                    rebanada.colocar_item(item, x, y)
                     ocupadas |= region
                     itemsColocados += 1
 
@@ -93,7 +93,7 @@ def generarRebanadasIniciales(binWidth, binHeight,
                 else:
                     x += 1
 
-            if rebanada.getPuntosDeInicioItems():
+            if rebanada.get_puntos_de_inicio_items():
                 rebanadas.append(rebanada)
                 itemsColocados = 0  # mantenemos tu semántica original
 
@@ -112,10 +112,10 @@ def generarRebanadasIniciales(binWidth, binHeight,
     return rebanadasNoRotadas + rebanadasRotadas
 
 def construirFirmaRebanada(rebanada):
-    return tuple(sorted((item.getPosicionX(), item.getPosicionY(), item.getRotado()) for item in rebanada.getItems()))
+    return tuple(sorted((item.get_posicion_x(), item.get_posicion_y(), item.get_rotado()) for item in rebanada.get_items()))
 
 def resumirRebanada(rebanada):
-    return sorted((item.getPosicionX(), item.getPosicionY(), item.getRotado()) for item in rebanada.getItems())
+    return sorted((item.get_posicion_x(), item.get_posicion_y(), item.get_rotado()) for item in rebanada.get_items())
 
 def extraerDualesNoNulos(precios_duales, tol=1e-9):
     dualesNoNulos = {}
@@ -129,10 +129,10 @@ def calcularReducedCostReal(rebanada, preciosDuales, w, h):
     
     if(rebanada is None):
         return 0.0, 0, 0.0
-    for item in rebanada.getItems():
-        x = item.getPosicionX()
-        y = item.getPosicionY()
-        rotado = item.getRotado()
+    for item in rebanada.get_items():
+        x = item.get_posicion_x()
+        y = item.get_posicion_y()
+        rotado = item.get_rotado()
 
         ancho = h if rotado else w
         alto = w if rotado else h
@@ -142,7 +142,7 @@ def calcularReducedCostReal(rebanada, preciosDuales, w, h):
                 clave = f"({x+dx},{y+dy})"
                 sumaDuales += preciosDuales["pi"].get(clave, 0.0)
 
-    c_r = len(rebanada.getItems())
+    c_r = len(rebanada.get_items())
     reducedCostReal = c_r - sumaDuales
 
     return reducedCostReal, c_r, sumaDuales
@@ -191,7 +191,7 @@ def obtenerRebanadasActivas(rebanadas, variablesActivasMaestro):
             continue
         idsActivos.add(int(nombreVariable.split("_")[1]))
 
-    return [rebanada for rebanada in rebanadas if rebanada.getId() in idsActivos]
+    return [rebanada for rebanada in rebanadas if rebanada.get_id() in idsActivos]
 
 
 def exportarLayoutFinal(binWidth, binHeight, itemWidth, itemHeight, cotaFisicaItems, rebanadasActivas):
@@ -210,11 +210,11 @@ def desnormalizarRebanadasParaSalida(rebanadas, binWidthOriginal, binHeightOrigi
     for rebanada in rebanadas:
         itemsDesnormalizados = []
 
-        for item in rebanada.getItems():
-            x = item.getPosicionX()
-            y = item.getPosicionY()
-            ancho = item.getAncho()
-            alto = item.getAlto()
+        for item in rebanada.get_items():
+            x = item.get_posicion_x()
+            y = item.get_posicion_y()
+            ancho = item.get_ancho()
+            alto = item.get_alto()
 
             if binNormalizado:
                 xOriginal = binWidthOriginal - (y + alto)
@@ -230,9 +230,9 @@ def desnormalizarRebanadasParaSalida(rebanadas, binWidthOriginal, binHeightOrigi
             itemOriginal = Item(
                 alto=altoOriginal,
                 ancho=anchoOriginal,
-                rotado=item.getRotado() ^ binNormalizado ^ itemNormalizado,
-                posicionX=xOriginal,
-                posicionY=yOriginal
+                rotado=item.get_rotado() ^ binNormalizado ^ itemNormalizado,
+                posicion_x=xOriginal,
+                posicion_y=yOriginal
             )
             itemsDesnormalizados.append(itemOriginal)
 
@@ -251,14 +251,14 @@ def desnormalizarRebanadasParaSalida(rebanadas, binWidthOriginal, binHeightOrigi
 def orquestador(queue,manualInterruption,maxTime,initialTime,configData,devolver_solucion=False):
     try:
         # Reiniciar el contador de IDs de Rebanada para cada ejecución
-        Rebanada.resetIdCounter()
+        Rebanada.reset_id_counter()
         iteracionesSinMejora = 0
 
         # Seteo configuraciones en base a los datos recibidos en configData
-        binWidthOriginal = configData.getBinWidth()
-        binHeightOriginal = configData.getBinHeight()
-        itemWidthOriginal = configData.getItemWidth()
-        itemHeightOriginal = configData.getItemHeight()
+        binWidthOriginal = configData.get_bin_width()
+        binHeightOriginal = configData.get_bin_height()
+        itemWidthOriginal = configData.get_item_width()
+        itemHeightOriginal = configData.get_item_height()
         binWidth = binWidthOriginal
         binHeight = binHeightOriginal
         itemWidth = itemWidthOriginal
@@ -534,10 +534,10 @@ def executeWithTimeLimit(maxTime):
     manualInterruption = multiprocessing.Value('b', True)
 
     configData = ConfigData(
-        binWidth=BIN_WIDTH,
-        binHeight=BIN_HEIGHT,
-        itemWidth=ITEM_WIDTH,
-        itemHeight=ITEM_HEIGHT
+        bin_width=BIN_WIDTH,
+        bin_height=BIN_HEIGHT,
+        item_width=ITEM_WIDTH,
+        item_height=ITEM_HEIGHT
     )
 
     # Crear el subproceso que correrá la función

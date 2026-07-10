@@ -1,75 +1,75 @@
 class ConfigData:
     def __init__(
         self,
-        binWidth=None,
-        binHeight=None,
-        itemWidth=None,
-        itemHeight=None
+        bin_width=None,
+        bin_height=None,
+        item_width=None,
+        item_height=None
     ):
-        self._binWidth = None
-        self._binHeight = None
-        self._itemWidth = None
-        self._itemHeight = None
+        self._bin_width = None
+        self._bin_height = None
+        self._item_width = None
+        self._item_height = None
 
-        if binWidth is not None:
-            self.setBinWidth(binWidth)
-        if binHeight is not None:
-            self.setBinHeight(binHeight)
-        if itemWidth is not None:
-            self.setItemWidth(itemWidth)
-        if itemHeight is not None:
-            self.setItemHeight(itemHeight)
+        if bin_width is not None:
+            self.set_bin_width(bin_width)
+        if bin_height is not None:
+            self.set_bin_height(bin_height)
+        if item_width is not None:
+            self.set_item_width(item_width)
+        if item_height is not None:
+            self.set_item_height(item_height)
 
     # ---------- BIN WIDTH ----------
-    def getBinWidth(self):
-        return self._binWidth
+    def get_bin_width(self):
+        return self._bin_width
 
-    def setBinWidth(self, value):
+    def set_bin_width(self, value):
         if value <= 0:
-            raise ValueError("binWidth debe ser mayor que 0")
-        self._binWidth = value
+            raise ValueError("bin_width debe ser mayor que 0")
+        self._bin_width = value
 
     # ---------- BIN HEIGHT ----------
-    def getBinHeight(self):
-        return self._binHeight
+    def get_bin_height(self):
+        return self._bin_height
 
-    def setBinHeight(self, value):
+    def set_bin_height(self, value):
         if value <= 0:
-            raise ValueError("binHeight debe ser mayor que 0")
-        self._binHeight = value
+            raise ValueError("bin_height debe ser mayor que 0")
+        self._bin_height = value
 
     # ---------- ITEM WIDTH ----------
-    def getItemWidth(self):
-        return self._itemWidth
+    def get_item_width(self):
+        return self._item_width
 
-    def setItemWidth(self, value):
+    def set_item_width(self, value):
         if value <= 0:
-            raise ValueError("itemWidth debe ser mayor que 0")
-        self._itemWidth = value
+            raise ValueError("item_width debe ser mayor que 0")
+        self._item_width = value
 
     # ---------- ITEM HEIGHT ----------
-    def getItemHeight(self):
-        return self._itemHeight
+    def get_item_height(self):
+        return self._item_height
 
-    def setItemHeight(self, value):
+    def set_item_height(self, value):
         if value <= 0:
-            raise ValueError("itemHeight debe ser mayor que 0")
-        self._itemHeight = value
+            raise ValueError("item_height debe ser mayor que 0")
+        self._item_height = value
 
     # ---------- UTIL ----------
-    def isComplete(self):
+    def is_complete(self):
         return all([
-            self._binWidth is not None,
-            self._binHeight is not None,
-            self._itemWidth is not None,
-            self._itemHeight is not None
+            self._bin_width is not None,
+            self._bin_height is not None,
+            self._item_width is not None,
+            self._item_height is not None
         ])
 
     def __str__(self):
         return (
             f"ConfigData("
-            f"binWidth={self._binWidth}, "
-            f"binHeight={self._binHeight}, "
-            f"itemWidth={self._itemWidth}, "
-            f"itemHeight={self._itemHeight})"
+            f"bin_width={self._bin_width}, "
+            f"bin_height={self._bin_height}, "
+            f"item_width={self._item_width}, "
+            f"item_height={self._item_height})"
         )

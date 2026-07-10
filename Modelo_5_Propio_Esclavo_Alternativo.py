@@ -32,8 +32,8 @@ def construirItems(variableNames, variableValues, altoItem, anchoItem):
             alto=alto,
             ancho=ancho,
             rotado=rotado,
-            posicionX=xValue,
-            posicionY=yValue
+            posicion_x=xValue,
+            posicion_y=yValue
         )
 
         if item not in items:
@@ -70,8 +70,8 @@ def obtenerYMaximo(posicionesOcupadas,altoItem,anchoItem,items):
     #TODO: Revisar si este metodo es necesario
     if not posicionesOcupadas:
         return None  # Manejar caso donde la lista esté vacía
-    itemPosYMax = max(items, key=lambda item: item.getPosicionY())
-    return itemPosYMax.getPosicionY() + itemPosYMax.getAlto()
+    itemPosYMax = max(items, key=lambda item: item.get_posicion_y())
+    return itemPosYMax.get_posicion_y() + itemPosYMax.get_alto()
 
 def rectsSolapan(x1, y1, w1, h1, x2, y2, w2, h2):
     return not (
@@ -296,8 +296,8 @@ def solveSlaveModel(model, queue, manualInterruption, binWidth, itemHeight, item
                     rotado=True
                 )
 
-            item.setPosicionX(a)
-            item.setPosicionY(b)
+            item.set_posicion_x(a)
+            item.set_posicion_y(b)
             itemsConstruidos.append(item)
 
         if not itemsConstruidos:
@@ -326,10 +326,10 @@ def solveSlaveModel(model, queue, manualInterruption, binWidth, itemHeight, item
         return fo
 
     def imprimirResumen(etiqueta, foOriginal, itemsConstruidos):
-        rotados = sum(1 for item in itemsConstruidos if item.getRotado())
+        rotados = sum(1 for item in itemsConstruidos if item.get_rotado())
         noRotados = len(itemsConstruidos) - rotados
         resumen = sorted(
-            (item.getPosicionX(), item.getPosicionY(), item.getRotado())
+            (item.get_posicion_x(), item.get_posicion_y(), item.get_rotado())
             for item in itemsConstruidos
         )
         print(f"{etiqueta}")
@@ -473,8 +473,8 @@ def solveSlaveModel(model, queue, manualInterruption, binWidth, itemHeight, item
 #                 rotado=True
 #             )
 
-#         item.setPosicionX(a)
-#         item.setPosicionY(b)
+#         item.set_posicion_x(a)
+#         item.set_posicion_y(b)
     
 
 #         itemsConstruidos.append(item)

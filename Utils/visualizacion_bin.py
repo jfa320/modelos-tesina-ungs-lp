@@ -19,11 +19,11 @@ def _medir_texto(draw, font, texto):
 
 
 def _obtener_rectangulo_item(item, escala, origen_x, origen_y, alto_bin):
-    x1 = origen_x + int(item.getPosicionX() * escala)
-    y_modelo = item.getPosicionY() + item.getAlto()
+    x1 = origen_x + int(item.get_posicion_x() * escala)
+    y_modelo = item.get_posicion_y() + item.get_alto()
     y1 = origen_y + int((alto_bin - y_modelo) * escala)
-    x2 = x1 + int(item.getAncho() * escala)
-    y2 = y1 + int(item.getAlto() * escala)
+    x2 = x1 + int(item.get_ancho() * escala)
+    y2 = y1 + int(item.get_alto() * escala)
     return x1, y1, x2, y2
 
 
@@ -33,13 +33,13 @@ def _ajustar_rectangulo(rectangulo, delta):
 
 
 def _obtener_rectangulo_rebanada(rebanada, escala, origen_x, origen_y, alto_bin):
-    if not rebanada.getItems():
+    if not rebanada.get_items():
         return None
 
-    min_x = min(item.getPosicionX() for item in rebanada.getItems())
-    min_y = min(item.getPosicionY() for item in rebanada.getItems())
-    max_x = max(item.getPosicionX() + item.getAncho() for item in rebanada.getItems())
-    max_y = max(item.getPosicionY() + item.getAlto() for item in rebanada.getItems())
+    min_x = min(item.get_posicion_x() for item in rebanada.get_items())
+    min_y = min(item.get_posicion_y() for item in rebanada.get_items())
+    max_x = max(item.get_posicion_x() + item.get_ancho() for item in rebanada.get_items())
+    max_y = max(item.get_posicion_y() + item.get_alto() for item in rebanada.get_items())
 
     x1 = origen_x + int(min_x * escala)
     y1 = origen_y + int((alto_bin - max_y) * escala)
@@ -50,11 +50,11 @@ def _obtener_rectangulo_rebanada(rebanada, escala, origen_x, origen_y, alto_bin)
 
 def _obtener_celdas_rebanada(rebanada):
     celdas = set()
-    for item in rebanada.getItems():
-        x0 = item.getPosicionX()
-        y0 = item.getPosicionY()
-        for dx in range(item.getAncho()):
-            for dy in range(item.getAlto()):
+    for item in rebanada.get_items():
+        x0 = item.get_posicion_x()
+        y0 = item.get_posicion_y()
+        for dx in range(item.get_ancho()):
+            for dy in range(item.get_alto()):
                 celdas.add((x0 + dx, y0 + dy))
     return celdas
 
@@ -151,7 +151,7 @@ def exportar_solucion_bin_a_png(bin_width, bin_height, item_width, item_height, 
     ancho_bin_px = int(bin_width * escala)
     alto_bin_px = int(bin_height * escala)
     font = ImageFont.load_default()
-    total_items = sum(len(rebanada.getItems()) for rebanada in rebanadas_activas)
+    total_items = sum(len(rebanada.get_items()) for rebanada in rebanadas_activas)
 
     lineas_leyenda = _construir_lineas_leyenda(
         bin_width,
@@ -199,11 +199,11 @@ def exportar_solucion_bin_a_png(bin_width, bin_height, item_width, item_height, 
     for indice_rebanada, rebanada in enumerate(rebanadas_activas, start=1):
         _dibujar_rebanada(draw, font, rebanada, indice_rebanada, escala, origen_x, origen_y, bin_height)
 
-        for indice_item, item in enumerate(rebanada.getItems(), start=1):
+        for indice_item, item in enumerate(rebanada.get_items(), start=1):
             rect_item = _obtener_rectangulo_item(item, escala, origen_x, origen_y, bin_height)
             rect_item_interno = _ajustar_rectangulo(rect_item, 0)
             draw.rectangle(rect_item_interno, outline=COLOR_ITEM, width=2)
-            estado_rotacion = "R" if item.getRotado() else "NR"
+            estado_rotacion = "R" if item.get_rotado() else "NR"
             draw.text(
                 (rect_item_interno[0] + 4, rect_item_interno[1] + 16),
                 f"I{indice_rebanada}.{indice_item}-{estado_rotacion}",

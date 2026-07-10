@@ -37,21 +37,21 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,posX
         model.parameters.lpmethod.set(1)
         # Variables
         # Variables p_r (binarias)
-        p_r_names = [f"p_{r.getId()}" for r in R]
-        coeffs_p_r = [r.getTotalItems() for r in R]
+        p_r_names = [f"p_{r.get_id()}" for r in R]
+        coeffs_p_r = [r.get_total_items() for r in R]
         print("======================================")
         print("COEFICIENTES FO MAESTRO")
         print("======================================")
         def resumirRebanada(rebanada):
-            return sorted((item.getPosicionX(), item.getPosicionY(), item.getRotado()) for item in rebanada.getItems())
+            return sorted((item.get_posicion_x(), item.get_posicion_y(), item.get_rotado()) for item in rebanada.get_items())
 
         for r, nombre, coef in zip(R, p_r_names, coeffs_p_r):
-            print(f"{nombre} | id={r.getId()} | totalItems={r.getTotalItems()} | lenItems={len(r.getItems())} | resumen={resumirRebanada(r)}")
+            print(f"{nombre} | id={r.get_id()} | totalItems={r.get_total_items()} | lenItems={len(r.get_items())} | resumen={resumirRebanada(r)}")
         
         addVariables(model, p_r_names, coeffs_p_r, model.variables.type.binary)
 
 
-        p_r_by_id = {r.getId(): f"p_{r.getId()}" for r in R}
+        p_r_by_id = {r.get_id(): f"p_{r.get_id()}" for r in R}
     
         model.objective.set_sense(model.objective.sense.maximize)
 
@@ -63,21 +63,21 @@ def createMasterModel(maxTime,rebanadas,altoBin,anchoBin,altoItem,anchoItem,posX
         celulasPorReb = {}
         for r in R:
             ocupadas = set()
-            for it in r.getItems():
-                if it.getPosicionX() is None or it.getPosicionY() is None:
+            for it in r.get_items():
+                if it.get_posicion_x() is None or it.get_posicion_y() is None:
                     continue
-                x, y = it.getPosicion()
-                for dx in range(it.getAncho()):
-                    for dy in range(it.getAlto()):
+                x, y = it.get_posicion()
+                for dx in range(it.get_ancho()):
+                    for dy in range(it.get_alto()):
                         ocupadas.add((x + dx, y + dy))
-            celulasPorReb[r.getId()] = ocupadas
+            celulasPorReb[r.get_id()] = ocupadas
 
 
         # Restricción de posiciones ocupadas por rebanadas
         for (a, b) in posiciones:
-            rebanadasQueOcupanPos = [r for r in R if (a, b) in celulasPorReb[r.getId()]]
+            rebanadasQueOcupanPos = [r for r in R if (a, b) in celulasPorReb[r.get_id()]]
             if rebanadasQueOcupanPos:
-                indexes = [f"p_{r.getId()}" for r in rebanadasQueOcupanPos]
+                indexes = [f"p_{r.get_id()}" for r in rebanadasQueOcupanPos]
                 coeffs = [1.0] * len(rebanadasQueOcupanPos)
                 addConstraintSet(
                     model,

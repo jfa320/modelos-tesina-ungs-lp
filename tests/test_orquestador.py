@@ -10,10 +10,10 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            binWidth=6,        # W
-            binHeight=4,       # H
-            itemWidth=2,       # w
-            itemHeight=3       # h
+            bin_width=6,        # W
+            bin_height=4,       # H
+            item_width=2,       # w
+            item_height=3       # h
         )
 
         objectiveValue = orquestador(
@@ -32,10 +32,10 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            binWidth=5,        # W
-            binHeight=5,       # H
-            itemWidth=3,       # w
-            itemHeight=2       # h
+            bin_width=5,        # W
+            bin_height=5,       # H
+            item_width=3,       # w
+            item_height=2       # h
         )
 
         objectiveValue = orquestador(
@@ -53,10 +53,10 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            binWidth=6,        # W
-            binHeight=6,       # H
-            itemWidth=3,       # w
-            itemHeight=2       # h
+            bin_width=6,        # W
+            bin_height=6,       # H
+            item_width=3,       # w
+            item_height=2       # h
         )
 
         objectiveValue = orquestador(
@@ -75,10 +75,10 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            binWidth=6,        # W
-            binHeight=6,       # H
-            itemWidth=4,       # w
-            itemHeight=2       # h
+            bin_width=6,        # W
+            bin_height=6,       # H
+            item_width=4,       # w
+            item_height=2       # h
         )
 
         objectiveValue = orquestador(
@@ -96,10 +96,10 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            binWidth=7,        # W
-            binHeight=3,       # H
-            itemWidth=3,       # w
-            itemHeight=2       # h
+            bin_width=7,        # W
+            bin_height=3,       # H
+            item_width=3,       # w
+            item_height=2       # h
         )
 
         objectiveValue = orquestador(
@@ -117,10 +117,10 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            binWidth=6,        # W
-            binHeight=3,       # H
-            itemWidth=3,       # w
-            itemHeight=2       # h
+            bin_width=6,        # W
+            bin_height=3,       # H
+            item_width=3,       # w
+            item_height=2       # h
         )
 
         objectiveValue = orquestador(
@@ -138,10 +138,10 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            binWidth=120,       # W
-            binHeight=20,       # H
-            itemWidth=12,       # w
-            itemHeight=8        # h
+            bin_width=120,       # W
+            bin_height=20,       # H
+            item_width=12,       # w
+            item_height=8        # h
         )
 
         objectiveValue = orquestador(
@@ -161,10 +161,10 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            binWidth=50,        # W
-            binHeight=20,       # H
-            itemWidth=13,       # w
-            itemHeight=8        # h
+            bin_width=50,        # W
+            bin_height=20,       # H
+            item_width=13,       # w
+            item_height=8        # h
         )
 
         objectiveValue = orquestador(
@@ -183,10 +183,10 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            binWidth=40,        # W
-            binHeight=25,       # H
-            itemWidth=10,       # w
-            itemHeight=6        # h
+            bin_width=40,        # W
+            bin_height=25,       # H
+            item_width=10,       # w
+            item_height=6        # h
         )
 
         objectiveValue = orquestador(
@@ -204,10 +204,10 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            binWidth=60,        # W
-            binHeight=20,       # H
-            itemWidth=12,       # w
-            itemHeight=7        # h
+            bin_width=60,        # W
+            bin_height=20,       # H
+            item_width=12,       # w
+            item_height=7        # h
         )
 
         objectiveValue = orquestador(
@@ -225,10 +225,10 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            binWidth=45,        # W
-            binHeight=30,       # H
-            itemWidth=9,        # w
-            itemHeight=9        # h
+            bin_width=45,        # W
+            bin_height=30,       # H
+            item_width=9,        # w
+            item_height=9        # h
         )
 
         objectiveValue = orquestador(
@@ -246,10 +246,10 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            binWidth=70,        # W
-            binHeight=25,       # H
-            itemWidth=14,       # w
-            itemHeight=8        # h
+            bin_width=70,        # W
+            bin_height=25,       # H
+            item_width=14,       # w
+            item_height=8        # h
         )
 
         objectiveValue = orquestador(
@@ -267,10 +267,10 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            binWidth=55,        # W
-            binHeight=22,       # H
-            itemWidth=11,       # w
-            itemHeight=6        # h
+            bin_width=55,        # W
+            bin_height=22,       # H
+            item_width=11,       # w
+            item_height=6        # h
         )
 
         objectiveValue = orquestador(
@@ -288,10 +288,10 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            binWidth=20,        # W
-            binHeight=20,       # H
-            itemWidth=6,        # w
-            itemHeight=5        # h
+            bin_width=20,        # W
+            bin_height=20,       # H
+            item_width=6,        # w
+            item_height=5        # h
         )
 
         objectiveValue = orquestador(
@@ -310,10 +310,10 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            binWidth=40,        # W
-            binHeight=30,       # H
-            itemWidth=10,       # w
-            itemHeight=7        # h
+            bin_width=40,        # W
+            bin_height=30,       # H
+            item_width=10,       # w
+            item_height=7        # h
         )
 
         objectiveValue = orquestador(
@@ -331,10 +331,10 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            binWidth=60,        # W
-            binHeight=25,       # H
-            itemWidth=12,       # w
-            itemHeight=5        # h
+            bin_width=60,        # W
+            bin_height=25,       # H
+            item_width=12,       # w
+            item_height=5        # h
         )
 
         objectiveValue = orquestador(
@@ -352,10 +352,10 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            binWidth=48,        # W
-            binHeight=24,       # H
-            itemWidth=8,        # w
-            itemHeight=6        # h
+            bin_width=48,        # W
+            bin_height=24,       # H
+            item_width=8,        # w
+            item_height=6        # h
         )
 
         objectiveValue = orquestador(
@@ -373,10 +373,10 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            binWidth=70,        # W
-            binHeight=28,       # H
-            itemWidth=14,       # w
-            itemHeight=7        # h
+            bin_width=70,        # W
+            bin_height=28,       # H
+            item_width=14,       # w
+            item_height=7        # h
         )
 
         objectiveValue = orquestador(
@@ -394,10 +394,10 @@ class TestOrquestador:
         queue, manualInterruption, EXECUTION_TIME = orquestador_context
 
         configData = ConfigData(
-            binWidth=10,        # W
-            binHeight=30,       # H
-            itemWidth=1,        # w
-            itemHeight=6        # h
+            bin_width=10,        # W
+            bin_height=30,       # H
+            item_width=1,        # w
+            item_height=6        # h
         )
 
         objectiveValue = orquestador(
