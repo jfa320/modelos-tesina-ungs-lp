@@ -162,3 +162,4 @@ cython_debug/
 #.idea/
 # "Pruebas del generador de posiciones.py"
 # "Pruebas locas.py"
+Resultados/
