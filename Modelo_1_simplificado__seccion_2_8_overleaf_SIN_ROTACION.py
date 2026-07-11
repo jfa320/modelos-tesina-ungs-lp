@@ -7,283 +7,161 @@ from Config import *
 
 # Basado en la simplificacion del modelo 1 (modelo base - Pisinger & Sigurd) - ver seccion 2.8 en Overleaf para modelo completo
 # Caso sencillo que mejora con rotacion
-MODEL_NAME="Model1"
+MODEL_NAME = "Model1"
 
-def calcularCotaFisicaItems():
+
+def calcular_cota_fisica_items():
     return (BIN_WIDTH // ITEM_WIDTH) * (BIN_HEIGHT // ITEM_HEIGHT)
 
-# def createAndSolveModel(queue,manualInterruption,maxTime):
-#     #valores por default para enviar a paver
-#     modelStatus, solverStatus, objectiveValue, solverTime = "1", "1", 0, 1
-#     try:
-#         # Crear un modelo de CPLEX
-#         model= cplex.Cplex()
-        
-#         model.set_results_stream(None) # deshabilito log de CPLEX de la info paso a paso
-#         model.set_problem_type(cplex.Cplex.problem_type.LP)
-#         model.objective.set_sense(model.objective.sense.maximize)
-#         # Definir el limite tiempo de la ejecución en un minuto
-#         model.parameters.timelimit.set(maxTime)
 
-#         # initialTime=model.get_time()
-#         initialTimeT= time.time()
-       
-#         # Definir variables y objetivos
-#         varsNames = [f"f_{i}" for i in ITEMS]
-#         coeffs = [1.0] * len(ITEMS)
-#         add_variables(model, varsNames, coeffs, "B")
+def create_model(max_time):
+    # Crear un modelo de CPLEX
+    model = cplex.Cplex()
 
-#         additionalVarsNames=[f"x_{i}" for i in ITEMS] + [f"y_{i}" for i in ITEMS]
-#         additionalCoeffObj = [0.0] * len(additionalVarsNames)
-#         add_variables(model, additionalVarsNames, additionalCoeffObj, "I")
-
-#         additionalVarsNames= set()
-#         for i in ITEMS:
-#             for j in ITEMS:
-#                 if i != j:
-#                     additionalVarsNames.add(f"l_{i},{j}") # agrego variable l_{ij}
-#                     additionalVarsNames.add(f"l_{j},{i}") # agrego variable l_{ij}
-#                     additionalVarsNames.add(f"b_{i},{j}") # agrego variable b_{ij}
-#                     additionalVarsNames.add(f"b_{j},{i}") # agrego variable b_{ij}
-#         additionalVarsNames = list(additionalVarsNames)
-#         additionalCoeffObj = [0.0] * len(additionalVarsNames)
-#         add_variables(model, additionalVarsNames, additionalCoeffObj, "B")
-
-#         # Añadir las restricciones para cada par (i, j) con i < j
-#         for i in ITEMS:
-#             for j in ITEMS:
-#                 if i < j: #Aca fue necesario reescribir la restriccion para que funcione con CPLEX
-#                     consCoeff = [1.0, 1.0, 1.0, 1.0, -1.0, -1.0]
-#                     consVars = [f"l_{i},{j}", f"l_{j},{i}", f"b_{i},{j}", f"b_{j},{i}", f"f_{i}", f"f_{j}"] 
-#                     consRhs = -1.0
-#                     consSense = "G"  # "G" indica >=
-#                     add_constraint(model,consCoeff,consVars,consRhs,consSense)
-
-#         # Añadir las restricciones x_i - x_j + W l_{ij} <= W - w para cada i en I
-#         for i in ITEMS:
-#             for j in ITEMS:
-#                 if i != j:
-#                     consCoeff = [1.0, -1.0, BIN_WIDTH]
-#                     consVars = [f"x_{i}", f"x_{j}", f"l_{i},{j}"]
-#                     consRhs = BIN_WIDTH - ITEM_WIDTH
-#                     consSense = "L"  # "L" indica <=
-#                     add_constraint(model,consCoeff,consVars,consRhs,consSense)
-
-#         # Añadir las restricciones y_i - y_j + H b_{ij} <= H - h para cada i en I
-#         for i in ITEMS:
-#             for j in ITEMS:
-#                 if i != j:
-#                     consCoeff = [1.0, -1.0, BIN_HEIGHT]
-#                     consVars = [f"y_{i}", f"y_{j}", f"b_{i},{j}"]
-#                     consRhs = BIN_HEIGHT - ITEM_HEIGHT
-#                     consSense = "L"  # "L" indica <=
-#                     add_constraint(model,consCoeff,consVars,consRhs,consSense)
-                    
-#         # Añadir la restricción x_i + W f_i <= 2W - w  para cada i en I
-#         for i in ITEMS:
-#             consCoeff = [1.0, BIN_WIDTH]  # Coeficientes para x_i y f_i
-#             consVars = [f"x_{i}", f"f_{i}"]  # Variables en la restricción
-#             consRhs = 2 * BIN_WIDTH - ITEM_WIDTH  # Lado derecho de la restricción
-#             consSense = "L"  # "L" indica <=
-#             add_constraint(model,consCoeff,consVars,consRhs,consSense)
-
-#         # Añadir la restricción y_i + H f_i <= 2H - h para cada i en I
-#         for i in ITEMS:
-#             consCoeff = [1.0, BIN_WIDTH]  # Coeficientes para x_i y f_i
-#             consVars = [f"x_{i}", f"f_{i}"]  # Variables en la restricción
-#             consRhs = 2 * BIN_WIDTH - ITEM_WIDTH  # Lado derecho de la restricción
-#             consSense = "L"  # "L" indica <=
-#             add_constraint(model,consCoeff,consVars,consRhs,consSense)
-
-#         # Desactivar la interrupción manual aquí
-#         manualInterruption.value = False
-#         # Resolver el modelo
-#         model.solve()
-
-#         # Obtener y mostrar los resultados
-#         objectiveValue = model.solution.get_objective_value()
-#         print("-------------------------------------------")
-#         print("Modelo 1 - Sin Rotacion")
-#         print(f"Optimal value: {objectiveValue}")
-        
-#         #aca puedo imprimir los valores que toman las variables
-#         # for var_name, value in zip(varsNames, solutionValues):
-#         #     print(f"{var_name} = {value}")
-       
-#         status = model.solution.get_status()
-#         # finalTime = model.get_time()
-#         # solverTime=finalTime-initialTime
-#         # solverTime=round(solverTime, 2)
-        
-#         finalTimeT= time.time()
-#         solverTimeT=finalTimeT-initialTimeT
-#         solverTimeT=round(solverTimeT, 2)
-        
-#         if status == 105:  # CPLEX código 105 = Time limit exceeded
-#             print("The solver stopped because it reached the time limit.")
-#             modelStatus="2" #valor en paver para marcar un optimo local
-
-#         # Enviar resultados a través de la cola
-#         queue.put({
-#             "modelStatus": modelStatus,
-#             "solverStatus": solverStatus,
-#             "objectiveValue": objectiveValue,
-#             "solverTime": solverTimeT
-#         })
-        
-#     except CplexSolverError as e:
-#         handle_solver_error(e, queue,solverTimeT)
-
-def createModel(maxTime):
-   
-    
-        # Crear un modelo de CPLEX
-    model= cplex.Cplex()
-        
-    model.set_results_stream(None) # deshabilito log de CPLEX de la info paso a paso
+    model.set_results_stream(None)  # deshabilito log de CPLEX de la info paso a paso
     model.set_problem_type(cplex.Cplex.problem_type.MILP)
     model.objective.set_sense(model.objective.sense.maximize)
     # Definir el limite tiempo de la ejecución en un minuto
-    model.parameters.timelimit.set(maxTime)
+    model.parameters.timelimit.set(max_time)
 
-        # Definir variables y objetivos
-    items = list(range(1, calcularCotaFisicaItems() + 1))
-    varsNames = [f"f_{i}" for i in items]
-    coeffs = [1.0] * len(items)  
-    add_variables(model, varsNames, coeffs, "B")
+    # Definir variables y objetivos
+    items = list(range(1, calcular_cota_fisica_items() + 1))
+    vars_names = [f"f_{i}" for i in items]
+    coeffs = [1.0] * len(items)
+    add_variables(model, vars_names, coeffs, "B")
 
-    additionalVarsNames=[f"x_{i}" for i in items] + [f"y_{i}" for i in items]
-    additionalCoeffObj = [0.0] * len(additionalVarsNames)
-    add_variables(model, additionalVarsNames, additionalCoeffObj, "I")
+    additional_vars_names = [f"x_{i}" for i in items] + [f"y_{i}" for i in items]
+    additional_coeff_obj = [0.0] * len(additional_vars_names)
+    add_variables(model, additional_vars_names, additional_coeff_obj, "I")
 
-    additionalVarsNames= set()
+    additional_vars_names = set()
     for i in items:
         for j in items:
             if i != j:
-                additionalVarsNames.add(f"l_{i},{j}") # agrego variable l_{ij}
-                additionalVarsNames.add(f"l_{j},{i}") # agrego variable l_{ij}
-                additionalVarsNames.add(f"b_{i},{j}") # agrego variable b_{ij}
-                additionalVarsNames.add(f"b_{j},{i}") # agrego variable b_{ij}
-    additionalVarsNames = list(additionalVarsNames)
-    additionalCoeffObj = [0.0] * len(additionalVarsNames)
-    add_variables(model, additionalVarsNames, additionalCoeffObj, "B")
+                additional_vars_names.add(f"l_{i},{j}")  # agrego variable l_{ij}
+                additional_vars_names.add(f"l_{j},{i}")  # agrego variable l_{ij}
+                additional_vars_names.add(f"b_{i},{j}")  # agrego variable b_{ij}
+                additional_vars_names.add(f"b_{j},{i}")  # agrego variable b_{ij}
+    additional_vars_names = list(additional_vars_names)
+    additional_coeff_obj = [0.0] * len(additional_vars_names)
+    add_variables(model, additional_vars_names, additional_coeff_obj, "B")
 
-        # Añadir las restricciones para cada par (i, j) con i < j
+    # Añadir las restricciones para cada par (i, j) con i < j
     for i in items:
         for j in items:
-            if i < j: #Aca fue necesario reescribir la restriccion para que funcione con CPLEX
-                consCoeff = [1.0, 1.0, 1.0, 1.0, -1.0, -1.0]
-                consVars = [f"l_{i},{j}", f"l_{j},{i}", f"b_{i},{j}", f"b_{j},{i}", f"f_{i}", f"f_{j}"] 
-                consRhs = -1.0
-                consSense = "G"  # "G" indica >=
-                add_constraint(model,consCoeff,consVars,consRhs,consSense)
+            if i < j:  # Aca fue necesario reescribir la restriccion para que funcione con CPLEX
+                cons_coeff = [1.0, 1.0, 1.0, 1.0, -1.0, -1.0]
+                cons_vars = [f"l_{i},{j}", f"l_{j},{i}", f"b_{i},{j}", f"b_{j},{i}", f"f_{i}", f"f_{j}"]
+                cons_rhs = -1.0
+                cons_sense = "G"  # "G" indica >=
+                add_constraint(model, cons_coeff, cons_vars, cons_rhs, cons_sense)
 
     # Añadir las restricciones x_i - x_j + W l_{ij} <= W - w para cada i en I
     for i in items:
         for j in items:
             if i != j:
-                consCoeff = [1.0, -1.0, BIN_WIDTH]
-                consVars = [f"x_{i}", f"x_{j}", f"l_{i},{j}"]
-                consRhs = BIN_WIDTH - ITEM_WIDTH
-                consSense = "L"  # "L" indica <=
-                add_constraint(model,consCoeff,consVars,consRhs,consSense)
+                cons_coeff = [1.0, -1.0, BIN_WIDTH]
+                cons_vars = [f"x_{i}", f"x_{j}", f"l_{i},{j}"]
+                cons_rhs = BIN_WIDTH - ITEM_WIDTH
+                cons_sense = "L"  # "L" indica <=
+                add_constraint(model, cons_coeff, cons_vars, cons_rhs, cons_sense)
 
     # Añadir las restricciones y_i - y_j + H b_{ij} <= H - h para cada i en I
     for i in items:
         for j in items:
             if i != j:
-                consCoeff = [1.0, -1.0, BIN_HEIGHT]
-                consVars = [f"y_{i}", f"y_{j}", f"b_{i},{j}"]
-                consRhs = BIN_HEIGHT - ITEM_HEIGHT
-                consSense = "L"  # "L" indica <=
-                add_constraint(model,consCoeff,consVars,consRhs,consSense)
-                    
-    # Añadir la restricción x_i + W f_i <= 2W - w  para cada i en I
+                cons_coeff = [1.0, -1.0, BIN_HEIGHT]
+                cons_vars = [f"y_{i}", f"y_{j}", f"b_{i},{j}"]
+                cons_rhs = BIN_HEIGHT - ITEM_HEIGHT
+                cons_sense = "L"  # "L" indica <=
+                add_constraint(model, cons_coeff, cons_vars, cons_rhs, cons_sense)
+
+    # Añadir la restricción x_i + W f_i <= 2W - w para cada i en I
     for i in items:
-        consCoeff = [1.0, BIN_WIDTH]  # Coeficientes para x_i y f_i
-        consVars = [f"x_{i}", f"f_{i}"]  # Variables en la restricción
-        consRhs = 2 * BIN_WIDTH - ITEM_WIDTH  # Lado derecho de la restricción
-        consSense = "L"  # "L" indica <=
-        add_constraint(model,consCoeff,consVars,consRhs,consSense)
+        cons_coeff = [1.0, BIN_WIDTH]  # Coeficientes para x_i y f_i
+        cons_vars = [f"x_{i}", f"f_{i}"]  # Variables en la restricción
+        cons_rhs = 2 * BIN_WIDTH - ITEM_WIDTH  # Lado derecho de la restricción
+        cons_sense = "L"  # "L" indica <=
+        add_constraint(model, cons_coeff, cons_vars, cons_rhs, cons_sense)
 
     # Añadir la restricción y_i + H f_i <= 2H - h para cada i en I
     for i in items:
-        consCoeff = [1.0, BIN_HEIGHT]  # Coeficientes para y_i y f_i
-        consVars = [f"y_{i}", f"f_{i}"]  # Variables en la restricción
-        consRhs = 2 * BIN_HEIGHT - ITEM_HEIGHT  # Lado derecho de la restricción
-        consSense = "L"  # "L" indica <=
-        add_constraint(model,consCoeff,consVars,consRhs,consSense)
+        cons_coeff = [1.0, BIN_HEIGHT]  # Coeficientes para y_i y f_i
+        cons_vars = [f"y_{i}", f"f_{i}"]  # Variables en la restricción
+        cons_rhs = 2 * BIN_HEIGHT - ITEM_HEIGHT  # Lado derecho de la restricción
+        cons_sense = "L"  # "L" indica <=
+        add_constraint(model, cons_coeff, cons_vars, cons_rhs, cons_sense)
 
     return model
-        
-def solveModel(model, queue, manualInterruption):
-    # Desactivar la interrupción manual aquí
 
-    manualInterruption.value = False
+
+def solve_model(model, queue, manual_interruption):
+    # Desactivar la interrupción manual aquí
+    manual_interruption.value = False
+
     # Resolver el modelo
     model.solve()
 
     # Obtener y mostrar los resultados
-    objectiveValue = model.solution.get_objective_value()
+    objective_value = model.solution.get_objective_value()
     print("-------------------------------------------")
     print("Modelo 1 - Sin Rotacion")
-    print(f"Optimal value: {objectiveValue}")
-       
-    modelStatus, solverStatus = "1", "1"
+    print(f"Optimal value: {objective_value}")
+
+    model_status, solver_status = "1", "1"
     status = model.solution.get_status()
     if status == 105:
         print("The solver stopped because it reached the time limit.")
-        modelStatus = "2"
+        model_status = "2"
 
-    return modelStatus, solverStatus, objectiveValue
+    return model_status, solver_status, objective_value
 
 
-def execute_with_time_limit(maxTime):
-    global modelStatus, solverStatus, objectiveValue, solverTime 
-    global excedingLimitTime
-    excedingLimitTime=False
-    
+def execute_with_time_limit(max_time):
+    global model_status, solver_status, objective_value, solver_time
+    global exceding_limit_time
+    exceding_limit_time = False
+
     # Crear una cola para recibir los resultados del subproceso
     queue = multiprocessing.Queue()
 
     # Crear una variable compartida para manejar la interrupción manual
-    manualInterruption = multiprocessing.Value('b', True)
+    manual_interruption = multiprocessing.Value('b', True)
 
     # Crear el subproceso que correrá la función
-    process = multiprocessing.Process(target=run_model, args=(createModel,solveModel,queue,manualInterruption,maxTime))
+    process = multiprocessing.Process(target=run_model, args=(create_model, solve_model, queue, manual_interruption, max_time))
 
     # Iniciar el subproceso
     process.start()
 
-    initialTime = time.time()
+    initial_time = time.time()
 
     # Monitorear la cola mientras el proceso está en ejecución
     while process.is_alive():
-        if manualInterruption.value and time.time() - initialTime > maxTime:
-                print("Limit time reached. Aborting process.")
-                modelStatus="14" #valor en paver para marcar que el modelo no devolvio respuesta por error
-                solverStatus="4" #el solver finalizo la ejecucion del modelo
-                solverTime=maxTime
-                excedingLimitTime=True
-                process.terminate()
-                process.join()
-                break
+        if manual_interruption.value and time.time() - initial_time > max_time:
+            print("Limit time reached. Aborting process.")
+            model_status = "14"  # valor en paver para marcar que el modelo no devolvio respuesta por error
+            solver_status = "4"  # el solver finalizo la ejecucion del modelo
+            solver_time = max_time
+            exceding_limit_time = True
+            process.terminate()
+            process.join()
+            break
         time.sleep(0.1)  # Evitar consumir demasiados recursos
 
     # Imprimo resultados de la ejecucion que se guardan luego en el archivo trc para usar en paver
-    
     while not queue.empty():
         message = queue.get()
         if isinstance(message, dict):
             print(message)
-            modelStatus = message["modelStatus"]
-            solverStatus = message["solverStatus"]
-            objectiveValue = message["objectiveValue"]
-            solverTime = message["solverTime"]
-            
-    if(excedingLimitTime):
+            model_status = message["modelStatus"]
+            solver_status = message["solverStatus"]
+            objective_value = message["objectiveValue"]
+            solver_time = message["solverTime"]
+
+    if exceding_limit_time:
         print("El modelo excedió el tiempo límite de ejecución.")
-        objectiveValue = "n/a"
-        modelStatus = "14"
-                
-    return CASE_NAME, MODEL_NAME, modelStatus, solverStatus, objectiveValue, solverTime
+        objective_value = "n/a"
+        model_status = "14"
+
+    return CASE_NAME, MODEL_NAME, model_status, solver_status, objective_value, solver_time
