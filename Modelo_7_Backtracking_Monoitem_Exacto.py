@@ -220,20 +220,20 @@ def _resolver_en_proceso(queue, max_time):
         })
 
 
-def execute_with_time_limit(maxTime):
+def execute_with_time_limit(max_time):
     queue = multiprocessing.Queue()
-    process = multiprocessing.Process(target=_resolver_en_proceso, args=(queue, maxTime))
+    process = multiprocessing.Process(target=_resolver_en_proceso, args=(queue, max_time))
     process.start()
-    process.join(maxTime)
+    process.join(max_time)
 
     if process.is_alive():
         process.terminate()
         process.join()
         print("El modelo excedio el tiempo limite de ejecucion.")
-        return CASE_NAME, MODEL_NAME, "14", "4", "n/a", maxTime
+        return CASE_NAME, MODEL_NAME, "14", "4", "n/a", max_time
 
     if queue.empty():
-        return CASE_NAME, MODEL_NAME, "14", "4", "n/a", maxTime
+        return CASE_NAME, MODEL_NAME, "14", "4", "n/a", max_time
 
     message = queue.get()
     return (

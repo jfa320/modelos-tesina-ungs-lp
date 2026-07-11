@@ -14,7 +14,7 @@ if __name__ == '__main__':
     
     models = [
         Modelo_5_Orquestador,
-        # Modelo_1_simplificado__seccion_2_8_overleaf_SIN_ROTACION,
+        Modelo_1_simplificado__seccion_2_8_overleaf_SIN_ROTACION,
         Modelo_1_simplificado__seccion_2_9_overleaf_CON_ROTACION,
         Modelo_6_Andrade_Birgin_Monoitem,
         Modelo_7_Backtracking_Monoitem_Exacto

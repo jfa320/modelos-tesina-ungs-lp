@@ -26,10 +26,10 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 # Caso 2: este vengo probando hace meses - el de la forma irregular "cruz"
 # optimo 4
 
-# BIN_WIDTH = 5 # W en el modelo
-# BIN_HEIGHT = 5 # H en el modelo
-# ITEM_WIDTH= 3 # w en el modelo
-# ITEM_HEIGHT= 2 # h en el modelo
+BIN_WIDTH = 5 # W en el modelo
+BIN_HEIGHT = 5 # H en el modelo
+ITEM_WIDTH= 3 # w en el modelo
+ITEM_HEIGHT= 2 # h en el modelo
 
 # nuevo
 # optimo 6
@@ -77,10 +77,10 @@ CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
 # Desde acá empiezan los casos de la OR Library (grandes)
 
 # # Caso 7 (optimo = 7)
-BIN_WIDTH = 50         # W
-BIN_HEIGHT = 20        # H
-ITEM_WIDTH = 13        # w
-ITEM_HEIGHT = 8        # h
+# BIN_WIDTH = 50         # W
+# BIN_HEIGHT = 20        # H
+# ITEM_WIDTH = 13        # w
+# ITEM_HEIGHT = 8        # h
 
 # Caso 8:
 # Optimo 16

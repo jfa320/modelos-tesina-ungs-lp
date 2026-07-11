@@ -7,51 +7,52 @@ from Config import *
 
 MODEL_NAME = "AndradeBirginBigM"
 
-def calcularCotaFisicaItems():
+
+def calcular_cota_fisica_items():
     return (BIN_WIDTH * BIN_HEIGHT) // (ITEM_WIDTH * ITEM_HEIGHT)
 
 
-def createModel(maxTime):
+def create_model(max_time):
     model = cplex.Cplex()
 
     model.set_results_stream(None)
     model.set_problem_type(cplex.Cplex.problem_type.MILP)
     model.objective.set_sense(model.objective.sense.maximize)
-    model.parameters.timelimit.set(maxTime)
+    model.parameters.timelimit.set(max_time)
 
-    maxItemDim = max(ITEM_WIDTH, ITEM_HEIGHT)
+    max_item_dim = max(ITEM_WIDTH, ITEM_HEIGHT)
 
-    bigMx = 2 * BIN_WIDTH + 2 * maxItemDim
-    bigMy = 2 * BIN_HEIGHT + 2 * maxItemDim
-    items = list(range(1, calcularCotaFisicaItems() + 1))
+    big_m_x = 2 * BIN_WIDTH + 2 * max_item_dim
+    big_m_y = 2 * BIN_HEIGHT + 2 * max_item_dim
+    items = list(range(1, calcular_cota_fisica_items() + 1))
 
     # -----------------------------
     # Variables
     # -----------------------------
-    usedVarNames = [f"f_{i}" for i in items]
-    usedVarObj = [1.0] * len(items)
-    add_variables(model, usedVarNames, usedVarObj, "B")
+    used_var_names = [f"f_{i}" for i in items]
+    used_var_obj = [1.0] * len(items)
+    add_variables(model, used_var_names, used_var_obj, "B")
 
-    rotVarNames = [f"r_{i}" for i in items]
-    rotVarObj = [0.0] * len(items)
-    add_variables(model, rotVarNames, rotVarObj, "B")
+    rot_var_names = [f"r_{i}" for i in items]
+    rot_var_obj = [0.0] * len(items)
+    add_variables(model, rot_var_names, rot_var_obj, "B")
 
-    centerVarNames = [f"cx_{i}" for i in items] + [f"cy_{i}" for i in items]
-    centerVarObj = [0.0] * len(centerVarNames)
-    add_variables(model, centerVarNames, centerVarObj, "C")
+    center_var_names = [f"cx_{i}" for i in items] + [f"cy_{i}" for i in items]
+    center_var_obj = [0.0] * len(center_var_names)
+    add_variables(model, center_var_names, center_var_obj, "C")
 
-    effDimVarNames = [f"wEff_{i}" for i in items] + [f"hEff_{i}" for i in items]
-    effDimVarObj = [0.0] * len(effDimVarNames)
-    add_variables(model, effDimVarNames, effDimVarObj, "C")
+    effective_dim_var_names = [f"wEff_{i}" for i in items] + [f"hEff_{i}" for i in items]
+    effective_dim_var_obj = [0.0] * len(effective_dim_var_names)
+    add_variables(model, effective_dim_var_names, effective_dim_var_obj, "C")
 
-    relativePosVars = []
+    relative_pos_vars = []
     for i in items:
         for j in items:
             if i < j:
-                relativePosVars.append(f"q_{i},{j}")
-                relativePosVars.append(f"q_{j},{i}")
+                relative_pos_vars.append(f"q_{i},{j}")
+                relative_pos_vars.append(f"q_{j},{i}")
 
-    add_variables(model, relativePosVars, [0.0] * len(relativePosVars), "B")
+    add_variables(model, relative_pos_vars, [0.0] * len(relative_pos_vars), "B")
 
     # -----------------------------
     # Dimensiones efectivas
@@ -60,50 +61,50 @@ def createModel(maxTime):
 
     for i in items:
         # wEff_i = ITEM_WIDTH + delta * r_i
-        consCoeff = [1.0, -delta]
-        consVars = [f"wEff_{i}", f"r_{i}"]
-        consRhs = ITEM_WIDTH
-        consSense = "E"
-        add_constraint(model, consCoeff, consVars, consRhs, consSense)
+        cons_coeff = [1.0, -delta]
+        cons_vars = [f"wEff_{i}", f"r_{i}"]
+        cons_rhs = ITEM_WIDTH
+        cons_sense = "E"
+        add_constraint(model, cons_coeff, cons_vars, cons_rhs, cons_sense)
 
         # hEff_i = ITEM_HEIGHT - delta * r_i
-        consCoeff = [1.0, delta]
-        consVars = [f"hEff_{i}", f"r_{i}"]
-        consRhs = ITEM_HEIGHT
-        consSense = "E"
-        add_constraint(model, consCoeff, consVars, consRhs, consSense)
+        cons_coeff = [1.0, delta]
+        cons_vars = [f"hEff_{i}", f"r_{i}"]
+        cons_rhs = ITEM_HEIGHT
+        cons_sense = "E"
+        add_constraint(model, cons_coeff, cons_vars, cons_rhs, cons_sense)
 
     # -----------------------------
     # Contención en el bin
     # -----------------------------
     for i in items:
         # cx_i - wEff_i / 2 >= 0
-        consCoeff = [1.0, -0.5]
-        consVars = [f"cx_{i}", f"wEff_{i}"]
-        consRhs = 0.0
-        consSense = "G"
-        add_constraint(model, consCoeff, consVars, consRhs, consSense)
+        cons_coeff = [1.0, -0.5]
+        cons_vars = [f"cx_{i}", f"wEff_{i}"]
+        cons_rhs = 0.0
+        cons_sense = "G"
+        add_constraint(model, cons_coeff, cons_vars, cons_rhs, cons_sense)
 
         # cx_i + wEff_i / 2 <= BIN_WIDTH
-        consCoeff = [1.0, 0.5]
-        consVars = [f"cx_{i}", f"wEff_{i}"]
-        consRhs = BIN_WIDTH
-        consSense = "L"
-        add_constraint(model, consCoeff, consVars, consRhs, consSense)
+        cons_coeff = [1.0, 0.5]
+        cons_vars = [f"cx_{i}", f"wEff_{i}"]
+        cons_rhs = BIN_WIDTH
+        cons_sense = "L"
+        add_constraint(model, cons_coeff, cons_vars, cons_rhs, cons_sense)
 
         # cy_i - hEff_i / 2 >= 0
-        consCoeff = [1.0, -0.5]
-        consVars = [f"cy_{i}", f"hEff_{i}"]
-        consRhs = 0.0
-        consSense = "G"
-        add_constraint(model, consCoeff, consVars, consRhs, consSense)
+        cons_coeff = [1.0, -0.5]
+        cons_vars = [f"cy_{i}", f"hEff_{i}"]
+        cons_rhs = 0.0
+        cons_sense = "G"
+        add_constraint(model, cons_coeff, cons_vars, cons_rhs, cons_sense)
 
         # cy_i + hEff_i / 2 <= BIN_HEIGHT
-        consCoeff = [1.0, 0.5]
-        consVars = [f"cy_{i}", f"hEff_{i}"]
-        consRhs = BIN_HEIGHT
-        consSense = "L"
-        add_constraint(model, consCoeff, consVars, consRhs, consSense)
+        cons_coeff = [1.0, 0.5]
+        cons_vars = [f"cy_{i}", f"hEff_{i}"]
+        cons_rhs = BIN_HEIGHT
+        cons_sense = "L"
+        add_constraint(model, cons_coeff, cons_vars, cons_rhs, cons_sense)
 
     # -----------------------------
     # No superposición
@@ -111,173 +112,158 @@ def createModel(maxTime):
     for i in items:
         for j in items:
             if i < j:
-                qij = f"q_{i},{j}"
-                qji = f"q_{j},{i}"
+                q_ij = f"q_{i},{j}"
+                q_ji = f"q_{j},{i}"
 
                 # 1) i a la derecha de j
-                consCoeff = [
+                cons_coeff = [
                     1.0, -1.0,
                     -0.5, -0.5,
-                    bigMx, bigMx
+                    big_m_x, big_m_x
                 ]
-                consVars = [
+                cons_vars = [
                     f"cx_{i}", f"cx_{j}",
                     f"wEff_{i}", f"wEff_{j}",
-                    qij, qji
+                    q_ij, q_ji
                 ]
-                consRhs = 0.0
-                consSense = "G"
-                add_constraint(model, consCoeff, consVars, consRhs, consSense)
+                cons_rhs = 0.0
+                cons_sense = "G"
+                add_constraint(model, cons_coeff, cons_vars, cons_rhs, cons_sense)
 
                 # 2) j a la derecha de i
-                consCoeff = [
+                cons_coeff = [
                     1.0, -1.0,
                     -0.5, -0.5,
-                    -bigMx, -bigMx
+                    -big_m_x, -big_m_x
                 ]
-                consVars = [
+                cons_vars = [
                     f"cx_{j}", f"cx_{i}",
                     f"wEff_{i}", f"wEff_{j}",
-                    qij, qji
+                    q_ij, q_ji
                 ]
-                consRhs = -2 * bigMx
-                consSense = "G"
-                add_constraint(model, consCoeff, consVars, consRhs, consSense)
+                cons_rhs = -2 * big_m_x
+                cons_sense = "G"
+                add_constraint(model, cons_coeff, cons_vars, cons_rhs, cons_sense)
 
                 # 3) i arriba de j
-                consCoeff = [
+                cons_coeff = [
                     1.0, -1.0,
                     -0.5, -0.5,
-                    -bigMy, bigMy
+                    -big_m_y, big_m_y
                 ]
-                consVars = [
+                cons_vars = [
                     f"cy_{i}", f"cy_{j}",
                     f"hEff_{i}", f"hEff_{j}",
-                    qij, qji
+                    q_ij, q_ji
                 ]
-                consRhs = -bigMy
-                consSense = "G"
-                add_constraint(model, consCoeff, consVars, consRhs, consSense)
+                cons_rhs = -big_m_y
+                cons_sense = "G"
+                add_constraint(model, cons_coeff, cons_vars, cons_rhs, cons_sense)
 
                 # 4) j arriba de i
-                consCoeff = [
+                cons_coeff = [
                     1.0, -1.0,
                     -0.5, -0.5,
-                    bigMy, -bigMy
+                    big_m_y, -big_m_y
                 ]
-                consVars = [
+                cons_vars = [
                     f"cy_{j}", f"cy_{i}",
                     f"hEff_{i}", f"hEff_{j}",
-                    qij, qji
+                    q_ij, q_ji
                 ]
-                consRhs = -bigMy
-                consSense = "G"
-                add_constraint(model, consCoeff, consVars, consRhs, consSense)
+                cons_rhs = -big_m_y
+                cons_sense = "G"
+                add_constraint(model, cons_coeff, cons_vars, cons_rhs, cons_sense)
 
     return model
 
 
-def solveModel(model, queue, manualInterruption):
-    manualInterruption.value = False
-    initialTime = time.time()
+def solve_model(model, queue, manual_interruption):
+    manual_interruption.value = False
+    initial_time = time.time()
 
     try:
         model.solve()
-        solverTime = time.time() - initialTime
+        solver_time = time.time() - initial_time
 
         status = model.solution.get_status()
-        statusString = model.solution.get_status_string(status)
+        status_string = model.solution.get_status_string(status)
 
-        hasSolution = model.solution.is_primal_feasible()
+        has_solution = model.solution.is_primal_feasible()
 
-        if hasSolution:
-            objectiveValue = model.solution.get_objective_value()
+        if has_solution:
+            objective_value = model.solution.get_objective_value()
         else:
-            objectiveValue = "n/a"
+            objective_value = "n/a"
 
         print("-------------------------------------------")
         print("Modelo Andrade-Birgin con Big-M")
-        print(f"Optimal value: {objectiveValue}")
+        print(f"Optimal value: {objective_value}")
 
-        # # Podés inspeccionar la solución acá si querés
-        # if hasSolution:
-        #     for i in ITEMS:
-        #         fi = model.solution.get_values(f"f_{i}")
-        #         if fi > 0.5:
-        #             ri = model.solution.get_values(f"r_{i}")
-        #             cx2 = model.solution.get_values(f"cx2_{i}")
-        #             cy2 = model.solution.get_values(f"cy2_{i}")
-        #             wEff = model.solution.get_values(f"wEff_{i}")
-        #             hEff = model.solution.get_values(f"hEff_{i}")
-        #             print(
-        #                 f"item {i}: used={fi}, rot={ri}, "
-        #                 f"center=({cx2 / 2.0}, {cy2 / 2.0}), size=({wEff}, {hEff})"
-        #             )
-
-        modelStatus = "1"
-        solverStatus = "1"
+        model_status = "1"
+        solver_status = "1"
 
         if status == 105:
             print("The solver stopped because it reached the time limit.")
-            modelStatus = "2"
+            model_status = "2"
 
         queue.put({
-            "modelStatus": modelStatus,
-            "solverStatus": solverStatus,
-            "objectiveValue": objectiveValue,
-            "solverTime": solverTime
+            "modelStatus": model_status,
+            "solverStatus": solver_status,
+            "objectiveValue": objective_value,
+            "solverTime": solver_time
         })
 
     except CplexSolverError as e:
-        solverTime = time.time() - initialTime
+        solver_time = time.time() - initial_time
         print(f"CplexSolverError: {e}")
 
         queue.put({
             "modelStatus": "14",
             "solverStatus": "4",
             "objectiveValue": "n/a",
-            "solverTime": solverTime
+            "solverTime": solver_time
         })
 
 
-def run_model(createModelFn, solveModelFn, queue, manualInterruption, maxTime):
+def run_model(create_model_fn, solve_model_fn, queue, manual_interruption, max_time):
     try:
-        model = createModelFn(maxTime)
-        solveModelFn(model, queue, manualInterruption)
+        model = create_model_fn(max_time)
+        solve_model_fn(model, queue, manual_interruption)
     except Exception as e:
         print(f"Error while running model: {e}")
         queue.put({
             "modelStatus": "14",
             "solverStatus": "4",
             "objectiveValue": "n/a",
-            "solverTime": maxTime
+            "solverTime": max_time
         })
 
 
-def execute_with_time_limit(maxTime):
-    global modelStatus, solverStatus, objectiveValue, solverTime
-    global excedingLimitTime
+def execute_with_time_limit(max_time):
+    global model_status, solver_status, objective_value, solver_time
+    global exceding_limit_time
 
-    excedingLimitTime = False
+    exceding_limit_time = False
 
     queue = multiprocessing.Queue()
-    manualInterruption = multiprocessing.Value('b', True)
+    manual_interruption = multiprocessing.Value('b', True)
 
     process = multiprocessing.Process(
         target=run_model,
-        args=(createModel, solveModel, queue, manualInterruption, maxTime)
+        args=(create_model, solve_model, queue, manual_interruption, max_time)
     )
 
     process.start()
-    initialTime = time.time()
+    initial_time = time.time()
 
     while process.is_alive():
-        if manualInterruption.value and time.time() - initialTime > maxTime:
+        if manual_interruption.value and time.time() - initial_time > max_time:
             print("Limit time reached. Aborting process.")
-            modelStatus = "14"
-            solverStatus = "4"
-            solverTime = maxTime
-            excedingLimitTime = True
+            model_status = "14"
+            solver_status = "4"
+            solver_time = max_time
+            exceding_limit_time = True
             process.terminate()
             process.join()
             break
@@ -287,14 +273,14 @@ def execute_with_time_limit(maxTime):
         message = queue.get()
         if isinstance(message, dict):
             print(message)
-            modelStatus = message["modelStatus"]
-            solverStatus = message["solverStatus"]
-            objectiveValue = message["objectiveValue"]
-            solverTime = message["solverTime"]
+            model_status = message["modelStatus"]
+            solver_status = message["solverStatus"]
+            objective_value = message["objectiveValue"]
+            solver_time = message["solverTime"]
 
-    if excedingLimitTime:
+    if exceding_limit_time:
         print("El modelo excedió el tiempo límite de ejecución.")
-        objectiveValue = "n/a"
-        modelStatus = "14"
+        objective_value = "n/a"
+        model_status = "14"
 
-    return CASE_NAME, MODEL_NAME, modelStatus, solverStatus, objectiveValue, solverTime
+    return CASE_NAME, MODEL_NAME, model_status, solver_status, objective_value, solver_time
