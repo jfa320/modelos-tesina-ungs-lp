@@ -104,3 +104,146 @@ De esta forma, al menos una de esas variables debe cambiar en la siguiente soluc
 
 - el modelo maestro no posiciona rebanadas ni items. Simplemente elige las rebanadas cuyos items no colisionan entre sí
 - en línea a lo anterior, la rebanada viene armada desde el esclavo con sus items y con ellos su ubicación en el bin
+
+---
+
+## Diagnóstico del caso `50 x 20`, item `13 x 8`
+
+### Caso observado
+
+Para el caso:
+
+- bin: `50 x 20`
+- item: `13 x 8`
+- rotación permitida: `8 x 13`
+
+el algoritmo obtiene una solución entera de `6` ítems, usando dos rebanadas iniciales homogéneas:
+
+- una rebanada inferior con 3 ítems no rotados
+- una rebanada superior con 3 ítems no rotados
+
+Geométricamente existe una solución de `7` ítems si se reemplaza la rebanada inferior por una rebanada mixta:
+
+- 3 ítems no rotados en `(0,0)`, `(13,0)`, `(26,0)`
+- 1 ítem rotado en `(39,0)`
+- más la rebanada superior de 3 ítems no rotados
+
+La rebanada mixta esperada es:
+
+```text
+[(0,0,NR), (13,0,NR), (26,0,NR), (39,0,R)]
+```
+
+### Verificaciones realizadas
+
+Se verificó que la rebanada mixta no está bloqueada por restricciones geométricas del esclavo:
+
+- las variables correspondientes existen en el pricing
+- la combinación es factible si se fuerza en el modelo esclavo
+- no hay un no-good cut que la elimine
+- al inicio tiene costo reducido positivo
+
+Con los duales iniciales del maestro relajado se observó:
+
+```text
+rebanada base de 3 NR: valor pricing = 0
+item rotado adicional en x = 39: coeficiente marginal = +1
+rebanada mixta completa: valor pricing = +1
+```
+
+Por lo tanto, el cuarto ítem no tiene coeficiente negativo. La rebanada mixta domina a la rebanada de 3 desde el punto de vista del pricing.
+
+Sin embargo, la rebanada mixta no domina a todas las columnas posibles. El pricing encuentra antes muchas columnas con mayor valor reducido, especialmente columnas de 5 ítems o columnas de 4 ítems con otra geometría. Por eso la columna deseada no aparece en el pool.
+
+### Rebanadas de 4 ítems
+
+El pricing sí puede generar rebanadas de 4 ítems y también puede generar rebanadas mixtas. El problema no es la cardinalidad ni la mezcla de orientaciones.
+
+Lo que no aparece es la rebanada de 4 específica que es compatible con la rebanada superior y permite construir la solución entera de `7`.
+
+Esto indica que el problema no es:
+
+```text
+"el pricing no genera mixtas"
+```
+
+sino:
+
+```text
+"el pricing no rankea suficientemente alto la columna mixta útil para el entero"
+```
+
+### Efecto del corte por estancamiento
+
+Se probó aumentar el corte por estancamiento para permitir más iteraciones de generación de columnas. Con más iteraciones:
+
+- se generan más columnas
+- aparecen columnas de 4 ítems
+- el maestro relajado llega a valor `7`
+- el maestro entero final sigue en `6`
+
+Esto muestra que el pool generado alcanza para construir una solución fraccional de valor `7`, pero no contiene una combinación entera compatible de valor `7`.
+
+Cuando el maestro relajado llega a `7`, la rebanada mixta esperada ya tiene costo reducido `0`, por lo que el pricing estándar deja de tener incentivo para generarla.
+
+### Degeneración dual observada
+
+El hallazgo más importante es que los duales del maestro por celdas son altamente degenerados.
+
+En la primera iteración del caso analizado, los duales no nulos se concentraron en solo dos celdas:
+
+```text
+dual(0,0) = 3
+dual(0,8) = 3
+resto de las celdas = 0
+```
+
+Esto ocurre porque el maestro impone restricciones de no colisión por celda:
+
+```text
+para cada celda (x,y):
+sum rebanadas que ocupan (x,y) <= 1
+```
+
+Una rebanada ocupa muchas celdas, pero una solución dual extrema puede concentrar todo el precio de esa rebanada en una sola celda. Matemáticamente puede ser válido para la relajación, pero produce una señal pobre para el pricing.
+
+Con esos duales, el pricing interpreta:
+
+```text
+evitar la celda (0,0) es muy valioso
+el resto de las celdas no tiene costo
+```
+
+Esto penaliza columnas geométricamente útiles que tocan esa celda, como la rebanada mixta esperada, y favorece columnas desplazadas o con otra geometría que evitan la celda cara pero no necesariamente ayudan a la solución entera.
+
+### Interpretación
+
+El maestro actual cumple dos funciones:
+
+- selecciona rebanadas para maximizar la cantidad de ítems
+- asegura que no haya colisiones entre ítems de distintas rebanadas mediante restricciones por celda
+
+Esta formulación es geométricamente válida como un set packing por celdas, pero puede no estar bien alineada con generación de columnas. Los duales asociados a restricciones tan locales pueden ser muy degenerados y guiar al pricing hacia columnas buenas para la relajación lineal, pero no necesariamente útiles para la solución entera.
+
+El caso evidencia una brecha entre:
+
+```text
+columnas con buen costo reducido para el maestro relajado
+```
+
+y:
+
+```text
+columnas útiles para construir una solución entera compatible
+```
+
+### Líneas de trabajo posibles
+
+Sin considerar el generador inicial como solución, las líneas relevantes son:
+
+- revisar la formulación del maestro, especialmente el uso de restricciones por celda como fuente de duales
+- estudiar estabilización o suavizado de duales para evitar precios extremadamente concentrados
+- analizar si conviene una formulación alternativa del maestro con restricciones menos locales o con una estructura de compatibilidad diferente
+- medir la degeneración dual en otros casos para confirmar si los fallos se correlacionan con duales concentrados
+
+La conclusión actual es que el problema no parece ser que la columna faltante sea infactible o tenga costo reducido negativo. El problema parece estar en la señal dual inducida por el maestro por celdas y en cómo esa señal rankea las columnas dentro del pricing.

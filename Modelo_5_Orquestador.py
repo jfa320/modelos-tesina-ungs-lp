@@ -111,6 +111,44 @@ def generar_rebanadas_iniciales(bin_width, bin_height,
 
     return rebanadas_no_rotadas + rebanadas_rotadas
 
+
+def generar_rebanadas_iniciales_greedy_uniforme(bin_width, bin_height,
+                                                item_width, item_height,
+                                                max_items):
+    alto_rebanada = calcular_alto_rebanada(bin_width, bin_height, item_width, item_height)
+
+    def generar_por_orientacion(w, h, rotado):
+        rebanadas = []
+
+        for y in range(0, bin_height - h + 1, h):
+            rebanada = Rebanada(alto=alto_rebanada, ancho=bin_width)
+            items_colocados = 0
+
+            for x in range(0, bin_width - w + 1, w):
+                if items_colocados >= max_items:
+                    break
+
+                item = Item(alto=h, ancho=w, rotado=rotado)
+                rebanada.colocar_item(item, x, y)
+                items_colocados += 1
+
+            if rebanada.get_puntos_de_inicio_items():
+                rebanadas.append(rebanada)
+
+        return rebanadas
+
+    rebanadas_no_rotadas = generar_por_orientacion(
+        item_width, item_height, rotado=False
+    )
+
+    rebanadas_rotadas = []
+    if item_width != item_height:
+        rebanadas_rotadas = generar_por_orientacion(
+            item_height, item_width, rotado=True
+        )
+
+    return rebanadas_no_rotadas + rebanadas_rotadas
+
 def construir_firma_rebanada(rebanada):
     return tuple(sorted((item.get_posicion_x(), item.get_posicion_y(), item.get_rotado()) for item in rebanada.get_items()))
 
