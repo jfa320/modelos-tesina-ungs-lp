@@ -65,9 +65,9 @@ Cada rebanada almacena:
 
 ### Relación con los ítems
 
-Cada ítem contenido en una rebanada posee una posición `(x, y)` expresada en el sistema de coordenadas del bin. Esta posicion corresponde a la esquina inferior izquierda de cada ítem y no es relativa a la rebanada, sino que lo es al bin.
+Cada ítem contenido en una rebanada posee una posición `(x, y)` expresada en el sistema de coordenadas del bin. Esta posición corresponde a la esquina inferior izquierda del ítem y no es relativa a la rebanada.
 
-La combinación de la lista de ítems y sus posiciones permite reconstruir completamente la disposición representada por la rebanada dentro del bin.
+La rebanada no posee una posición propia, sino que queda completamente determinada por las posiciones absolutas de los ítems que la componen dentro del bin. En consecuencia, dos rebanadas con la misma disposición relativa de ítems, pero ubicadas a distinta altura, se consideran rebanadas distintas.
 
 ---
 
