@@ -1,219 +1,170 @@
-# Configuración compartida para todos los modelos
-CASE_NAME="inst2" # nombre del caso a probar que se guarda en el archivo trc
+# Catalogo compartido de instancias para los modelos y PAVER.
+
+DEFAULT_CASE_NAME = "caso7"
+
+INSTANCES = {
+    "caso1": {
+        "bin_width": 6,
+        "bin_height": 4,
+        "item_width": 2,
+        "item_height": 3,
+        "optimum": 4,
+    },
+    "caso2": {
+        "bin_width": 5,
+        "bin_height": 5,
+        "item_width": 3,
+        "item_height": 2,
+        "optimum": 4,
+    },
+    "caso3": {
+        "bin_width": 6,
+        "bin_height": 6,
+        "item_width": 4,
+        "item_height": 2,
+        "optimum": 4,
+    },
+    "caso4": {
+        "bin_width": 7,
+        "bin_height": 3,
+        "item_width": 3,
+        "item_height": 2,
+        "optimum": 3,
+    },
+    "caso5": {
+        "bin_width": 6,
+        "bin_height": 3,
+        "item_width": 3,
+        "item_height": 2,
+        "optimum": 3,
+    },
+    "caso6": {
+        "bin_width": 120,
+        "bin_height": 20,
+        "item_width": 12,
+        "item_height": 8,
+        "optimum": 25,
+    },
+    "caso7": {
+        "bin_width": 50,
+        "bin_height": 20,
+        "item_width": 13,
+        "item_height": 8,
+        "optimum": 7,
+    },
+    "caso8": {
+        "bin_width": 40,
+        "bin_height": 25,
+        "item_width": 10,
+        "item_height": 6,
+        "optimum": 16,
+    },
+    "caso9": {
+        "bin_width": 60,
+        "bin_height": 20,
+        "item_width": 12,
+        "item_height": 7,
+        "optimum": 13,
+    },
+    "caso10": {
+        "bin_width": 45,
+        "bin_height": 30,
+        "item_width": 9,
+        "item_height": 9,
+        "optimum": 15,
+    },
+    "caso11": {
+        "bin_width": 70,
+        "bin_height": 25,
+        "item_width": 14,
+        "item_height": 8,
+        "optimum": 15,
+    },
+    "caso12": {
+        "bin_width": 55,
+        "bin_height": 22,
+        "item_width": 11,
+        "item_height": 6,
+        "optimum": 18,
+    },
+    "caso13": {
+        "bin_width": 20,
+        "bin_height": 20,
+        "item_width": 6,
+        "item_height": 5,
+        "optimum": 12,
+    },
+    "caso14": {
+        "bin_width": 40,
+        "bin_height": 30,
+        "item_width": 10,
+        "item_height": 7,
+        "optimum": 16,
+    },
+    "caso15": {
+        "bin_width": 60,
+        "bin_height": 25,
+        "item_width": 12,
+        "item_height": 5,
+        "optimum": 25,
+    },
+    "caso16": {
+        "bin_width": 48,
+        "bin_height": 24,
+        "item_width": 8,
+        "item_height": 6,
+        "optimum": 24,
+    },
+    "caso17": {
+        "bin_width": 70,
+        "bin_height": 28,
+        "item_width": 14,
+        "item_height": 7,
+        "optimum": 20,
+    },
+    "caso18": {
+        "bin_width": 10,
+        "bin_height": 30,
+        "item_width": 1,
+        "item_height": 6,
+        "optimum": 50,
+    },
+}
 
 
-# optimo 
-# BIN_WIDTH = 6
-# BIN_HEIGHT = 4
-# ITEM_WIDTH = 2
-# ITEM_HEIGHT = 3
-# EXECUTION_TIME = 2  # Tiempo de ejecución en segundos para cada modelo
-
-# BIN_WIDTH = 4       # W en el modelo
-# BIN_HEIGHT = 4      # H en el modelo
-# ITEM_WIDTH = 2      # w en el modelo
-# ITEM_HEIGHT = 2     # h en el modelo
+def _normalize_instance(case_name, instance):
+    return {
+        "case_name": case_name,
+        "bin_width": instance["bin_width"],
+        "bin_height": instance["bin_height"],
+        "item_width": instance["item_width"],
+        "item_height": instance["item_height"],
+        "optimum": instance.get("optimum"),
+    }
 
 
-# Caso 1:
-# optimo 4
-
-# BIN_WIDTH = 6 # W en el modelo
-# BIN_HEIGHT = 4 # H en el modelo
-# ITEM_WIDTH= 2 # w en el modelo
-# ITEM_HEIGHT= 3 # h en el modelo
-
-# Caso 2: este vengo probando hace meses - el de la forma irregular "cruz"
-# optimo 4
-
-BIN_WIDTH = 5 # W en el modelo
-BIN_HEIGHT = 5 # H en el modelo
-ITEM_WIDTH= 3 # w en el modelo
-ITEM_HEIGHT= 2 # h en el modelo
-
-# nuevo
-# optimo 6
-
-# BIN_WIDTH = 6 # W en el modelo
-# BIN_HEIGHT = 6 # H en el modelo
-# ITEM_WIDTH= 3 # w en el modelo
-# ITEM_HEIGHT= 2 # h en el modelo
-
-#Caso 3:
-#Valor objetivo: 4
-
-# BIN_WIDTH = 6 # W en el modelo
-# BIN_HEIGHT = 6 # H en el modelo
-# ITEM_WIDTH= 4 # w en el modelo
-# ITEM_HEIGHT= 2 # h en el modelo
-
-#Caso 4:  
-# optimo 3
-
-# BIN_WIDTH = 7 # W en el modelo
-# BIN_HEIGHT = 3 # H en el modelo
-# ITEM_WIDTH= 3 # w en el modelo
-# ITEM_HEIGHT= 2 # h en el modelo
-
-# Caso 5:  este caso es el que rompe el generador de posiciones viejas (da un item menos de los que entran, no considera todas las posiciones)
-# optimo 3
-
-# BIN_WIDTH = 6  # W en el modelo
-# BIN_HEIGHT = 3  # H en el modelo
-
-# ITEM_WIDTH = 3  # w en el modelo
-# ITEM_HEIGHT = 2  # h en el modelo
+def get_instance(case_name):
+    if case_name not in INSTANCES:
+        available = ", ".join(sorted(INSTANCES))
+        raise ValueError(f"Instancia desconocida '{case_name}'. Disponibles: {available}")
+    return _normalize_instance(case_name, INSTANCES[case_name])
 
 
-# Caso 6: 
-# optimo 25 
-
-# BIN_WIDTH = 120  # W en el modelo
-# BIN_HEIGHT = 20  # H en el modelo
-
-# ITEM_WIDTH = 12  # w en el modelo
-# ITEM_HEIGHT = 8  # h en el modelo
-
-# Desde acá empiezan los casos de la OR Library (grandes)
-
-# # Caso 7 (optimo = 7)
-# BIN_WIDTH = 50         # W
-# BIN_HEIGHT = 20        # H
-# ITEM_WIDTH = 13        # w
-# ITEM_HEIGHT = 8        # h
-
-# Caso 8:
-# Optimo 16
-
-# BIN_WIDTH = 40         
-# BIN_HEIGHT = 25        
-# ITEM_WIDTH = 10        
-# ITEM_HEIGHT = 6     
-
-# Caso 9:
-# Optimo 13
-# BIN_WIDTH = 60         
-# BIN_HEIGHT = 20        
-# ITEM_WIDTH = 12        
-# ITEM_HEIGHT = 7       
-
-# Caso 10: -> este se resuelve rapido. TODO: Analizar por qué
-# optimo 15
-
-# BIN_WIDTH = 45         
-# BIN_HEIGHT = 30        
-# ITEM_WIDTH = 9         
-# ITEM_HEIGHT = 9  
+def list_instance_names():
+    return sorted(INSTANCES)
 
 
-# Caso 11:
-# optimo 15
+def set_current_instance(case_name):
+    global CASE_NAME, BIN_WIDTH, BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT
 
-# BIN_WIDTH = 70         
-# BIN_HEIGHT = 25        
-# ITEM_WIDTH = 14        
-# ITEM_HEIGHT = 8        
-
-# Caso 12
-# Óptimo: 18 ítems (5 de ancho x 3 de alto = 15 sin rotar, 
-# más 3 rotados en el espacio sobrante)
-
-# BIN_WIDTH = 55         
-# BIN_HEIGHT = 22        
-# ITEM_WIDTH = 11        
-# ITEM_HEIGHT = 6    
-
-# Caso 13
-# # Óptimo: 12
-
-# BIN_WIDTH = 20          # ancho del bin
-# BIN_HEIGHT = 20         # alto del bin
-# ITEM_WIDTH = 6          # ancho de cada ítem
-# ITEM_HEIGHT = 5         # alto de cada ítem
-
-# Caso 14
-# Óptimo: 16 ítems (4 de ancho x 2 de alto = 8 sin rotar,
-# más 8 rotados 7x10 en los espacios libres arriba)
-
-# BIN_WIDTH = 40         
-# BIN_HEIGHT = 30        
-# ITEM_WIDTH = 10        
-# ITEM_HEIGHT = 7     
-
-# # Caso 15
-# # Óptimo: 25 ítems (5 de ancho x 5 de alto)
-# BIN_WIDTH = 60         
-# BIN_HEIGHT = 25        
-# ITEM_WIDTH = 12        
-# ITEM_HEIGHT = 5     
-
-# Caso 16
-# Óptimo: 24 ítems (6 de ancho x 4 de alto)
-
-# BIN_WIDTH = 48         
-# BIN_HEIGHT = 24        
-# ITEM_WIDTH = 8         
-# ITEM_HEIGHT = 6     
-
-# # Caso 17
-# # Óptimo: 20 ítems (5 de ancho x 4 de alto)
-
-# BIN_WIDTH = 70         
-# BIN_HEIGHT = 28        
-# ITEM_WIDTH = 14        
-# ITEM_HEIGHT = 7     
+    instance = get_instance(case_name)
+    CASE_NAME = instance["case_name"]
+    BIN_WIDTH = instance["bin_width"]
+    BIN_HEIGHT = instance["bin_height"]
+    ITEM_WIDTH = instance["item_width"]
+    ITEM_HEIGHT = instance["item_height"]
+    return instance
 
 
-# # OR Library test
-# # Caso 18
-# BIN_WIDTH = 10          # ancho del bin
-# BIN_HEIGHT = 30         # alto del bin
-# ITEM_WIDTH = 1         # ancho de cada ítem
-# ITEM_HEIGHT = 6         # alto de cada ítem
-# # optimo: 50
-
-# # Caso 3
-# BIN_WIDTH = 20          # ancho del bin
-# BIN_HEIGHT = 20         # alto del bin
-# ITEM_WIDTH = 1         # ancho de cada ítem
-# ITEM_HEIGHT = 6         # alto de cada ítem
-
-# # Caso 2
-# BIN_WIDTH = 20          # ancho del bin
-# BIN_HEIGHT = 20         # alto del bin
-# ITEM_WIDTH = 2         # ancho de cada ítem
-# ITEM_HEIGHT = 8         # alto de cada ítem
-
-# # Caso 3
-# BIN_WIDTH = 20          # ancho del bin
-# BIN_HEIGHT = 20         # alto del bin
-# ITEM_WIDTH = 6         # ancho de cada ítem
-# ITEM_HEIGHT = 5         # alto de cada ítem
-
-# # Caso 4
-# BIN_WIDTH = 20          # ancho del bin
-# BIN_HEIGHT = 20         # alto del bin
-# ITEM_WIDTH = 4         # ancho de cada ítem
-# ITEM_HEIGHT = 9         # alto de cada ítem
-
-# # Caso 5
-# BIN_WIDTH = 20          # ancho del bin
-# BIN_HEIGHT = 20         # alto del bin
-# ITEM_WIDTH = 8         # ancho de cada ítem
-# ITEM_HEIGHT = 7         # alto de cada ítem
-
-# # Caso 6
-# BIN_WIDTH = 20          # ancho del bin
-# BIN_HEIGHT = 20         # alto del bin
-# ITEM_WIDTH = 7         # ancho de cada ítem
-# ITEM_HEIGHT = 5         # alto de cada ítem
-# #optimo: 10
-
-
-
-# # Caso 8
-# BIN_WIDTH = 10          # ancho del bin
-# BIN_HEIGHT = 30         # alto del bin
-# ITEM_WIDTH = 2         # ancho de cada ítem
-# ITEM_HEIGHT = 8         # alto de cada ítem
-# optimo: 
+# Variables historicas para compatibilidad con scripts que todavia importan Config.*
+set_current_instance(DEFAULT_CASE_NAME)

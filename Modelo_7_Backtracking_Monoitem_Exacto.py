@@ -173,14 +173,14 @@ def resolver_2dbpp_monoitem_exacto(bin_width, bin_height, item_width, item_heigh
     }
 
 
-def _resolver_en_proceso(queue, max_time):
+def _resolver_en_proceso(queue, max_time, instance):
     inicio = time.time()
     try:
         resultado = resolver_2dbpp_monoitem_exacto(
-            BIN_WIDTH,
-            BIN_HEIGHT,
-            ITEM_WIDTH,
-            ITEM_HEIGHT,
+            instance["bin_width"],
+            instance["bin_height"],
+            instance["item_width"],
+            instance["item_height"],
             allow_rotation=True,
             max_time=max_time
         )
@@ -220,9 +220,12 @@ def _resolver_en_proceso(queue, max_time):
         })
 
 
-def execute_with_time_limit(max_time):
+def execute_with_time_limit(max_time, instance=None):
+    if instance is None:
+        instance = get_instance(CASE_NAME)
+
     queue = multiprocessing.Queue()
-    process = multiprocessing.Process(target=_resolver_en_proceso, args=(queue, max_time))
+    process = multiprocessing.Process(target=_resolver_en_proceso, args=(queue, max_time, instance))
     process.start()
     process.join(max_time)
 
@@ -230,14 +233,14 @@ def execute_with_time_limit(max_time):
         process.terminate()
         process.join()
         print("El modelo excedio el tiempo limite de ejecucion.")
-        return CASE_NAME, MODEL_NAME, "14", "4", "n/a", max_time
+        return instance["case_name"], MODEL_NAME, "14", "4", "n/a", max_time
 
     if queue.empty():
-        return CASE_NAME, MODEL_NAME, "14", "4", "n/a", max_time
+        return instance["case_name"], MODEL_NAME, "14", "4", "n/a", max_time
 
     message = queue.get()
     return (
-        CASE_NAME,
+        instance["case_name"],
         MODEL_NAME,
         message["modelStatus"],
         message["solverStatus"],

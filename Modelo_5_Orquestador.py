@@ -18,8 +18,13 @@ MODEL_NAME = "Model5Orchestrator"
 EPS = 1e-9  # tolerancia numérica
 
 EPS_MASTER = 1e-4
-MAX_ESTANCAMIENTO = 5
+MAX_ESTANCAMIENTO = 1000
 MAX_EXTRA = 5
+
+# Estabilizacion dual experimental. Para volver al comportamiento anterior,
+# dejar USAR_ESTABILIZACION_DUAL = False.
+USAR_ESTABILIZACION_DUAL = False
+ALPHA_ESTABILIZACION_DUAL = 0.2
 
 
 def calcular_alto_rebanada(bin_width, bin_height, item_width, item_height, porcentaje=0.05):
@@ -162,6 +167,21 @@ def extraer_duales_no_nulos(precios_duales, tol=1e-9):
             duales_no_nulos[clave] = valor
     return duales_no_nulos
 
+
+def estabilizar_duales(duales_actuales, duales_anteriores, alpha=ALPHA_ESTABILIZACION_DUAL):
+    if not USAR_ESTABILIZACION_DUAL or duales_anteriores is None:
+        return duales_actuales
+
+    claves = set(duales_actuales.get("pi", {}).keys()) | set(duales_anteriores.get("pi", {}).keys())
+    duales_estabilizados = {"pi": {}}
+
+    for clave in claves:
+        actual = duales_actuales.get("pi", {}).get(clave, 0.0)
+        anterior = duales_anteriores.get("pi", {}).get(clave, 0.0)
+        duales_estabilizados["pi"][clave] = alpha * actual + (1.0 - alpha) * anterior
+
+    return duales_estabilizados
+
 def calcular_reduced_cost_real(rebanada, precios_duales, w, h):
     suma_duales = 0.0
     
@@ -232,8 +252,8 @@ def obtener_rebanadas_activas(rebanadas, variables_activas_maestro):
     return [rebanada for rebanada in rebanadas if rebanada.get_id() in ids_activos]
 
 
-def exportar_layout_final(bin_width, bin_height, item_width, item_height, cota_fisica_items, rebanadas_activas):
-    output_path = os.path.join("Resultados", f"{CASE_NAME}_layout.png")
+def exportar_layout_final(case_name, bin_width, bin_height, item_width, item_height, cota_fisica_items, rebanadas_activas):
+    output_path = os.path.join("Resultados", f"{case_name}_layout.png")
     exportar_solucion_bin_a_png(bin_width, bin_height, item_width, item_height, cota_fisica_items, rebanadas_activas, output_path)
     print(f"Layout final exportado en: {output_path}")
 
@@ -286,7 +306,7 @@ def desnormalizar_rebanadas_para_salida(rebanadas, bin_width_original, bin_heigh
 
 
 # Orquestador principal
-def orquestador(queue, manual_interruption, max_time, initial_time, config_data, devolver_solucion=False):
+def orquestador(queue, manual_interruption, max_time, initial_time, case_name, config_data, devolver_solucion=False):
     try:
         # Reiniciar el contador de IDs de Rebanada para cada ejecución
         Rebanada.reset_id_counter()
@@ -326,6 +346,7 @@ def orquestador(queue, manual_interruption, max_time, initial_time, config_data,
         # Construyo firma de rebanadas iniciales para evitar que se generen nuevamente en alguna iteracion
         firmas_generadas = {construir_firma_rebanada(r) for r in rebanadas}
         objective_master_anterior = None
+        precios_duales_estabilizados_anteriores = None
 
         while True:
             #TODO: Aca podria mejorar evitando la creacion del modelo en cada vuelta.
@@ -334,13 +355,18 @@ def orquestador(queue, manual_interruption, max_time, initial_time, config_data,
             master_model = create_master_model(max_time, rebanadas, bin_height, bin_width, item_height, item_width, pos_xy_x, pos_xy_y)
             # Resolver modelo maestro
             objective_master, precios_duales, _ = solve_master_model(master_model, queue, manual_interruption, True, initial_time)
+            precios_duales_pricing = estabilizar_duales(
+                precios_duales,
+                precios_duales_estabilizados_anteriores
+            )
+            precios_duales_estabilizados_anteriores = precios_duales_pricing
 
             if objective_master_anterior is None:
                 print("FO maestro relajado anterior: None (primera iteración)")
             else:
                 mejora_master = objective_master - objective_master_anterior
 
-            slave_model = create_slave_model(max_time, pos_xy_x, pos_xy_y, precios_duales, bin_width, item_height, item_width, bin_height, alto_rebanada)
+            slave_model = create_slave_model(max_time, pos_xy_x, pos_xy_y, precios_duales_pricing, bin_width, item_height, item_width, bin_height, alto_rebanada)
             nueva_rebanada, objective_value_slave_model, variables_activas = solve_slave_model(slave_model, queue, manual_interruption, bin_width, item_height, item_width, alto_rebanada)
 
             es_duplicada = False
@@ -371,7 +397,7 @@ def orquestador(queue, manual_interruption, max_time, initial_time, config_data,
                         max_time,
                         pos_xy_x,
                         pos_xy_y,
-                        precios_duales,
+                        precios_duales_pricing,
                         bin_width,
                         item_height,
                         item_width,
@@ -450,7 +476,7 @@ def orquestador(queue, manual_interruption, max_time, initial_time, config_data,
                         max_time,
                         pos_xy_x,
                         pos_xy_y,
-                        precios_duales,
+                        precios_duales_pricing,
                         bin_width,
                         item_height,
                         item_width,
@@ -539,7 +565,7 @@ def orquestador(queue, manual_interruption, max_time, initial_time, config_data,
             item_normalizado
         )
         if rebanadas_activas_salida:
-            exportar_layout_final(bin_width_original, bin_height_original, item_width_original, item_height_original, max_items_fisicos, rebanadas_activas_salida)
+            exportar_layout_final(case_name, bin_width_original, bin_height_original, item_width_original, item_height_original, max_items_fisicos, rebanadas_activas_salida)
         else:
             print("No se generó ninguna rebanada activa en la solución final del maestro. No se exporta layout.")
         # Devuelvo resultado
@@ -556,7 +582,7 @@ def orquestador(queue, manual_interruption, max_time, initial_time, config_data,
 
         return None
 
-def execute_with_time_limit(max_time):
+def execute_with_time_limit(max_time, instance=None):
     global model_status, solver_status, objective_value, solver_time
     global exceding_limit_time
     exceding_limit_time = False
@@ -568,15 +594,18 @@ def execute_with_time_limit(max_time):
     # Crear una variable compartida para manejar la interrupción manual
     manual_interruption = multiprocessing.Value('b', True)
 
+    if instance is None:
+        instance = get_instance(CASE_NAME)
+
     config_data = ConfigData(
-        bin_width=BIN_WIDTH,
-        bin_height=BIN_HEIGHT,
-        item_width=ITEM_WIDTH,
-        item_height=ITEM_HEIGHT
+        bin_width=instance["bin_width"],
+        bin_height=instance["bin_height"],
+        item_width=instance["item_width"],
+        item_height=instance["item_height"]
     )
 
     # Crear el subproceso que correrá la función
-    process = multiprocessing.Process(target=orquestador, args=(queue, manual_interruption, max_time, initial_time, config_data))
+    process = multiprocessing.Process(target=orquestador, args=(queue, manual_interruption, max_time, initial_time, instance["case_name"], config_data))
 
     # Iniciar el subproceso
     process.start()
@@ -609,4 +638,4 @@ def execute_with_time_limit(max_time):
         objective_value = "n/a"
         model_status = "14"
 
-    return CASE_NAME, MODEL_NAME, model_status, solver_status, objective_value, solver_time
+    return instance["case_name"], MODEL_NAME, model_status, solver_status, objective_value, solver_time

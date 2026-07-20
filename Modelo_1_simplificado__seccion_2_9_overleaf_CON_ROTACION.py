@@ -8,6 +8,20 @@ from Config import *
 MODEL_NAME = "Model1"
 
 
+def aplicar_instancia(instance):
+    global CASE_NAME, BIN_WIDTH, BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT
+    CASE_NAME = instance["case_name"]
+    BIN_WIDTH = instance["bin_width"]
+    BIN_HEIGHT = instance["bin_height"]
+    ITEM_WIDTH = instance["item_width"]
+    ITEM_HEIGHT = instance["item_height"]
+
+
+def run_model_for_instance(instance, create_model_fn, solve_model_fn, queue, manual_interruption, max_time):
+    aplicar_instancia(instance)
+    run_model(create_model_fn, solve_model_fn, queue, manual_interruption, max_time)
+
+
 def calcular_cota_fisica_items():
     return (BIN_WIDTH * BIN_HEIGHT) // (ITEM_WIDTH * ITEM_HEIGHT)
 
@@ -116,7 +130,7 @@ def solve_model(model, queue, manual_interruption):
     return model_status, solver_status, objective_value
 
 
-def execute_with_time_limit(max_time):
+def execute_with_time_limit(max_time, instance=None):
     global model_status, solver_status, objective_value, solver_time
     global exceding_limit_time
     exceding_limit_time = False
@@ -127,8 +141,11 @@ def execute_with_time_limit(max_time):
     # Crear una variable compartida para manejar la interrupción manual
     manual_interruption = multiprocessing.Value('b', True)
 
+    if instance is None:
+        instance = get_instance(CASE_NAME)
+
     # Crear el subproceso que correrá la función
-    process = multiprocessing.Process(target=run_model, args=(create_model, solve_model, queue, manual_interruption, max_time))
+    process = multiprocessing.Process(target=run_model_for_instance, args=(instance, create_model, solve_model, queue, manual_interruption, max_time))
 
     # Iniciar el subproceso
     process.start()
@@ -163,4 +180,4 @@ def execute_with_time_limit(max_time):
         objective_value = "n/a"
         model_status = "14"
 
-    return CASE_NAME, MODEL_NAME, model_status, solver_status, objective_value, solver_time
+    return instance["case_name"], MODEL_NAME, model_status, solver_status, objective_value, solver_time
