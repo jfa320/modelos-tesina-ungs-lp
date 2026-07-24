@@ -1,13 +1,13 @@
 import time
 
 import pytest
-from Modelo_5_Orquestador import orquestador
-from Objetos.ConfigData import ConfigData
+from Model_5_Orchestrator import orchestrator
+from Objects.ConfigData import ConfigData
 
-class TestOrquestador:
-    def test_caso_1(self, orquestador_context):
+class TestOrchestrator:
+    def test_case_1(self, orchestrator_context):
         
-        queue, manual_interruption, EXECUTION_TIME = orquestador_context
+        queue, manual_interruption, EXECUTION_TIME = orchestrator_context
 
         config_data = ConfigData(
             bin_width=6,        # W
@@ -16,7 +16,7 @@ class TestOrquestador:
             item_height=3       # h
         )
 
-        objective_value = orquestador(
+        objective_value = orchestrator(
             queue,
             manual_interruption,
             EXECUTION_TIME,
@@ -25,11 +25,11 @@ class TestOrquestador:
         )
 
         assert objective_value is not None
-        assert objective_value == 4  # Valor óptimo esperado para el Caso 1
+        assert objective_value == 4  # Expected optimal value for case 1
 
    
-    def test_caso_2(self, orquestador_context):
-        queue, manual_interruption, EXECUTION_TIME = orquestador_context
+    def test_case_2(self, orchestrator_context):
+        queue, manual_interruption, EXECUTION_TIME = orchestrator_context
 
         config_data = ConfigData(
             bin_width=5,        # W
@@ -38,7 +38,7 @@ class TestOrquestador:
             item_height=2       # h
         )
 
-        objective_value = orquestador(
+        objective_value = orchestrator(
             queue,
             manual_interruption,
             EXECUTION_TIME,
@@ -47,10 +47,10 @@ class TestOrquestador:
         )
 
         assert objective_value is not None
-        assert objective_value == 4  # Valor óptimo esperado para el Caso 2
+        assert objective_value == 4  # Expected optimal value for case 2
 
-    def test_caso_nuevo_optimo_6(self, orquestador_context):
-        queue, manual_interruption, EXECUTION_TIME = orquestador_context
+    def test_new_optimum_case_6(self, orchestrator_context):
+        queue, manual_interruption, EXECUTION_TIME = orchestrator_context
 
         config_data = ConfigData(
             bin_width=6,        # W
@@ -59,7 +59,7 @@ class TestOrquestador:
             item_height=2       # h
         )
 
-        objective_value = orquestador(
+        objective_value = orchestrator(
             queue,
             manual_interruption,
             EXECUTION_TIME,
@@ -68,11 +68,11 @@ class TestOrquestador:
         )
 
         assert objective_value is not None
-        assert objective_value == 6  # Valor óptimo esperado
+        assert objective_value == 6  # Expected optimal value
         
 
-    def test_caso_3(self, orquestador_context):
-        queue, manual_interruption, EXECUTION_TIME = orquestador_context
+    def test_case_3(self, orchestrator_context):
+        queue, manual_interruption, EXECUTION_TIME = orchestrator_context
 
         config_data = ConfigData(
             bin_width=6,        # W
@@ -81,7 +81,7 @@ class TestOrquestador:
             item_height=2       # h
         )
 
-        objective_value = orquestador(
+        objective_value = orchestrator(
             queue,
             manual_interruption,
             EXECUTION_TIME,
@@ -92,8 +92,8 @@ class TestOrquestador:
         assert objective_value is not None
         assert objective_value == 4
         
-    def test_caso_4(self, orquestador_context):
-        queue, manual_interruption, EXECUTION_TIME = orquestador_context
+    def test_case_4(self, orchestrator_context):
+        queue, manual_interruption, EXECUTION_TIME = orchestrator_context
 
         config_data = ConfigData(
             bin_width=7,        # W
@@ -102,7 +102,7 @@ class TestOrquestador:
             item_height=2       # h
         )
 
-        objective_value = orquestador(
+        objective_value = orchestrator(
             queue,
             manual_interruption,
             EXECUTION_TIME,
@@ -113,8 +113,8 @@ class TestOrquestador:
         assert objective_value is not None
         assert objective_value == 3
 
-    def test_caso_5(self, orquestador_context):
-        queue, manual_interruption, EXECUTION_TIME = orquestador_context
+    def test_case_5(self, orchestrator_context):
+        queue, manual_interruption, EXECUTION_TIME = orchestrator_context
 
         config_data = ConfigData(
             bin_width=6,        # W
@@ -123,7 +123,7 @@ class TestOrquestador:
             item_height=2       # h
         )
 
-        objective_value = orquestador(
+        objective_value = orchestrator(
             queue,
             manual_interruption,
             EXECUTION_TIME,
@@ -134,8 +134,8 @@ class TestOrquestador:
         assert objective_value is not None
         assert objective_value == 3
 
-    def test_caso_6(self, orquestador_context):
-        queue, manual_interruption, EXECUTION_TIME = orquestador_context
+    def test_case_6(self, orchestrator_context):
+        queue, manual_interruption, EXECUTION_TIME = orchestrator_context
 
         config_data = ConfigData(
             bin_width=120,       # W
@@ -144,7 +144,7 @@ class TestOrquestador:
             item_height=8        # h
         )
 
-        objective_value = orquestador(
+        objective_value = orchestrator(
             queue,
             manual_interruption,
             EXECUTION_TIME,
@@ -155,10 +155,10 @@ class TestOrquestador:
         assert objective_value is not None
         assert objective_value == 25
     
-    # Desde acá empiezan los casos de la OR Library (grandes)
+    # OR Library large cases start here
 
-    def test_caso_7(self, orquestador_context):
-        queue, manual_interruption, EXECUTION_TIME = orquestador_context
+    def test_case_7(self, orchestrator_context):
+        queue, manual_interruption, EXECUTION_TIME = orchestrator_context
 
         config_data = ConfigData(
             bin_width=50,        # W
@@ -167,7 +167,7 @@ class TestOrquestador:
             item_height=8        # h
         )
 
-        objective_value = orquestador(
+        objective_value = orchestrator(
             queue,
             manual_interruption,
             EXECUTION_TIME,
@@ -179,8 +179,8 @@ class TestOrquestador:
         assert objective_value == 7
 
 
-    def test_caso_8(self, orquestador_context):
-        queue, manual_interruption, EXECUTION_TIME = orquestador_context
+    def test_case_8(self, orchestrator_context):
+        queue, manual_interruption, EXECUTION_TIME = orchestrator_context
 
         config_data = ConfigData(
             bin_width=40,        # W
@@ -189,7 +189,7 @@ class TestOrquestador:
             item_height=6        # h
         )
 
-        objective_value = orquestador(
+        objective_value = orchestrator(
             queue,
             manual_interruption,
             EXECUTION_TIME,
@@ -200,8 +200,8 @@ class TestOrquestador:
         assert objective_value is not None
         assert objective_value == 16
 
-    def test_caso_9(self, orquestador_context):
-        queue, manual_interruption, EXECUTION_TIME = orquestador_context
+    def test_case_9(self, orchestrator_context):
+        queue, manual_interruption, EXECUTION_TIME = orchestrator_context
 
         config_data = ConfigData(
             bin_width=60,        # W
@@ -210,7 +210,7 @@ class TestOrquestador:
             item_height=7        # h
         )
 
-        objective_value = orquestador(
+        objective_value = orchestrator(
             queue,
             manual_interruption,
             EXECUTION_TIME,
@@ -221,8 +221,8 @@ class TestOrquestador:
         assert objective_value is not None
         assert objective_value == 13
 
-    def test_caso_10(self, orquestador_context):
-        queue, manual_interruption, EXECUTION_TIME = orquestador_context
+    def test_case_10(self, orchestrator_context):
+        queue, manual_interruption, EXECUTION_TIME = orchestrator_context
 
         config_data = ConfigData(
             bin_width=45,        # W
@@ -231,7 +231,7 @@ class TestOrquestador:
             item_height=9        # h
         )
 
-        objective_value = orquestador(
+        objective_value = orchestrator(
             queue,
             manual_interruption,
             EXECUTION_TIME,
@@ -242,8 +242,8 @@ class TestOrquestador:
         assert objective_value is not None
         assert objective_value == 15
     
-    def test_caso_11(self, orquestador_context):
-        queue, manual_interruption, EXECUTION_TIME = orquestador_context
+    def test_case_11(self, orchestrator_context):
+        queue, manual_interruption, EXECUTION_TIME = orchestrator_context
 
         config_data = ConfigData(
             bin_width=70,        # W
@@ -252,7 +252,7 @@ class TestOrquestador:
             item_height=8        # h
         )
 
-        objective_value = orquestador(
+        objective_value = orchestrator(
             queue,
             manual_interruption,
             EXECUTION_TIME,
@@ -263,8 +263,8 @@ class TestOrquestador:
         assert objective_value is not None
         assert objective_value == 15
 
-    def test_caso_12(self, orquestador_context):
-        queue, manual_interruption, EXECUTION_TIME = orquestador_context
+    def test_case_12(self, orchestrator_context):
+        queue, manual_interruption, EXECUTION_TIME = orchestrator_context
 
         config_data = ConfigData(
             bin_width=55,        # W
@@ -273,7 +273,7 @@ class TestOrquestador:
             item_height=6        # h
         )
 
-        objective_value = orquestador(
+        objective_value = orchestrator(
             queue,
             manual_interruption,
             EXECUTION_TIME,
@@ -284,8 +284,8 @@ class TestOrquestador:
         assert objective_value is not None
         assert objective_value == 18
 
-    def test_caso_13(self, orquestador_context):
-        queue, manual_interruption, EXECUTION_TIME = orquestador_context
+    def test_case_13(self, orchestrator_context):
+        queue, manual_interruption, EXECUTION_TIME = orchestrator_context
 
         config_data = ConfigData(
             bin_width=20,        # W
@@ -294,7 +294,7 @@ class TestOrquestador:
             item_height=5        # h
         )
 
-        objective_value = orquestador(
+        objective_value = orchestrator(
             queue,
             manual_interruption,
             EXECUTION_TIME,
@@ -306,8 +306,8 @@ class TestOrquestador:
         assert objective_value == 12
         
 
-    def test_caso_14(self, orquestador_context):
-        queue, manual_interruption, EXECUTION_TIME = orquestador_context
+    def test_case_14(self, orchestrator_context):
+        queue, manual_interruption, EXECUTION_TIME = orchestrator_context
 
         config_data = ConfigData(
             bin_width=40,        # W
@@ -316,7 +316,7 @@ class TestOrquestador:
             item_height=7        # h
         )
 
-        objective_value = orquestador(
+        objective_value = orchestrator(
             queue,
             manual_interruption,
             EXECUTION_TIME,
@@ -327,8 +327,8 @@ class TestOrquestador:
         assert objective_value is not None
         assert objective_value == 16
 
-    def test_caso_15(self, orquestador_context):
-        queue, manual_interruption, EXECUTION_TIME = orquestador_context
+    def test_case_15(self, orchestrator_context):
+        queue, manual_interruption, EXECUTION_TIME = orchestrator_context
 
         config_data = ConfigData(
             bin_width=60,        # W
@@ -337,7 +337,7 @@ class TestOrquestador:
             item_height=5        # h
         )
 
-        objective_value = orquestador(
+        objective_value = orchestrator(
             queue,
             manual_interruption,
             EXECUTION_TIME,
@@ -348,8 +348,8 @@ class TestOrquestador:
         assert objective_value is not None
         assert objective_value == 25
 
-    def test_caso_16(self, orquestador_context):
-        queue, manual_interruption, EXECUTION_TIME = orquestador_context
+    def test_case_16(self, orchestrator_context):
+        queue, manual_interruption, EXECUTION_TIME = orchestrator_context
 
         config_data = ConfigData(
             bin_width=48,        # W
@@ -358,7 +358,7 @@ class TestOrquestador:
             item_height=6        # h
         )
 
-        objective_value = orquestador(
+        objective_value = orchestrator(
             queue,
             manual_interruption,
             EXECUTION_TIME,
@@ -369,8 +369,8 @@ class TestOrquestador:
         assert objective_value is not None
         assert objective_value == 24
 
-    def test_caso_17(self, orquestador_context):
-        queue, manual_interruption, EXECUTION_TIME = orquestador_context
+    def test_case_17(self, orchestrator_context):
+        queue, manual_interruption, EXECUTION_TIME = orchestrator_context
 
         config_data = ConfigData(
             bin_width=70,        # W
@@ -379,7 +379,7 @@ class TestOrquestador:
             item_height=7        # h
         )
 
-        objective_value = orquestador(
+        objective_value = orchestrator(
             queue,
             manual_interruption,
             EXECUTION_TIME,
@@ -390,8 +390,8 @@ class TestOrquestador:
         assert objective_value is not None
         assert objective_value == 20
 
-    def test_caso_18(self, orquestador_context):
-        queue, manual_interruption, EXECUTION_TIME = orquestador_context
+    def test_case_18(self, orchestrator_context):
+        queue, manual_interruption, EXECUTION_TIME = orchestrator_context
 
         config_data = ConfigData(
             bin_width=10,        # W
@@ -400,7 +400,7 @@ class TestOrquestador:
             item_height=6        # h
         )
 
-        objective_value = orquestador(
+        objective_value = orchestrator(
             queue,
             manual_interruption,
             EXECUTION_TIME,

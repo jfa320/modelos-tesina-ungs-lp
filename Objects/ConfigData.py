@@ -26,7 +26,7 @@ class ConfigData:
 
     def set_bin_width(self, value):
         if value <= 0:
-            raise ValueError("bin_width debe ser mayor que 0")
+            raise ValueError("bin_width must be greater than 0")
         self._bin_width = value
 
     # ---------- BIN HEIGHT ----------
@@ -35,7 +35,7 @@ class ConfigData:
 
     def set_bin_height(self, value):
         if value <= 0:
-            raise ValueError("bin_height debe ser mayor que 0")
+            raise ValueError("bin_height must be greater than 0")
         self._bin_height = value
 
     # ---------- ITEM WIDTH ----------
@@ -44,7 +44,7 @@ class ConfigData:
 
     def set_item_width(self, value):
         if value <= 0:
-            raise ValueError("item_width debe ser mayor que 0")
+            raise ValueError("item_width must be greater than 0")
         self._item_width = value
 
     # ---------- ITEM HEIGHT ----------
@@ -53,7 +53,7 @@ class ConfigData:
 
     def set_item_height(self, value):
         if value <= 0:
-            raise ValueError("item_height debe ser mayor que 0")
+            raise ValueError("item_height must be greater than 0")
         self._item_height = value
 
     # ---------- UTIL ----------

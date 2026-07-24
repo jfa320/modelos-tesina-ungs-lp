@@ -1,33 +1,33 @@
 import argparse
 
-import Modelo_1_simplificado__seccion_2_8_overleaf_SIN_ROTACION
-import Modelo_1_simplificado__seccion_2_9_overleaf_CON_ROTACION
-import Modelo_5_Orquestador
-import Modelo_6_Andrade_Birgin_Monoitem
-import Modelo_7_Backtracking_Monoitem_Exacto
+import Model_1_Simplified_Section_2_8_No_Rotation
+import Model_1_Simplified_Section_2_9_With_Rotation
+import Model_5_Orchestrator
+import Model_6_Andrade_Birgin_Monoitem
+import Model_7_Exact_Monoitem_Backtracking
 from Config import DEFAULT_CASE_NAME, get_instance, list_instance_names
-from TraceFileGenerator import TraceFileGenerator
+from trace_file_generator import TraceFileGenerator
 
 
-DEFAULT_EXECUTION_TIME = 1200  # tiempo de ejecucion en segundos para cada modelo - se puede cambiar via parametro de linea de comando
+DEFAULT_EXECUTION_TIME = 1200  # Execution time in seconds for each model; can be changed through the CLI.
 
 MODELS = [
-    Modelo_5_Orquestador,
-    Modelo_1_simplificado__seccion_2_8_overleaf_SIN_ROTACION,
-    Modelo_1_simplificado__seccion_2_9_overleaf_CON_ROTACION,
-    Modelo_6_Andrade_Birgin_Monoitem,
-    Modelo_7_Backtracking_Monoitem_Exacto,
+    Model_5_Orchestrator,
+    Model_1_Simplified_Section_2_8_No_Rotation,
+    Model_1_Simplified_Section_2_9_With_Rotation,
+    Model_6_Andrade_Birgin_Monoitem,
+    Model_7_Exact_Monoitem_Backtracking,
 ]
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Ejecuta modelos sobre una o varias instancias.")
+    parser = argparse.ArgumentParser(description="Run models on one or more instances.")
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("--case", default=DEFAULT_CASE_NAME, help="Instancia a ejecutar.")
-    group.add_argument("--cases", nargs="+", help="Instancias a ejecutar.")
-    group.add_argument("--all", action="store_true", help="Ejecuta todas las instancias configuradas.")
-    parser.add_argument("--time", type=int, default=DEFAULT_EXECUTION_TIME, help="Tiempo limite por modelo en segundos.")
-    parser.add_argument("--output", default="output.trc", help="Nombre del archivo .trc dentro de Resultados.")
+    group.add_argument("--case", default=DEFAULT_CASE_NAME, help="Instance to run.")
+    group.add_argument("--cases", nargs="+", help="Instances to run.")
+    group.add_argument("--all", action="store_true", help="Run all configured instances.")
+    parser.add_argument("--time", type=int, default=DEFAULT_EXECUTION_TIME, help="Time limit per model in seconds.")
+    parser.add_argument("--output", default="output.trc", help="Name of the .trc file inside Results.")
     return parser.parse_args()
 
 
@@ -46,13 +46,13 @@ def main():
     for case_name in selected_case_names(args):
         instance = get_instance(case_name)
         print(
-            f"Ejecutando {instance['case_name']}: "
+            f"Running {instance['case_name']}: "
             f"bin=({instance['bin_width']},{instance['bin_height']}), "
             f"item=({instance['item_width']},{instance['item_height']})"
         )
 
         for model in MODELS:
-            print(f"Modelo: {model.MODEL_NAME}")
+            print(f"Model: {model.MODEL_NAME}")
             case_name, model_name, model_status, solver_status, objective_value, solver_time = model.execute_with_time_limit(
                 args.time,
                 instance,

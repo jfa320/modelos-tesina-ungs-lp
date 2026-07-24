@@ -2,13 +2,13 @@ import cplex
 from cplex.exceptions import CplexSolverError
 import multiprocessing
 import time
-from Utils.Model_Functions import *
+from Utils.model_functions import *
 from Config import *
 
 MODEL_NAME = "AndradeBirginBigM"
 
 
-def aplicar_instancia(instance):
+def apply_instance(instance):
     global CASE_NAME, BIN_WIDTH, BIN_HEIGHT, ITEM_WIDTH, ITEM_HEIGHT
     CASE_NAME = instance["case_name"]
     BIN_WIDTH = instance["bin_width"]
@@ -17,7 +17,7 @@ def aplicar_instancia(instance):
     ITEM_HEIGHT = instance["item_height"]
 
 
-def calcular_cota_fisica_items():
+def calculate_physical_item_bound():
     return (BIN_WIDTH * BIN_HEIGHT) // (ITEM_WIDTH * ITEM_HEIGHT)
 
 
@@ -33,7 +33,7 @@ def create_model(max_time):
 
     big_m_x = 2 * BIN_WIDTH + 2 * max_item_dim
     big_m_y = 2 * BIN_HEIGHT + 2 * max_item_dim
-    items = list(range(1, calcular_cota_fisica_items() + 1))
+    items = list(range(1, calculate_physical_item_bound() + 1))
 
     # -----------------------------
     # Variables
@@ -64,7 +64,7 @@ def create_model(max_time):
     add_variables(model, relative_pos_vars, [0.0] * len(relative_pos_vars), "B")
 
     # -----------------------------
-    # Dimensiones efectivas
+    # Effective dimensions
     # -----------------------------
     delta = ITEM_HEIGHT - ITEM_WIDTH
 
@@ -84,7 +84,7 @@ def create_model(max_time):
         add_constraint(model, cons_coeff, cons_vars, cons_rhs, cons_sense)
 
     # -----------------------------
-    # Contención en el bin
+    # Bin containment
     # -----------------------------
     for i in items:
         # cx_i - wEff_i / 2 >= 0
@@ -116,7 +116,7 @@ def create_model(max_time):
         add_constraint(model, cons_coeff, cons_vars, cons_rhs, cons_sense)
 
     # -----------------------------
-    # No superposición
+    # Non-overlap
     # -----------------------------
     for i in items:
         for j in items:
@@ -124,7 +124,7 @@ def create_model(max_time):
                 q_ij = f"q_{i},{j}"
                 q_ji = f"q_{j},{i}"
 
-                # 1) i a la derecha de j
+                # 1) i to the right of j
                 cons_coeff = [
                     1.0, -1.0,
                     -0.5, -0.5,
@@ -139,7 +139,7 @@ def create_model(max_time):
                 cons_sense = "G"
                 add_constraint(model, cons_coeff, cons_vars, cons_rhs, cons_sense)
 
-                # 2) j a la derecha de i
+                # 2) j to the right of i
                 cons_coeff = [
                     1.0, -1.0,
                     -0.5, -0.5,
@@ -154,7 +154,7 @@ def create_model(max_time):
                 cons_sense = "G"
                 add_constraint(model, cons_coeff, cons_vars, cons_rhs, cons_sense)
 
-                # 3) i arriba de j
+                # 3) i above j
                 cons_coeff = [
                     1.0, -1.0,
                     -0.5, -0.5,
@@ -169,7 +169,7 @@ def create_model(max_time):
                 cons_sense = "G"
                 add_constraint(model, cons_coeff, cons_vars, cons_rhs, cons_sense)
 
-                # 4) j arriba de i
+                # 4) j above i
                 cons_coeff = [
                     1.0, -1.0,
                     -0.5, -0.5,
@@ -206,7 +206,7 @@ def solve_model(model, queue, manual_interruption):
             objective_value = "n/a"
 
         print("-------------------------------------------")
-        print("Modelo Andrade-Birgin con Big-M")
+        print("Andrade-Birgin model with Big-M")
         print(f"Optimal value: {objective_value}")
 
         model_status = "1"
@@ -238,7 +238,7 @@ def solve_model(model, queue, manual_interruption):
 def run_model(create_model_fn, solve_model_fn, queue, manual_interruption, max_time, instance=None):
     try:
         if instance is not None:
-            aplicar_instancia(instance)
+            apply_instance(instance)
         model = create_model_fn(max_time)
         solve_model_fn(model, queue, manual_interruption)
     except Exception as e:
@@ -293,7 +293,7 @@ def execute_with_time_limit(max_time, instance=None):
             solver_time = message["solverTime"]
 
     if exceding_limit_time:
-        print("El modelo excedió el tiempo límite de ejecución.")
+        print("The model exceeded the execution time limit.")
         objective_value = "n/a"
         model_status = "14"
 
